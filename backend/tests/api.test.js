@@ -49,6 +49,7 @@ describe('Express App HTTP, Security & RBAC Integration Checks', () => {
       '/manifest.json',
       '/service-worker.js',
       '/assets/logos/apnascore-logo.png',
+      '/assets/images/apnascore-og-preview.jpg',
       '/assets/icons/apnascore-icon.png',
       '/assets/icons/favicon-32.png'
     ];
@@ -56,6 +57,13 @@ describe('Express App HTTP, Security & RBAC Integration Checks', () => {
       const res = await fetch(`${baseUrl}${p}`);
       assert.equal(res.status, 200, `Expected 200 OK for ${p}, got ${res.status}`);
     }
+
+    // Verify Open Graph & Twitter link preview tags on public-match.html and index.html
+    const pmHtml = await (await fetch(`${baseUrl}/public-match.html`)).text();
+    assert.match(pmHtml, /<meta property="og:title"/);
+    assert.match(pmHtml, /<meta property="og:description"/);
+    assert.match(pmHtml, /apnascore-og-preview\.jpg/);
+    assert.match(pmHtml, /<meta name="twitter:card" content="summary_large_image"/);
   });
 
   it('blocks direct access to /backend and /.env', async () => {

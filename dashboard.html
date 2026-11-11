@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#208B4E" />
   <title>Dashboard – ApnaScore</title>
+  <meta name="description" content="Your cricket command center: live matches, upcoming tournament fixtures, top batsmen & bowlers, quick match launch, and instant PDF scorecards — online or offline." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ApnaScore" />
+  <meta property="og:title" content="Dashboard – ApnaScore | Apne Gaon ka Apna Scorer" />
+  <meta property="og:description" content="Your cricket command center: live matches, upcoming tournament fixtures, top batsmen & bowlers, quick match launch, and instant PDF scorecards — online or offline." />
+  <meta property="og:image" content="/assets/images/apnascore-og-preview.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ApnaScore – Apne Gaon ka Apna Scorer" />
+  <meta property="og:url" content="/dashboard.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Dashboard – ApnaScore | Apne Gaon ka Apna Scorer" />
+  <meta name="twitter:description" content="Your cricket command center: live matches, upcoming tournament fixtures, top batsmen & bowlers, quick match launch, and instant PDF scorecards — online or offline." />
+  <meta name="twitter:image" content="/assets/images/apnascore-og-preview.jpg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
   <link rel="manifest" href="/manifest.json" />
@@ -29,6 +44,19 @@
           <a href="/live-score.html" class="btn btn-secondary">Live Scores</a>
         </div>
       </section>
+
+      <!-- Guest Mode Prompt Banner -->
+      <div id="guestBannerBox" class="card mb-2 hidden" style="border-left:5px solid var(--brand-primary);background:var(--bg-surface-alt);">
+        <div class="flex-between">
+          <div>
+            <strong>Guest Mode Active</strong>
+            <div class="text-sm text-muted">All local matches, teams & scorecards are saved safely in IndexedDB. Create a free account anytime to publish matches & manage tournaments.</div>
+          </div>
+          <div class="flex-gap">
+            <a href="/register.html" class="btn btn-primary btn-sm">Create Free Account</a>
+          </div>
+        </div>
+      </div>
 
       <!-- Local Unsynced / Offline Matches Alert -->
       <div id="offlineRecoveryBox" class="card mb-2 hidden" style="border-left:5px solid var(--warning);">
@@ -136,6 +164,7 @@
   <script src="/js/auth.js"></script>
   <script src="/js/scoring-engine.js"></script>
   <script src="/js/offline-sync.js"></script>
+  <script src="/js/migrate.js"></script>
   <script src="/js/vendor/gsap.min.js"></script>
   <script src="/js/animations.js"></script>
   <script src="/js/main.js"></script>

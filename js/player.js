@@ -15,8 +15,8 @@
       await loadPlayerDetail(id);
     } else {
       await loadTeamsDropdown();
-      document.getElementById('openCreatePlayerBtn').addEventListener('click', () => {
-        if (!ApnaAuth.requireAuth()) return;
+      document.getElementById('openCreatePlayerBtn').addEventListener('click', async () => {
+        if (!ApnaAuth.isAuthenticatedOrGuest()) await ApnaAuth.continueAsGuest(null);
         document.getElementById('createPlayerModal').classList.add('open');
       });
       document.getElementById('pSearchInput').addEventListener('input', loadPlayers);
@@ -24,7 +24,8 @@
       document.getElementById('pRoleFilter').addEventListener('change', loadPlayers);
       document.getElementById('createPlayerForm').addEventListener('submit', createPlayer);
       await loadPlayers();
-      if (params.get('action') === 'create' && ApnaAuth.isLoggedIn()) {
+      if (params.get('action') === 'create') {
+        if (!ApnaAuth.isAuthenticatedOrGuest()) await ApnaAuth.continueAsGuest(null);
         document.getElementById('createPlayerModal').classList.add('open');
       }
     }
@@ -41,22 +42,33 @@
 
   async function createPlayer(e) {
     e.preventDefault();
+    const clientId = 'lplayer_' + Date.now();
+    const payload = {
+      name: document.getElementById('cpName').value.trim(),
+      village: document.getElementById('cpVillage').value.trim(),
+      age: document.getElementById('cpAge').value || null,
+      jerseyNumber: document.getElementById('cpJersey').value || null,
+      role: document.getElementById('cpRole').value,
+      teamId: document.getElementById('cpTeam').value || null,
+      battingStyle: document.getElementById('cpBatStyle').value,
+      bowlingStyle: document.getElementById('cpBowlStyle').value,
+      clientId
+    };
     try {
-      const res = await ApnaAPI.post('/api/players', {
-        name: document.getElementById('cpName').value.trim(),
-        village: document.getElementById('cpVillage').value.trim(),
-        age: document.getElementById('cpAge').value || null,
-        jerseyNumber: document.getElementById('cpJersey').value || null,
-        role: document.getElementById('cpRole').value,
-        teamId: document.getElementById('cpTeam').value || null,
-        battingStyle: document.getElementById('cpBatStyle').value,
-        bowlingStyle: document.getElementById('cpBowlStyle').value
-      });
+      const res = await ApnaAPI.post('/api/players', payload);
+      await ApnaOffline.savePlayerLocally(Object.assign({}, res.player, { localId: res.player._id }));
       document.getElementById('createPlayerModal').classList.remove('open');
       ApnaUI.showToast(res.reusedExisting ? res.message : `Player "${res.player.name}" created!`);
       await loadPlayers();
     } catch (err) {
-      ApnaUI.showToast(err.message, 'error');
+      if (err.isOffline || !navigator.onLine) {
+        const lp = await ApnaOffline.savePlayerLocally({ ...payload, _id: clientId, localId: clientId });
+        document.getElementById('createPlayerModal').classList.remove('open');
+        ApnaUI.showToast(`Offline: Player "${lp.name}" saved locally!`);
+        await loadPlayers();
+      } else {
+        ApnaUI.showToast(err.message, 'error');
+      }
     }
   }
 
@@ -71,8 +83,16 @@
     if (r) qs.set('role', r);
 
     try {
-      const res = await ApnaAPI.get(`/api/players?${qs.toString()}`);
-      const list = res.players || [];
+      const [res, localPlayers] = await Promise.all([
+        ApnaAPI.get(`/api/players?${qs.toString()}`).catch(() => ({ players: [] })),
+        ApnaOffline.getLocalPlayers().catch(() => [])
+      ]);
+      const list = [...(res.players || [])];
+      for (const lp of localPlayers) {
+        if (!lp.migrated && !list.some((p) => String(p._id) === String(lp._id) || (lp.clientId && p.clientId === lp.clientId))) {
+          list.unshift(Object.assign({}, lp, { _id: lp._id || lp.localId }));
+        }
+      }
       if (!list.length) {
         grid.innerHTML = `<div class="empty-state">No players found. Click "+ Add Player" to register one!</div>`;
         return;

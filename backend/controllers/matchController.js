@@ -16,27 +16,57 @@ function makeMatchCode() {
   return 'AS-' + uuidv4().slice(0, 6).toUpperCase();
 }
 
+function buildMatchVisibility(req) {
+  if (req.user) {
+    if (req.user.role === 'super_admin') return {};
+    return {
+      $or: [
+        { ownerType: { $ne: 'guest' }, isPublic: true },
+        { userId: req.user._id },
+        { scorerId: req.user._id },
+        { authorizedScorers: req.user._id }
+      ]
+    };
+  }
+  if (req.guest) {
+    return {
+      $or: [
+        { ownerType: 'guest', guestId: req.guest.guestId },
+        { ownerType: { $ne: 'guest' }, isPublic: true }
+      ]
+    };
+  }
+  return { ownerType: { $ne: 'guest' }, isPublic: true };
+}
+
 async function listMatches(req, res, next) {
   try {
-    const { status, tournamentId, teamId, search } = req.query;
-    const query = {};
-    if (status) {
-      query.status = status.includes(',') ? { $in: status.split(',') } : status;
+    const { status, tournamentId, teamId, search, mine } = req.query;
+    const andClauses = [buildMatchVisibility(req)];
+
+    if (mine === '1') {
+      if (req.guest) andClauses.push({ ownerType: 'guest', guestId: req.guest.guestId });
+      else if (req.user) andClauses.push({ $or: [{ userId: req.user._id }, { scorerId: req.user._id }] });
     }
-    if (tournamentId) query.tournamentId = tournamentId;
+    if (status) {
+      andClauses.push({ status: status.includes(',') ? { $in: status.split(',') } : status });
+    }
+    if (tournamentId) andClauses.push({ tournamentId });
     if (teamId) {
-      query.$or = [{ 'teamA.teamId': teamId }, { 'teamB.teamId': teamId }];
+      andClauses.push({ $or: [{ 'teamA.teamId': teamId }, { 'teamB.teamId': teamId }] });
     }
     if (search) {
-      query.$or = [
-        { title: new RegExp(String(search), 'i') },
-        { venue: new RegExp(String(search), 'i') },
-        { 'teamA.name': new RegExp(String(search), 'i') },
-        { 'teamB.name': new RegExp(String(search), 'i') }
-      ];
+      andClauses.push({
+        $or: [
+          { title: new RegExp(String(search), 'i') },
+          { venue: new RegExp(String(search), 'i') },
+          { 'teamA.name': new RegExp(String(search), 'i') },
+          { 'teamB.name': new RegExp(String(search), 'i') }
+        ]
+      });
     }
 
-    const matches = await Match.find(query).sort({ matchDate: -1, createdAt: -1 }).limit(60).lean();
+    const matches = await Match.find({ $and: andClauses }).sort({ matchDate: -1, createdAt: -1 }).limit(60).lean();
     const matchIds = matches.map((m) => m._id);
     const innings = await Innings.find({ matchId: { $in: matchIds } })
       .select('matchId inningsNumber battingTeamName totalRuns wickets oversString status target')
@@ -64,6 +94,12 @@ async function getMatch(req, res, next) {
   try {
     const match = await Match.findById(req.params.id).populate('tournamentId', 'name village format');
     if (!match) return res.status(404).json({ success: false, message: 'Match not found.' });
+
+    if (match.ownerType === 'guest') {
+      if (!req.guest || req.guest.guestId !== match.guestId) {
+        return res.status(403).json({ success: false, message: 'Unauthorized access to private guest match.' });
+      }
+    }
 
     const innings = await Innings.find({ matchId: match._id }).sort({ inningsNumber: 1 }).lean();
     const deliveries = await Delivery.find({ matchId: match._id, isVoided: { $ne: true } })
@@ -101,8 +137,19 @@ async function createMatch(req, res, next) {
       tossDecision,
       rules,
       officials,
-      startImmediately
+      startImmediately,
+      isPublic
     } = req.body;
+
+    const isGuest = Boolean(req.guest && !req.user);
+
+    if (isGuest && (tournamentId || fixtureId || isPublic === true)) {
+      return res.status(403).json({
+        success: false,
+        requiresAccount: true,
+        message: 'Create a free account to publish your match and manage tournaments.'
+      });
+    }
 
     if (!teamAId || !teamBId) {
       return res.status(400).json({ success: false, message: 'Both Team A and Team B are required.' });
@@ -111,10 +158,12 @@ async function createMatch(req, res, next) {
       return res.status(400).json({ success: false, message: 'Team A and Team B must be different teams.' });
     }
 
-    // Idempotent offline match creation check
     if (clientMatchId) {
       const existing = await Match.findOne({ clientMatchId });
       if (existing) {
+        if (existing.ownerType === 'guest' && (!req.guest || existing.guestId !== req.guest.guestId)) {
+          return res.status(403).json({ success: false, message: 'Access denied.' });
+        }
         const innings = await Innings.find({ matchId: existing._id }).sort({ inningsNumber: 1 });
         return res.status(200).json({ success: true, match: existing, innings, deduplicated: true });
       }
@@ -128,7 +177,6 @@ async function createMatch(req, res, next) {
       return res.status(404).json({ success: false, message: 'Selected team(s) not found.' });
     }
 
-    // Merge format settings into rules and validate snapshot
     const mergedRawRules = Object.assign({}, rules || {}, {
       format: Object.assign({}, (rules && rules.format) || {}, {
         oversPerInnings: oversPerInnings || (rules && rules.format && rules.format.oversPerInnings) || 6,
@@ -165,7 +213,6 @@ async function createMatch(req, res, next) {
     const squadA = buildSquad(teamASquad, teamA, teamACaptainId, teamAWicketkeeperId);
     const squadB = buildSquad(teamBSquad, teamB, teamBCaptainId, teamBWicketkeeperId);
 
-    // Determine batting / bowling order for Innings 1
     let tossWinner = teamA;
     if (tossWinnerTeamId && String(tossWinnerTeamId) === String(teamB._id)) tossWinner = teamB;
     const decision = tossDecision === 'bowl' ? 'bowl' : 'bat';
@@ -179,6 +226,9 @@ async function createMatch(req, res, next) {
     const matchTitle = (title && String(title).trim()) || `${teamA.name} vs ${teamB.name}`;
 
     const match = await Match.create({
+      ownerType: isGuest ? 'guest' : 'user',
+      guestId: isGuest ? req.guest.guestId : null,
+      userId: req.user ? req.user._id : null,
       title: matchTitle,
       matchCode: makeMatchCode(),
       clientMatchId: clientMatchId || undefined,
@@ -217,8 +267,9 @@ async function createMatch(req, res, next) {
       status: startImmediately === false ? 'upcoming' : 'live',
       currentInningsNumber: 1,
       officials: officials || {},
-      scorerId: req.user._id,
-      authorizedScorers: [req.user._id]
+      scorerId: req.user ? req.user._id : null,
+      authorizedScorers: req.user ? [req.user._id] : [],
+      isPublic: isGuest ? false : (isPublic !== false)
     });
 
     const inn1State = engine.createEmptyInningsState({
@@ -250,7 +301,7 @@ async function createMatch(req, res, next) {
       });
     }
 
-    await logAudit({ req, action: 'MATCH_CREATED', entityType: 'Match', entityId: match._id, details: { title: match.title } });
+    await logAudit({ req, action: 'MATCH_CREATED', entityType: 'Match', entityId: match._id, details: { title: match.title, ownerType: match.ownerType } });
 
     res.status(201).json({
       success: true,
@@ -337,6 +388,9 @@ async function startSuperOver(req, res, next) {
     });
 
     const superMatch = await Match.create({
+      ownerType: parent.ownerType,
+      guestId: parent.guestId,
+      userId: parent.userId,
       title: `${parent.title} (Super Over)`,
       matchCode: makeMatchCode(),
       tournamentId: parent.tournamentId,
@@ -353,8 +407,9 @@ async function startSuperOver(req, res, next) {
       currentInningsNumber: 1,
       isSuperOver: true,
       parentMatchId: parent._id,
-      scorerId: req.user._id,
-      authorizedScorers: parent.authorizedScorers
+      scorerId: req.user ? req.user._id : null,
+      authorizedScorers: parent.authorizedScorers,
+      isPublic: parent.isPublic
     });
 
     const inn1State = engine.createEmptyInningsState({
@@ -390,7 +445,16 @@ async function updateMatchControl(req, res, next) {
     const match = req.match;
     const { action, playerOfMatchId, playerOfMatchName, officials, teamASquad, teamBSquad, scorerUserId, deviceId } = req.body;
 
-    if (action === 'pause') {
+    if (action === 'publish') {
+      if (!req.user) {
+        return res.status(403).json({
+          success: false,
+          requiresAccount: true,
+          message: 'Create a free account to publish your match and manage tournaments.'
+        });
+      }
+      match.isPublic = true;
+    } else if (action === 'pause') {
       match.status = 'paused';
     } else if (action === 'resume' || action === 'start') {
       match.status = 'live';
@@ -428,14 +492,15 @@ async function updateMatchControl(req, res, next) {
     } else if (action === 'update_playing_xi') {
       if (Array.isArray(teamASquad)) match.teamA.squad = teamASquad;
       if (Array.isArray(teamBSquad)) match.teamB.squad = teamBSquad;
-    } else if (action === 'assign_scorer' && scorerUserId) {
+    } else if (action === 'assign_scorer' && scorerUserId && req.user) {
       if (!match.authorizedScorers.some((id) => String(id) === String(scorerUserId))) {
         match.authorizedScorers.push(scorerUserId);
       }
     } else if (action === 'take_lock') {
       match.scorerLock = {
         deviceId: deviceId || 'web',
-        userId: req.user._id,
+        userId: req.user ? req.user._id : null,
+        guestId: req.guest ? req.guest.guestId : null,
         lockedAt: new Date()
       };
     }

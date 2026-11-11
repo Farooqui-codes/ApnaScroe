@@ -259,8 +259,12 @@
         document.getElementById('bannerStart2ndBtn').onclick = startSecondInnings;
       } else {
         bannerTitle.textContent = (matchDoc.result && matchDoc.result.marginText) || 'Match Completed!';
+        const guestSaveCta = ApnaAuth.isGuest()
+          ? `<a href="/register.html" class="btn btn-secondary btn-sm">Save Match to Account</a>`
+          : '';
         bannerBtns.innerHTML = `
           <a href="/scorecard.html?matchId=${matchDoc._id}" class="btn btn-primary btn-sm">View Scorecard & PDF</a>
+          ${guestSaveCta}
           ${matchDoc.status === 'tied' ? `<button type="button" class="btn btn-lime btn-sm" id="bannerSuperOverBtn">Start Super Over</button>` : ''}
         `;
         document.getElementById('bannerSuperOverBtn')?.addEventListener('click', startSuperOver);
@@ -348,7 +352,8 @@
     await ApnaOffline.saveEventLocally(localKey, innNum, eventObj);
 
     try {
-      if (navigator.onLine && !String(localKey).startsWith('cm_') && ApnaAPI.getToken()) {
+      const canHitServer = navigator.onLine && !String(localKey).startsWith('cm_') && (ApnaAPI.getToken() || (ApnaAPI.getGuestSession() && ApnaAPI.getGuestSession().guestToken));
+      if (canHitServer) {
         const res = await ApnaAPI.post(`/api/scoring/${localKey}/event`, eventObj);
         if (res && res.success) {
           eventObj.synced = true;
@@ -577,10 +582,26 @@
         <div class="form-group"><label class="form-label">Runs Scored Off Bat</label><input type="number" min="0" max="6" value="0" class="form-control" id="exBatRuns" /></div>
         <div class="form-group"><label class="form-label">Additional Extra Runs</label><input type="number" min="0" max="6" value="0" class="form-control" id="exAddRuns" /></div>
       `;
-    } else {
-      const defaultAdd = (extraType === 'bye' || extraType === 'leg_bye') ? 1 : (extraType === 'penalty' ? 5 : 0);
+    } else if (extraType === 'penalty') {
+      const customCfg = matchDoc.rulesSnapshot?.extras?.customExtra;
+      const customOpt = customCfg && customCfg.enabled
+        ? `<option value="custom_extra">${ApnaUI.escapeHtml(customCfg.label || 'Custom Extra')} (+${customCfg.baseRuns || 1})</option>`
+        : '';
       body.innerHTML = `
-        <div class="form-group"><label class="form-label">${extraType === 'penalty' ? 'Penalty Runs' : 'Additional Running Runs'}</label>
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-control" id="exPenaltyKind">
+            <option value="penalty">Penalty Runs</option>
+            ${customOpt}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Additional / Penalty Runs</label>
+        <input type="number" min="0" max="12" value="5" class="form-control" id="exAddRuns" /></div>
+      `;
+    } else {
+      const defaultAdd = (extraType === 'bye' || extraType === 'leg_bye') ? 1 : 0;
+      body.innerHTML = `
+        <div class="form-group"><label class="form-label">Additional Running Runs</label>
         <input type="number" min="0" max="12" value="${defaultAdd}" class="form-control" id="exAddRuns" /></div>
       `;
     }
@@ -597,6 +618,12 @@
         dispatchEvent({
           extraType: 'no_ball',
           batRuns: Number(document.getElementById('exBatRuns').value || 0),
+          additionalExtraRuns: Number(document.getElementById('exAddRuns').value || 0)
+        });
+      } else if (extraType === 'penalty') {
+        const chosenKind = document.getElementById('exPenaltyKind')?.value || 'penalty';
+        dispatchEvent({
+          extraType: chosenKind,
           additionalExtraRuns: Number(document.getElementById('exAddRuns').value || 0)
         });
       } else {
@@ -685,7 +712,8 @@
     const localKey = matchDoc._id || matchDoc.clientMatchId;
     await ApnaOffline.saveEventLocally(localKey, activeInnings.inningsNumber, targetEv);
 
-    if (navigator.onLine && !String(localKey).startsWith('cm_') && ApnaAPI.getToken()) {
+    const canHitServer = navigator.onLine && !String(localKey).startsWith('cm_') && (ApnaAPI.getToken() || (ApnaAPI.getGuestSession() && ApnaAPI.getGuestSession().guestToken));
+    if (canHitServer) {
       try {
         const res = await ApnaAPI.post(`/api/scoring/${localKey}/undo`, { inningsNumber: activeInnings.inningsNumber });
         if (res && res.state) {
@@ -736,7 +764,8 @@
 
       const localKey = matchDoc._id || matchDoc.clientMatchId;
       await ApnaOffline.saveEventLocally(localKey, activeInnings.inningsNumber, ev);
-      if (navigator.onLine && !String(localKey).startsWith('cm_') && ApnaAPI.getToken()) {
+      const canHitServer = navigator.onLine && !String(localKey).startsWith('cm_') && (ApnaAPI.getToken() || (ApnaAPI.getGuestSession() && ApnaAPI.getGuestSession().guestToken));
+      if (canHitServer) {
         try {
           const res = await ApnaAPI.put(`/api/scoring/${localKey}/events/${ev.eventId}`, ev);
           if (res && res.state) { computedState = res.state; renderAll(); }
@@ -771,6 +800,9 @@
       const delta = prompt('Enter run adjustment (e.g. 2 or -1):', '0');
       if (delta === null) return;
       return dispatchEvent({ eventType: 'score_correction', deltaRuns: Number(delta || 0) });
+    }
+    if (action === 'change_xi') {
+      return openPlayingXIModal();
     }
 
     const localKey = matchDoc._id || matchDoc.clientMatchId;
@@ -827,6 +859,12 @@
   }
 
   async function openShareModal() {
+    if (!ApnaAuth.isLoggedIn() && (matchDoc.ownerType === 'guest' || ApnaAuth.isGuest())) {
+      if (window.ApnaMigrate) {
+        ApnaMigrate.showRestrictionPrompt('Create a free account to publish permanent public match links and share live score pages.');
+        return;
+      }
+    }
     const idOrCode = matchDoc.matchCode || matchDoc._id;
     const url = `${window.location.origin}/public-match.html?id=${encodeURIComponent(idOrCode)}`;
     document.getElementById('sharePublicUrlInput').value = url;
@@ -841,6 +879,56 @@
       document.getElementById('shareQrImg').src = qr.qrDataUrl;
     } catch (_) {}
     document.getElementById('shareModal').classList.add('open');
+  }
+
+  function openPlayingXIModal() {
+    const modal = document.getElementById('playersSelectModal');
+    const title = document.getElementById('playersModalTitle');
+    const body = document.getElementById('playersModalBody');
+    const saveBtn = document.getElementById('playersModalSaveBtn');
+    title.textContent = 'Update Playing XI / Add Player';
+
+    const renderTeamChecks = (teamObj, side) => (teamObj.squad || []).map((p) => `
+      <div class="switch-row" style="margin-bottom:6px;padding:6px 10px;">
+        <label>${ApnaUI.escapeHtml(p.name)}</label>
+        <label class="text-sm"><input type="checkbox" class="xi-sub-${side}" data-pid="${p.playerId}" ${p.isSubstitute ? 'checked' : ''} /> Substitute</label>
+      </div>
+    `).join('');
+
+    body.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">${ApnaUI.escapeHtml(matchDoc.teamA.name)}</label>
+        ${renderTeamChecks(matchDoc.teamA, 'A')}
+      </div>
+      <div class="form-group">
+        <label class="form-label">${ApnaUI.escapeHtml(matchDoc.teamB.name)}</label>
+        ${renderTeamChecks(matchDoc.teamB, 'B')}
+      </div>
+    `;
+
+    saveBtn.onclick = async () => {
+      const applySub = (teamObj, side) => (teamObj.squad || []).map((p) => ({
+        ...p,
+        isSubstitute: Boolean(document.querySelector(`.xi-sub-${side}[data-pid="${p.playerId}"]`)?.checked)
+      }));
+      const teamASquad = applySub(matchDoc.teamA, 'A');
+      const teamBSquad = applySub(matchDoc.teamB, 'B');
+      closeModal('playersSelectModal');
+      try {
+        const localKey = matchDoc._id || matchDoc.clientMatchId;
+        const res = await ApnaAPI.post(`/api/matches/${localKey}/control`, {
+          action: 'update_playing_xi',
+          teamASquad,
+          teamBSquad
+        });
+        if (res && res.match) matchDoc = res.match;
+        ApnaUI.showToast('Playing XI updated.');
+      } catch (err) {
+        ApnaUI.showToast(err.message, 'error');
+      }
+    };
+
+    modal.classList.add('open');
   }
 
   function closeModal(id) {

@@ -8,9 +8,28 @@ const Award = require('../models/Award');
 const pdfService = require('../services/pdfService');
 const syncService = require('../services/syncService');
 
+function buildScorecardVisibility(req) {
+  if (req.user) {
+    if (req.user.role === 'super_admin') return {};
+    return { ownerType: { $ne: 'guest' } };
+  }
+  if (req.guest) {
+    return {
+      $or: [
+        { ownerType: 'guest', guestId: req.guest.guestId },
+        { ownerType: { $ne: 'guest' } }
+      ]
+    };
+  }
+  return { ownerType: { $ne: 'guest' } };
+}
+
 async function listScorecards(req, res, next) {
   try {
-    const scorecards = await Scorecard.find().sort({ matchDate: -1, updatedAt: -1 }).limit(50).lean();
+    const scorecards = await Scorecard.find(buildScorecardVisibility(req))
+      .sort({ matchDate: -1, updatedAt: -1 })
+      .limit(50)
+      .lean();
     res.json({ success: true, scorecards });
   } catch (err) {
     next(err);
@@ -21,6 +40,10 @@ async function getScorecard(req, res, next) {
   try {
     const match = await Match.findById(req.params.matchId).populate('tournamentId', 'name village');
     if (!match) return res.status(404).json({ success: false, message: 'Match not found.' });
+
+    if (match.ownerType === 'guest' && (!req.guest || req.guest.guestId !== match.guestId)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized access to guest scorecard.' });
+    }
 
     let scorecard = await Scorecard.findOne({ matchId: match._id }).lean();
     if (!scorecard) {
@@ -39,6 +62,10 @@ async function downloadMatchPDF(req, res, next) {
   try {
     const match = await Match.findById(req.params.matchId).lean();
     if (!match) return res.status(404).json({ success: false, message: 'Match not found.' });
+
+    if (match.ownerType === 'guest' && (!req.guest || req.guest.guestId !== match.guestId)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized access to guest PDF.' });
+    }
 
     const inningsList = await Innings.find({ matchId: match._id }).sort({ inningsNumber: 1 }).lean();
     const tournament = match.tournamentId

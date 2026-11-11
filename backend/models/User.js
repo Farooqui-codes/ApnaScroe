@@ -7,6 +7,8 @@ const userSchema = new mongoose.Schema(
     phone: { type: String, trim: true, default: '' },
     village: { type: String, trim: true, default: '' },
     passwordHash: { type: String, required: true, select: false },
+    emailVerified: { type: Boolean, default: false },
+    accountType: { type: String, enum: ['registered'], default: 'registered' },
     role: {
       type: String,
       enum: ['super_admin', 'organizer', 'team_manager', 'scorer', 'viewer'],

@@ -1,11 +1,12 @@
 /**
- * ApnaScore API Client – Centralized Fetch Wrapper with JWT & Offline Handling
+ * ApnaScore API Client – Centralized Fetch Wrapper with JWT + Guest Token & Offline Handling
  */
 (function (root) {
   'use strict';
 
   const TOKEN_KEY = 'apnascore_token';
   const USER_KEY = 'apnascore_user';
+  const GUEST_KEY = 'apnascore_guest_session';
 
   function getToken() {
     return localStorage.getItem(TOKEN_KEY) || '';
@@ -30,12 +31,38 @@
     }
   }
 
+  function getGuestSession() {
+    try {
+      const raw = localStorage.getItem(GUEST_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function setGuestSession(session) {
+    if (session) localStorage.setItem(GUEST_KEY, JSON.stringify(session));
+  }
+
+  function clearGuestSession() {
+    localStorage.removeItem(GUEST_KEY);
+  }
+
   async function request(path, options = {}) {
     const headers = Object.assign({}, options.headers || {});
     const token = getToken();
+    const guest = getGuestSession();
+
     if (token && !headers.Authorization) {
       headers.Authorization = `Bearer ${token}`;
+    } else if (guest && guest.guestId && guest.guestToken) {
+      headers['X-Guest-Id'] = guest.guestId;
+      headers['X-Guest-Token'] = guest.guestToken;
+      if (!headers.Authorization) {
+        headers.Authorization = `Guest ${guest.guestToken}`;
+      }
     }
+
     const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
     if (!isFormData && options.body && typeof options.body === 'object' && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
@@ -63,8 +90,9 @@
       const err = new Error(msg);
       err.status = response.status;
       err.data = data;
-      if (response.status === 401 && !path.includes('/auth/login') && !path.includes('/auth/register')) {
-        clearSession();
+      err.requiresAccount = Boolean(data.requiresAccount);
+      if (response.status === 401 && !path.includes('/auth/login') && !path.includes('/auth/register') && !path.includes('/guest/')) {
+        if (token) clearSession();
       }
       throw err;
     }
@@ -77,6 +105,9 @@
     setSession,
     clearSession,
     getStoredUser,
+    getGuestSession,
+    setGuestSession,
+    clearGuestSession,
     get: (p) => request(p, { method: 'GET' }),
     post: (p, body) => request(p, { method: 'POST', body }),
     put: (p, body) => request(p, { method: 'PUT', body }),

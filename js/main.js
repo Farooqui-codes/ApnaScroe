@@ -152,8 +152,10 @@
             <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark mode"></button>
             ${
               user
-                ? `<a href="/profile.html" class="btn btn-secondary btn-sm hide-on-mobile">${user.name.split(' ')[0]}</a>`
-                : `<a href="/login.html" class="btn btn-primary btn-sm">Login</a>`
+                ? `<a href="/profile.html" class="btn btn-secondary btn-sm hide-on-mobile">${escapeHtml(user.name.split(' ')[0])}</a>`
+                : (root.ApnaAuth && root.ApnaAuth.isGuest()
+                  ? `<a href="/profile.html" class="badge badge-warning" title="Guest Mode active">Guest Mode</a><a href="/register.html" class="btn btn-primary btn-sm hide-on-mobile">Create Account</a>`
+                  : `<a href="/login.html" class="btn btn-primary btn-sm">Login</a>`)
             }
           </div>
         </header>
@@ -202,7 +204,8 @@
         if (labelSpan) {
           if (!st.online) labelSpan.textContent = `Offline (${st.pendingCount})`;
           else if (st.isSyncing) labelSpan.textContent = 'Syncing...';
-          else if (st.state === 'failed') labelSpan.textContent = `Retry (${st.pendingCount})`;
+          else if (st.state === 'failed') labelSpan.textContent = `Sync Failed (${st.pendingCount})`;
+          else if (st.state === 'synced') labelSpan.textContent = 'Synced';
           else labelSpan.textContent = st.pendingCount > 0 ? `Pending (${st.pendingCount})` : 'Online';
         }
       });

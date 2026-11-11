@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const http = require('http');
 const express = require('express');
 const cors = require('cors');
@@ -24,6 +25,7 @@ const statsRoutes = require('./routes/statsRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
 const syncRoutes = require('./routes/syncRoutes');
 const publicRoutes = require('./routes/publicRoutes');
+const guestRoutes = require('./routes/guestRoutes');
 
 function createApp() {
   const app = express();
@@ -81,10 +83,83 @@ function createApp() {
   app.use('/api/settings', settingsRoutes);
   app.use('/api/sync', syncRoutes);
   app.use('/api/public', publicRoutes);
+  app.use('/api/guest', guestRoutes);
 
   // Block direct access to backend source or env files
   app.use('/backend', (_req, res) => res.status(403).json({ success: false, message: 'Forbidden' }));
   app.use('/.env', (_req, res) => res.status(403).json({ success: false, message: 'Forbidden' }));
+
+  // Dynamic Open Graph / WhatsApp Link Preview injection for shared public matches & tournaments
+  const escMeta = (s) => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const injectMeta = (html, { title, description, imageUrl, pageUrl }) => {
+    return html
+      .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escMeta(title)}</title>`)
+      .replace(/<meta name="description" content="[^"]*"\s*\/?>/i, `<meta name="description" content="${escMeta(description)}" />`)
+      .replace(/<meta property="og:title" content="[^"]*"\s*\/?>/i, `<meta property="og:title" content="${escMeta(title)}" />`)
+      .replace(/<meta property="og:description" content="[^"]*"\s*\/?>/i, `<meta property="og:description" content="${escMeta(description)}" />`)
+      .replace(/<meta property="og:image" content="[^"]*"\s*\/?>/i, `<meta property="og:image" content="${escMeta(imageUrl)}" />`)
+      .replace(/<meta property="og:url" content="[^"]*"\s*\/?>/i, `<meta property="og:url" content="${escMeta(pageUrl)}" />`)
+      .replace(/<meta name="twitter:title" content="[^"]*"\s*\/?>/i, `<meta name="twitter:title" content="${escMeta(title)}" />`)
+      .replace(/<meta name="twitter:description" content="[^"]*"\s*\/?>/i, `<meta name="twitter:description" content="${escMeta(description)}" />`)
+      .replace(/<meta name="twitter:image" content="[^"]*"\s*\/?>/i, `<meta name="twitter:image" content="${escMeta(imageUrl)}" />`);
+  };
+
+  app.get('/public-match.html', async (req, res, next) => {
+    try {
+      const filePath = path.join(rootDir, 'public-match.html');
+      let html = fs.readFileSync(filePath, 'utf8');
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const imgUrl = `${origin}/assets/images/apnascore-og-preview.jpg`;
+      const pageUrl = `${origin}${req.originalUrl}`;
+      let title = 'Live Match Center – ApnaScore | Apne Gaon ka Apna Scorer';
+      let description = 'Watch live ball-by-ball cricket scores, commentary, batsmen & bowler stats, and full match scorecards in real time on ApnaScore.';
+
+      const val = req.query.id ? String(req.query.id) : '';
+      if (val && require('mongoose').connection.readyState === 1) {
+        const Match = require('./models/Match');
+        const Innings = require('./models/Innings');
+        const isObjId = /^[0-9a-fA-F]{24}$/.test(val);
+        const match = await Match.findOne(isObjId ? { _id: val } : { matchCode: val.toUpperCase() }).lean();
+        if (match && match.isPublic) {
+          const innings = await Innings.find({ matchId: match._id }).sort({ inningsNumber: 1 }).lean();
+          const curr = innings.find((i) => i.inningsNumber === (match.currentInningsNumber || 1)) || innings[0];
+          const scorePart = curr ? ` (${curr.battingTeamName}: ${curr.totalRuns}/${curr.wickets} in ${curr.oversString} ov)` : '';
+          title = `${match.title}${scorePart} – Live on ApnaScore`;
+          const statusPart = (match.result && match.result.marginText) || `${match.status.toUpperCase()} • ${match.oversPerInnings} Overs`;
+          description = `${statusPart} at ${match.venue}. Watch live ball-by-ball updates, commentary, and full scorecard on ApnaScore – Apne Gaon ka Apna Scorer!`;
+        }
+      }
+      res.type('html').send(injectMeta(html, { title, description, imageUrl: imgUrl, pageUrl }));
+    } catch (err) {
+      next();
+    }
+  });
+
+  app.get('/public-tournament.html', async (req, res, next) => {
+    try {
+      const filePath = path.join(rootDir, 'public-tournament.html');
+      let html = fs.readFileSync(filePath, 'utf8');
+      const origin = `${req.protocol}://${req.get('host')}`;
+      const imgUrl = `${origin}/assets/images/apnascore-og-preview.jpg`;
+      const pageUrl = `${origin}${req.originalUrl}`;
+      let title = 'Tournament Hub – ApnaScore | Apne Gaon ka Apna Scorer';
+      let description = 'Follow live tournament points tables, Net Run Rate (NRR), match fixtures, and champion leaderboards on ApnaScore.';
+
+      const val = req.query.id ? String(req.query.id) : '';
+      if (val && require('mongoose').connection.readyState === 1) {
+        const Tournament = require('./models/Tournament');
+        const isObjId = /^[0-9a-fA-F]{24}$/.test(val);
+        const t = await Tournament.findOne(isObjId ? { _id: val } : { shareCode: val.toUpperCase() }).lean();
+        if (t && t.isPublic) {
+          title = `${t.name} (${t.village}) – Points Table & Fixtures | ApnaScore`;
+          description = `${t.oversPerMatch}-Over ${String(t.format).replace('_', ' ').toUpperCase()} Cricket Tournament at ${t.village}. Check live standings, NRR, fixtures & match results on ApnaScore!`;
+        }
+      }
+      res.type('html').send(injectMeta(html, { title, description, imageUrl: imgUrl, pageUrl }));
+    } catch (err) {
+      next();
+    }
+  });
 
   // Serve static frontend files
   app.use(express.static(rootDir, { extensions: ['html'] }));

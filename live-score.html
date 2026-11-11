@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#208B4E" />
   <title>Live Scoring – ApnaScore</title>
+  <meta name="description" content="Sunlight-readable, one-hand mobile cricket scorer with ball-by-ball commentary, custom extras, wickets, undo/edit ball, and offline IndexedDB sync." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ApnaScore" />
+  <meta property="og:title" content="Live Cricket Scorer – ApnaScore | Ball-by-Ball Scoring & Outdoor Mode" />
+  <meta property="og:description" content="Sunlight-readable, one-hand mobile cricket scorer with ball-by-ball commentary, custom extras, wickets, undo/edit ball, and offline IndexedDB sync." />
+  <meta property="og:image" content="/assets/images/apnascore-og-preview.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ApnaScore – Apne Gaon ka Apna Scorer" />
+  <meta property="og:url" content="/live-score.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Live Cricket Scorer – ApnaScore | Ball-by-Ball Scoring & Outdoor Mode" />
+  <meta name="twitter:description" content="Sunlight-readable, one-hand mobile cricket scorer with ball-by-ball commentary, custom extras, wickets, undo/edit ball, and offline IndexedDB sync." />
+  <meta name="twitter:image" content="/assets/images/apnascore-og-preview.jpg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/css/style.css" />
@@ -314,6 +329,7 @@
         <button type="button" class="btn btn-secondary" data-mc="retire">Retire Batsman</button>
         <button type="button" class="btn btn-secondary" data-mc="undo">Undo Last Ball</button>
         <button type="button" class="btn btn-secondary" data-mc="correct_score">Correct Score (+/-)</button>
+        <button type="button" class="btn btn-secondary" data-mc="change_xi">Change Playing XI</button>
         <button type="button" class="btn btn-secondary" data-mc="end_innings">End Innings</button>
         <button type="button" class="btn btn-primary" data-mc="start_2nd">Start 2nd Innings</button>
         <button type="button" class="btn btn-secondary" data-mc="super_over">Start Super Over</button>
@@ -347,6 +363,7 @@
   <script src="/js/auth.js"></script>
   <script src="/js/scoring-engine.js"></script>
   <script src="/js/offline-sync.js"></script>
+  <script src="/js/migrate.js"></script>
   <script src="/js/vendor/gsap.min.js"></script>
   <script src="/js/animations.js"></script>
   <script src="/js/main.js"></script>

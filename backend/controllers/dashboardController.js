@@ -8,6 +8,20 @@ const Notification = require('../models/Notification');
 
 async function getDashboardSummary(req, res, next) {
   try {
+    const matchVis = req.guest
+      ? { $or: [{ ownerType: 'guest', guestId: req.guest.guestId }, { ownerType: { $ne: 'guest' }, isPublic: true }] }
+      : (req.user
+        ? (req.user.role === 'super_admin' ? {} : { $or: [{ ownerType: { $ne: 'guest' }, isPublic: true }, { userId: req.user._id }, { scorerId: req.user._id }] })
+        : { ownerType: { $ne: 'guest' }, isPublic: true });
+
+    const teamVis = req.guest
+      ? { $or: [{ ownerType: 'guest', guestId: req.guest.guestId }, { ownerType: { $ne: 'guest' } }] }
+      : { ownerType: { $ne: 'guest' } };
+
+    const playerVis = req.guest
+      ? { $or: [{ ownerType: 'guest', guestId: req.guest.guestId }, { ownerType: { $ne: 'guest' } }] }
+      : { ownerType: { $ne: 'guest' } };
+
     const [
       totalMatches,
       liveCount,
@@ -23,25 +37,25 @@ async function getDashboardSummary(req, res, next) {
       topBowlers,
       recentWinners
     ] = await Promise.all([
-      Match.countDocuments(),
-      Match.countDocuments({ status: { $in: ['live', 'paused', 'innings_break'] } }),
-      Match.countDocuments({ status: 'upcoming' }),
-      Match.countDocuments({ status: { $in: ['completed', 'tied'] } }),
+      Match.countDocuments(matchVis),
+      Match.countDocuments({ $and: [matchVis, { status: { $in: ['live', 'paused', 'innings_break'] } }] }),
+      Match.countDocuments({ $and: [matchVis, { status: 'upcoming' }] }),
+      Match.countDocuments({ $and: [matchVis, { status: { $in: ['completed', 'tied'] } }] }),
       Tournament.countDocuments({ status: { $in: ['upcoming', 'registration_open', 'ongoing'] } }),
-      Team.countDocuments(),
-      Player.countDocuments(),
-      Match.find({ status: { $in: ['live', 'paused', 'innings_break'] } })
+      Team.countDocuments(teamVis),
+      Player.countDocuments(playerVis),
+      Match.find({ $and: [matchVis, { status: { $in: ['live', 'paused', 'innings_break'] } }] })
         .sort({ updatedAt: -1 })
         .limit(6)
         .lean(),
-      Match.find().sort({ matchDate: -1, createdAt: -1 }).limit(8).lean(),
+      Match.find(matchVis).sort({ matchDate: -1, createdAt: -1 }).limit(8).lean(),
       TournamentFixture.find({ status: 'scheduled' })
         .sort({ scheduledDate: 1 })
         .limit(6)
         .populate('tournamentId', 'name village')
         .lean(),
-      Player.find({ 'stats.runs': { $gt: 0 } }).sort({ 'stats.runs': -1 }).limit(5).lean(),
-      Player.find({ 'stats.wickets': { $gt: 0 } }).sort({ 'stats.wickets': -1 }).limit(5).lean(),
+      Player.find({ $and: [playerVis, { 'stats.runs': { $gt: 0 } }] }).sort({ 'stats.runs': -1 }).limit(5).lean(),
+      Player.find({ $and: [playerVis, { 'stats.wickets': { $gt: 0 } }] }).sort({ 'stats.wickets': -1 }).limit(5).lean(),
       Tournament.find({ status: 'completed', winnerTeamId: { $ne: null } })
         .sort({ endDate: -1 })
         .limit(5)
@@ -49,7 +63,6 @@ async function getDashboardSummary(req, res, next) {
         .lean()
     ]);
 
-    // Attach latest innings score summaries to recent/live matches
     const matchIds = Array.from(new Set([...liveMatches, ...recentMatches].map((m) => String(m._id))));
     const inningsList = await Innings.find({ matchId: { $in: matchIds } })
       .select('matchId inningsNumber battingTeamName totalRuns wickets oversString')

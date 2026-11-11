@@ -13,6 +13,12 @@ const matchPlayerSchema = new mongoose.Schema(
 
 const matchSchema = new mongoose.Schema(
   {
+    ownerType: { type: String, enum: ['guest', 'user'], default: 'user', index: true },
+    guestId: { type: String, default: null, index: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
+    sourceGuestId: { type: String, default: null },
+    migratedAt: { type: Date, default: null },
+
     title: { type: String, required: true, trim: true, maxlength: 140 },
     matchCode: { type: String, unique: true, index: true },
     clientMatchId: { type: String, unique: true, sparse: true, index: true },
@@ -79,16 +85,19 @@ const matchSchema = new mongoose.Schema(
       umpire2: { type: String, default: '' },
       scorerName: { type: String, default: '' }
     },
-    scorerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    scorerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
     authorizedScorers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     scorerLock: {
       deviceId: { type: String, default: '' },
       userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+      guestId: { type: String, default: null },
       lockedAt: { type: Date, default: null }
     },
     isPublic: { type: Boolean, default: true, index: true }
   },
   { timestamps: true }
 );
+
+matchSchema.index({ sourceGuestId: 1, clientMatchId: 1 }, { sparse: true });
 
 module.exports = mongoose.model('Match', matchSchema, 'matches');

@@ -3,9 +3,14 @@ const engine = require('../services/scoringEngine');
 
 async function getSettings(req, res, next) {
   try {
-    const query = req.user
-      ? { $or: [{ isSystemPreset: true }, { createdBy: req.user._id }] }
-      : { isSystemPreset: true };
+    let query;
+    if (req.user) {
+      query = { $or: [{ isSystemPreset: true }, { createdBy: req.user._id }, { userId: req.user._id }] };
+    } else if (req.guest) {
+      query = { $or: [{ isSystemPreset: true }, { ownerType: 'guest', guestId: req.guest.guestId }] };
+    } else {
+      query = { isSystemPreset: true };
+    }
 
     const savedPresets = await ScoringRule.find(query).sort({ isSystemPreset: -1, createdAt: -1 }).lean();
 
@@ -60,7 +65,7 @@ async function updatePreferences(req, res, next) {
 
 async function saveCustomRulePreset(req, res, next) {
   try {
-    const { name, description, rules } = req.body;
+    const { name, description, rules, clientId } = req.body;
     if (!name || !rules) {
       return res.status(400).json({ success: false, message: 'Preset name and rules are required.' });
     }
@@ -70,12 +75,17 @@ async function saveCustomRulePreset(req, res, next) {
       return res.status(400).json({ success: false, message: validation.errors.join(' ') });
     }
 
+    const isGuest = Boolean(req.guest && !req.user);
     const preset = await ScoringRule.create({
+      ownerType: isGuest ? 'guest' : 'user',
+      guestId: isGuest ? req.guest.guestId : null,
+      userId: req.user ? req.user._id : null,
+      clientId: clientId || null,
       name: String(name).trim(),
-      presetId: 'user_' + Date.now(),
-      description: description ? String(description).trim() : 'Custom user scoring preset',
+      presetId: (isGuest ? 'guest_' : 'user_') + Date.now(),
+      description: description ? String(description).trim() : 'Custom scoring preset',
       isSystemPreset: false,
-      createdBy: req.user._id,
+      createdBy: req.user ? req.user._id : null,
       rules: validation.rules
     });
 
@@ -92,7 +102,14 @@ async function deleteCustomRulePreset(req, res, next) {
     if (preset.isSystemPreset) {
       return res.status(403).json({ success: false, message: 'System presets cannot be deleted.' });
     }
-    if (String(preset.createdBy) !== String(req.user._id) && req.user.role !== 'super_admin') {
+    if (req.guest) {
+      if (preset.ownerType !== 'guest' || preset.guestId !== req.guest.guestId) {
+        return res.status(403).json({ success: false, message: 'Not authorized to delete this preset.' });
+      }
+    } else if (
+      String(preset.createdBy || preset.userId) !== String(req.user._id) &&
+      req.user.role !== 'super_admin'
+    ) {
       return res.status(403).json({ success: false, message: 'Not authorized to delete this preset.' });
     }
     await preset.deleteOne();

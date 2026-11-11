@@ -41,7 +41,14 @@
   }
 
   function openCreateModal() {
-    if (!ApnaAuth.requireAuth()) return;
+    if (!ApnaAuth.isLoggedIn()) {
+      if (window.ApnaMigrate) {
+        ApnaMigrate.showRestrictionPrompt('Create a free account to publish your match and manage tournaments.');
+        return;
+      }
+      ApnaAuth.requireAuth();
+      return;
+    }
     document.getElementById('createTourModal').classList.add('open');
   }
 
@@ -256,7 +263,13 @@
     const available = allTeams.filter((team) => !regIds.has(String(team._id)));
 
     el.innerHTML = `
-      <div class="card-header"><h3 class="card-title">Registered Teams</h3></div>
+      <div class="card-header">
+        <h3 class="card-title">Registered Teams & Branding</h3>
+        <div class="flex-gap">
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer;">Upload Logo <input type="file" accept="image/*" id="tourLogoUploadInp" class="hidden" /></label>
+          <label class="btn btn-secondary btn-sm" style="cursor:pointer;">Upload Poster <input type="file" accept="image/*" id="tourPosterUploadInp" class="hidden" /></label>
+        </div>
+      </div>
       <div class="flex-gap mb-2">
         <select class="form-control" id="regTeamSelect" style="max-width:280px;">
           ${available.map((tm) => `<option value="${tm._id}">${ApnaUI.escapeHtml(tm.name)} (${ApnaUI.escapeHtml(tm.village)})</option>`).join('')}
@@ -296,6 +309,25 @@
         ApnaUI.showToast(err.message, 'error');
       }
     };
+
+    const bindMediaUpload = (inputId, type) => {
+      document.getElementById(inputId)?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const fd = new FormData();
+        fd.append('image', file);
+        fd.append('type', type);
+        try {
+          await ApnaAPI.upload(`/api/tournaments/${t._id}/media`, fd);
+          ApnaUI.showToast(`Tournament ${type} updated!`);
+          await loadTournamentDetail(t._id);
+        } catch (err) {
+          ApnaUI.showToast(err.message, 'error');
+        }
+      });
+    };
+    bindMediaUpload('tourLogoUploadInp', 'logo');
+    bindMediaUpload('tourPosterUploadInp', 'poster');
   }
 
   window.TourApprove = async (tourId, teamId, status) => {

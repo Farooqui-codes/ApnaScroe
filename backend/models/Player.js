@@ -2,8 +2,15 @@ const mongoose = require('mongoose');
 
 const playerSchema = new mongoose.Schema(
   {
+    ownerType: { type: String, enum: ['guest', 'user'], default: 'user', index: true },
+    guestId: { type: String, default: null, index: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
+    clientId: { type: String, default: null, index: true },
+    sourceGuestId: { type: String, default: null },
+    migratedAt: { type: Date, default: null },
+
     name: { type: String, required: true, trim: true, maxlength: 80, index: true },
-    village: { type: String, required: true, trim: true, index: true },
+    village: { type: String, required: true, trim: true, default: 'Local Ground', index: true },
     phone: { type: String, trim: true, default: '' },
     age: { type: Number, min: 6, max: 90, default: null },
     jerseyNumber: { type: Number, min: 0, max: 999, default: null },
@@ -54,7 +61,7 @@ const playerSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Prevent accidental duplicate profiles in the same village with identical name & jersey
 playerSchema.index({ name: 1, village: 1 });
+playerSchema.index({ sourceGuestId: 1, clientId: 1 }, { sparse: true });
 
 module.exports = mongoose.model('Player', playerSchema, 'players');

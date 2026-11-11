@@ -4,14 +4,35 @@ const Player = require('../models/Player');
 const Match = require('../models/Match');
 const { logAudit } = require('../utils/logger');
 
+function buildVisibilityFilter(req) {
+  if (req.user) {
+    if (req.user.role === 'super_admin') return {};
+    return { ownerType: { $ne: 'guest' } };
+  }
+  if (req.guest) {
+    return {
+      $or: [
+        { ownerType: 'guest', guestId: req.guest.guestId },
+        { ownerType: { $ne: 'guest' } }
+      ]
+    };
+  }
+  return { ownerType: { $ne: 'guest' } };
+}
+
 async function listTeams(req, res, next) {
   try {
-    const { search, village } = req.query;
-    const query = {};
-    if (village) query.village = new RegExp(String(village), 'i');
-    if (search) query.name = new RegExp(String(search), 'i');
+    const { search, village, mine } = req.query;
+    const andClauses = [buildVisibilityFilter(req)];
 
-    const teams = await Team.find(query)
+    if (mine === '1') {
+      if (req.guest) andClauses.push({ ownerType: 'guest', guestId: req.guest.guestId });
+      else if (req.user) andClauses.push({ $or: [{ userId: req.user._id }, { managerId: req.user._id }] });
+    }
+    if (village) andClauses.push({ village: new RegExp(String(village), 'i') });
+    if (search) andClauses.push({ name: new RegExp(String(search), 'i') });
+
+    const teams = await Team.find({ $and: andClauses })
       .populate('players', 'name role battingStyle bowlingStyle jerseyNumber photoUrl')
       .populate('captainId', 'name')
       .populate('viceCaptainId', 'name')
@@ -33,6 +54,12 @@ async function getTeam(req, res, next) {
       .populate('pendingInvites.playerId', 'name village role');
     if (!team) return res.status(404).json({ success: false, message: 'Team not found.' });
 
+    if (team.ownerType === 'guest') {
+      if (!req.guest || req.guest.guestId !== team.guestId) {
+        return res.status(403).json({ success: false, message: 'Access denied to another guest\'s team.' });
+      }
+    }
+
     const matches = await Match.find({
       $or: [{ 'teamA.teamId': team._id }, { 'teamB.teamId': team._id }]
     })
@@ -48,33 +75,38 @@ async function getTeam(req, res, next) {
 
 async function createTeam(req, res, next) {
   try {
-    const { name, shortName, village, ownerName, logoUrl, playerIds, captainId, viceCaptainId } = req.body;
-    if (!name || !village) {
-      return res.status(400).json({ success: false, message: 'Team name and village are required.' });
+    const { name, shortName, village, ownerName, logoUrl, playerIds, captainId, viceCaptainId, clientId } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Team name is required.' });
     }
 
+    const isGuest = Boolean(req.guest && !req.user);
     const derivedShort = shortName
       ? String(shortName).toUpperCase().slice(0, 8)
       : String(name).trim().split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 4) || 'TEAM';
 
     const team = await Team.create({
+      ownerType: isGuest ? 'guest' : 'user',
+      guestId: isGuest ? req.guest.guestId : null,
+      userId: req.user ? req.user._id : null,
+      clientId: clientId || null,
       name: String(name).trim(),
       shortName: derivedShort,
-      village: String(village).trim(),
+      village: village ? String(village).trim() : 'Local Ground',
       ownerName: ownerName ? String(ownerName).trim() : '',
       logoUrl: logoUrl || '',
-      managerId: req.user._id,
+      managerId: req.user ? req.user._id : null,
       captainId: captainId || null,
       viceCaptainId: viceCaptainId || null,
       players: Array.isArray(playerIds) ? playerIds : [],
-      inviteCode: uuidv4().slice(0, 8).toUpperCase()
+      inviteCode: isGuest ? '' : uuidv4().slice(0, 8).toUpperCase()
     });
 
     if (Array.isArray(playerIds) && playerIds.length > 0) {
       await Player.updateMany({ _id: { $in: playerIds } }, { $addToSet: { teams: team._id } });
     }
 
-    await logAudit({ req, action: 'TEAM_CREATED', entityType: 'Team', entityId: team._id, details: { name: team.name } });
+    await logAudit({ req, action: 'TEAM_CREATED', entityType: 'Team', entityId: team._id, details: { name: team.name, ownerType: team.ownerType } });
     res.status(201).json({ success: true, team });
   } catch (err) {
     next(err);
@@ -107,6 +139,10 @@ async function addPlayerToTeam(req, res, next) {
 
     const player = await Player.findById(playerId);
     if (!player) return res.status(404).json({ success: false, message: 'Player not found.' });
+
+    if (player.ownerType === 'guest' && (!req.guest || req.guest.guestId !== player.guestId)) {
+      return res.status(403).json({ success: false, message: 'Cannot add another guest\'s player.' });
+    }
 
     if (!team.players.some((id) => String(id) === String(player._id))) {
       team.players.push(player._id);
@@ -144,7 +180,7 @@ async function removePlayerFromTeam(req, res, next) {
 async function requestJoinTeam(req, res, next) {
   try {
     const { inviteCode, playerId } = req.body;
-    const team = await Team.findOne({ inviteCode: String(inviteCode || '').toUpperCase().trim() });
+    const team = await Team.findOne({ inviteCode: String(inviteCode || '').toUpperCase().trim(), ownerType: 'user' });
     if (!team) return res.status(404).json({ success: false, message: 'Invalid team invite code.' });
     if (!playerId) return res.status(400).json({ success: false, message: 'playerId is required.' });
 
@@ -165,7 +201,7 @@ async function requestJoinTeam(req, res, next) {
 async function respondToInvite(req, res, next) {
   try {
     const team = req.team;
-    const { playerId, decision } = req.body; // 'approved' | 'rejected'
+    const { playerId, decision } = req.body;
     const inv = team.pendingInvites.find((i) => String(i.playerId) === String(playerId) && i.status === 'pending');
     if (!inv) return res.status(404).json({ success: false, message: 'Pending invite not found.' });
 

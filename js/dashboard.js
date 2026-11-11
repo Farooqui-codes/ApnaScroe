@@ -14,6 +14,11 @@
     const user = ApnaAuth.getUser();
     if (user) {
       document.getElementById('welcomeHeading').textContent = `Namaste, ${user.name}!`;
+    } else if (ApnaAuth.isGuest()) {
+      document.getElementById('welcomeHeading').textContent = 'Welcome, Guest Scorer!';
+      document.getElementById('guestBannerBox')?.classList.remove('hidden');
+    } else {
+      document.getElementById('guestBannerBox')?.classList.remove('hidden');
     }
 
     await checkOfflineRecovery();

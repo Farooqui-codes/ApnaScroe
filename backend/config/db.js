@@ -1,8 +1,21 @@
 const mongoose = require('mongoose');
 const config = require('./env');
 
+let memoryServer = null;
+
 async function connectDB(overrideUri) {
-  const uri = overrideUri || config.mongoUri || 'mongodb://127.0.0.1:27017/apnascore';
+  let uri = overrideUri || config.mongoUri;
+
+  if (!uri && config.allowMemoryDbFallback) {
+    const { MongoMemoryServer } = require('mongodb-memory-server');
+    memoryServer = await MongoMemoryServer.create();
+    uri = memoryServer.getUri();
+    console.log('[ApnaScore] Using in-memory MongoDB fallback (ALLOW_MEMORY_DB_FALLBACK=true).');
+  }
+
+  if (!uri) {
+    uri = 'mongodb://127.0.0.1:27017/apnascore';
+  }
 
   mongoose.set('strictQuery', true);
 
@@ -14,4 +27,12 @@ async function connectDB(overrideUri) {
   return mongoose.connection;
 }
 
-module.exports = { connectDB };
+async function disconnectDB() {
+  await mongoose.disconnect();
+  if (memoryServer) {
+    await memoryServer.stop();
+    memoryServer = null;
+  }
+}
+
+module.exports = { connectDB, disconnectDB };

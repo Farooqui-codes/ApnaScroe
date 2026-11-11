@@ -5,6 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#208B4E" />
   <title>Login – ApnaScore</title>
+  <meta name="description" content="Sign in to ApnaScore to sync your matches, manage tournaments, or continue instantly as a Guest Scorer without sign-up." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ApnaScore" />
+  <meta property="og:title" content="Login – ApnaScore | Apne Gaon ka Apna Scorer" />
+  <meta property="og:description" content="Sign in to ApnaScore to sync your matches, manage tournaments, or continue instantly as a Guest Scorer without sign-up." />
+  <meta property="og:image" content="/assets/images/apnascore-og-preview.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ApnaScore – Apne Gaon ka Apna Scorer" />
+  <meta property="og:url" content="/login.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Login – ApnaScore | Apne Gaon ka Apna Scorer" />
+  <meta name="twitter:description" content="Sign in to ApnaScore to sync your matches, manage tournaments, or continue instantly as a Guest Scorer without sign-up." />
+  <meta name="twitter:image" content="/assets/images/apnascore-og-preview.jpg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/css/style.css" />
@@ -61,6 +76,8 @@
         <button type="submit" class="btn btn-primary btn-lg" style="width:100%;" id="loginSubmitBtn">Login</button>
       </form>
 
+      <button type="button" class="btn btn-lime mt-2" style="width:100%;" id="continueGuestBtn">Continue as Guest (No Sign-Up Needed)</button>
+
       <div class="flex-between mt-2 text-sm">
         <a href="/register.html">New user? Create account</a>
         <a href="/dashboard.html">Explore Dashboard</a>
@@ -70,10 +87,14 @@
 
   <script src="/js/icons.js"></script>
   <script src="/js/api.js"></script>
+  <script src="/js/offline-sync.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="/js/migrate.js"></script>
   <script src="/js/main.js"></script>
   <script>
     ApnaUI.applyTheme(localStorage.getItem('apnascore_theme') || 'light');
+    document.getElementById('continueGuestBtn').addEventListener('click', () => ApnaAuth.continueAsGuest('/dashboard.html'));
+
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const errEl = document.getElementById('loginError');
@@ -89,7 +110,11 @@
         ApnaAPI.setSession(res.token, res.user);
         const params = new URLSearchParams(window.location.search);
         const nextUrl = params.get('next');
-        window.location.href = nextUrl && nextUrl.startsWith('/') ? nextUrl : '/dashboard.html';
+        const dest = nextUrl && nextUrl.startsWith('/') ? nextUrl : '/dashboard.html';
+        const shown = await ApnaMigrate.showMigrationModal({
+          onDone: () => { window.location.href = dest; }
+        });
+        if (!shown) window.location.href = dest;
       } catch (err) {
         errEl.textContent = err.message;
         errEl.classList.remove('hidden');

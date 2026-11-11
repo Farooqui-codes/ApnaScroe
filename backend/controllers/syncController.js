@@ -6,11 +6,12 @@ const engine = require('../services/scoringEngine');
 const liveSocket = require('../sockets/liveSocket');
 
 /**
- * Syncs an offline-created or offline-scored match and its pending ball events idempotently.
+ * Syncs an offline-created or offline-scored match (user or guest) and its pending ball events idempotently.
  */
 async function syncOfflineMatch(req, res, next) {
   try {
     const { matchId, clientMatchId, matchData, inningsNumber, events, deviceId } = req.body;
+    const isGuest = Boolean(req.guest && !req.user);
     let match = null;
 
     if (matchId && /^[0-9a-fA-F]{24}$/.test(String(matchId))) {
@@ -20,14 +21,16 @@ async function syncOfflineMatch(req, res, next) {
       match = await Match.findOne({ clientMatchId });
     }
 
-    // If match was created entirely offline, create it on the server now
     if (!match && matchData) {
       const val = engine.validateAndNormalizeRules(matchData.rules || matchData.rulesSnapshot || {});
       match = await Match.create({
+        ownerType: isGuest ? 'guest' : 'user',
+        guestId: isGuest ? req.guest.guestId : null,
+        userId: req.user ? req.user._id : null,
         title: matchData.title || `${matchData.teamA.name} vs ${matchData.teamB.name}`,
         matchCode: 'AS-' + uuidv4().slice(0, 6).toUpperCase(),
         clientMatchId: clientMatchId || uuidv4(),
-        tournamentId: matchData.tournamentId || null,
+        tournamentId: isGuest ? null : (matchData.tournamentId || null),
         teamA: matchData.teamA,
         teamB: matchData.teamB,
         matchDate: matchData.matchDate ? new Date(matchData.matchDate) : new Date(),
@@ -40,9 +43,15 @@ async function syncOfflineMatch(req, res, next) {
         rulesSnapshot: val.rules,
         status: matchData.status || 'live',
         currentInningsNumber: Number(inningsNumber || 1),
-        scorerId: req.user._id,
-        authorizedScorers: [req.user._id],
-        scorerLock: { deviceId: deviceId || 'offline', userId: req.user._id, lockedAt: new Date() }
+        scorerId: req.user ? req.user._id : null,
+        authorizedScorers: req.user ? [req.user._id] : [],
+        scorerLock: {
+          deviceId: deviceId || 'offline',
+          userId: req.user ? req.user._id : null,
+          guestId: isGuest ? req.guest.guestId : null,
+          lockedAt: new Date()
+        },
+        isPublic: isGuest ? false : Boolean(matchData.isPublic)
       });
 
       const innSetup = matchData.inningsSetup || {
@@ -79,14 +88,19 @@ async function syncOfflineMatch(req, res, next) {
       return res.status(404).json({ success: false, message: 'Match not found for synchronization.' });
     }
 
-    // Verify permission
-    const uid = String(req.user._id);
-    const allowed =
-      req.user.role === 'super_admin' ||
-      String(match.scorerId) === uid ||
-      (match.authorizedScorers || []).some((id) => String(id) === uid);
-    if (!allowed) {
-      return res.status(403).json({ success: false, message: 'You do not have permission to sync scores for this match.' });
+    if (isGuest) {
+      if (match.ownerType !== 'guest' || match.guestId !== req.guest.guestId) {
+        return res.status(403).json({ success: false, message: 'You do not have permission to sync this match.' });
+      }
+    } else {
+      const uid = String(req.user._id);
+      const allowed =
+        req.user.role === 'super_admin' ||
+        String(match.scorerId || match.userId) === uid ||
+        (match.authorizedScorers || []).some((id) => String(id) === uid);
+      if (!allowed) {
+        return res.status(403).json({ success: false, message: 'You do not have permission to sync scores for this match.' });
+      }
     }
 
     const result = await syncService.syncOfflineEvents({
@@ -94,7 +108,8 @@ async function syncOfflineMatch(req, res, next) {
       inningsNumber: Number(inningsNumber || match.currentInningsNumber || 1),
       events: Array.isArray(events) ? events : [],
       deviceId: deviceId || 'offline',
-      userId: req.user._id
+      userId: req.user ? req.user._id : null,
+      guestId: isGuest ? req.guest.guestId : null
     });
 
     if (!result.ok) {

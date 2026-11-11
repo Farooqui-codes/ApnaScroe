@@ -121,6 +121,11 @@ async function upsertScorecard(match) {
   await Scorecard.findOneAndUpdate(
     { matchId: match._id },
     {
+      ownerType: match.ownerType || 'user',
+      guestId: match.guestId || null,
+      userId: match.userId || match.scorerId || null,
+      sourceGuestId: match.sourceGuestId || null,
+      migratedAt: match.migratedAt || null,
       matchId: match._id,
       title: match.title,
       tournamentId: match.tournamentId,
@@ -141,15 +146,16 @@ async function upsertScorecard(match) {
  * Idempotent batch sync of offline deliveries for a match.
  * Prevents duplicate deliveries via (matchId, eventId) and detects stale/conflicting device locks.
  */
-async function syncOfflineEvents({ match, inningsNumber, events, deviceId, userId }) {
+async function syncOfflineEvents({ match, inningsNumber, events, deviceId, userId, guestId }) {
   // Check scorer lock ownership
+  const lockedByOtherUser = match.scorerLock && match.scorerLock.userId && userId && String(match.scorerLock.userId) !== String(userId);
+  const lockedByOtherGuest = match.scorerLock && match.scorerLock.guestId && guestId && match.scorerLock.guestId !== guestId;
   if (
     match.scorerLock &&
     match.scorerLock.deviceId &&
     deviceId &&
     match.scorerLock.deviceId !== deviceId &&
-    match.scorerLock.userId &&
-    String(match.scorerLock.userId) !== String(userId)
+    (lockedByOtherUser || lockedByOtherGuest)
   ) {
     return {
       ok: false,
@@ -164,7 +170,7 @@ async function syncOfflineEvents({ match, inningsNumber, events, deviceId, userI
   }
 
   // Acquire/refresh scorer lock for this device
-  match.scorerLock = { deviceId: deviceId || 'web', userId, lockedAt: new Date() };
+  match.scorerLock = { deviceId: deviceId || 'web', userId: userId || null, guestId: guestId || null, lockedAt: new Date() };
   await match.save();
 
   let syncedCount = 0;

@@ -21,7 +21,10 @@
   ];
 
   document.addEventListener('DOMContentLoaded', async () => {
-    if (!ApnaUI.initShell({ activePage: 'match-create', pageTitle: 'Start New Match', requireAuth: true })) return;
+    if (!ApnaAuth.isAuthenticatedOrGuest()) {
+      await ApnaAuth.continueAsGuest(null);
+    }
+    if (!ApnaUI.initShell({ activePage: 'match-create', pageTitle: 'Start New Match' })) return;
 
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -37,15 +40,24 @@
 
   async function loadInitialData(params) {
     try {
-      const [tRes, tourRes, setRes] = await Promise.all([
+      const [tRes, tourRes, setRes, localTeams, localRules] = await Promise.all([
         ApnaAPI.get('/api/teams').catch(() => ({ teams: [] })),
         ApnaAPI.get('/api/tournaments').catch(() => ({ tournaments: [] })),
-        ApnaAPI.get('/api/settings').catch(() => ({ presets: [] }))
+        ApnaAPI.get('/api/settings').catch(() => ({ presets: [] })),
+        ApnaOffline.getLocalTeams().catch(() => []),
+        ApnaOffline.getLocalRules().catch(() => [])
       ]);
 
-      teamsList = tRes.teams || [];
-      tournamentsList = tourRes.tournaments || [];
-      savedPresets = setRes.presets || [];
+      const srvTeams = tRes.teams || [];
+      const mergedTeams = [...srvTeams];
+      for (const lt of localTeams) {
+        if (!mergedTeams.some((t) => String(t._id) === String(lt._id) || (lt.clientId && t.clientId === lt.clientId))) {
+          mergedTeams.push(Object.assign({}, lt, { _id: lt._id || lt.localId }));
+        }
+      }
+      teamsList = mergedTeams;
+      tournamentsList = ApnaAuth.isGuest() ? [] : (tourRes.tournaments || []);
+      savedPresets = [...(setRes.presets || []), ...localRules];
 
       if (setRes.preferences && setRes.preferences.defaultScoring && setRes.preferences.defaultScoring.rules) {
         currentRules = ApnaScoringEngine.validateAndNormalizeRules(setRes.preferences.defaultScoring.rules).rules;
@@ -194,13 +206,13 @@
     document.getElementById('saveRulePresetBtn').addEventListener('click', async () => {
       const name = prompt('Enter a name for this custom scoring rule preset:');
       if (!name || !name.trim()) return;
+      collectRuleInputs();
+      const clientId = 'lrule_' + Date.now();
+      await ApnaOffline.saveRuleLocally({ localId: clientId, clientId, name: name.trim(), rules: currentRules });
       try {
-        collectRuleInputs();
-        await ApnaAPI.post('/api/settings/presets', { name: name.trim(), rules: currentRules });
-        ApnaUI.showToast(`Rule preset "${name}" saved.`);
-      } catch (err) {
-        ApnaUI.showToast(err.message, 'error');
-      }
+        await ApnaAPI.post('/api/settings/presets', { name: name.trim(), rules: currentRules, clientId });
+      } catch (_) {}
+      ApnaUI.showToast(`Rule preset "${name}" saved.`);
     });
 
     document.getElementById('matchWizardForm').addEventListener('submit', submitMatch);

@@ -14,8 +14,8 @@
       document.getElementById('teamDetailView').classList.remove('hidden');
       await loadTeamDetail(id);
     } else {
-      document.getElementById('openCreateTeamBtn').addEventListener('click', () => {
-        if (!ApnaAuth.requireAuth()) return;
+      document.getElementById('openCreateTeamBtn').addEventListener('click', async () => {
+        if (!ApnaAuth.isAuthenticatedOrGuest()) await ApnaAuth.continueAsGuest(null);
         document.getElementById('createTeamModal').classList.add('open');
       });
       document.getElementById('teamSearchInput').addEventListener('input', loadTeams);
@@ -23,7 +23,8 @@
       document.getElementById('joinByCodeBtn').addEventListener('click', joinByInviteCode);
       document.getElementById('createTeamForm').addEventListener('submit', createTeam);
       await loadTeams();
-      if (params.get('action') === 'create' && ApnaAuth.isLoggedIn()) {
+      if (params.get('action') === 'create') {
+        if (!ApnaAuth.isAuthenticatedOrGuest()) await ApnaAuth.continueAsGuest(null);
         document.getElementById('createTeamModal').classList.add('open');
       }
     }
@@ -31,18 +32,29 @@
 
   async function createTeam(e) {
     e.preventDefault();
+    const clientId = 'lteam_' + Date.now();
+    const payload = {
+      name: document.getElementById('tName').value.trim(),
+      shortName: document.getElementById('tShort').value.trim(),
+      village: document.getElementById('tVillage').value.trim(),
+      ownerName: document.getElementById('tOwner').value.trim(),
+      clientId
+    };
     try {
-      const res = await ApnaAPI.post('/api/teams', {
-        name: document.getElementById('tName').value.trim(),
-        shortName: document.getElementById('tShort').value.trim(),
-        village: document.getElementById('tVillage').value.trim(),
-        ownerName: document.getElementById('tOwner').value.trim()
-      });
+      const res = await ApnaAPI.post('/api/teams', payload);
+      await ApnaOffline.saveTeamLocally(Object.assign({}, res.team, { localId: res.team._id }));
       document.getElementById('createTeamModal').classList.remove('open');
       ApnaUI.showToast(`Team "${res.team.name}" created!`);
       window.location.href = `/team.html?id=${res.team._id}`;
     } catch (err) {
-      ApnaUI.showToast(err.message, 'error');
+      if (err.isOffline || !navigator.onLine) {
+        const localTeam = await ApnaOffline.saveTeamLocally({ ...payload, _id: clientId, localId: clientId, players: [] });
+        document.getElementById('createTeamModal').classList.remove('open');
+        ApnaUI.showToast(`Offline: Team "${localTeam.name}" saved locally!`);
+        await loadTeams();
+      } else {
+        ApnaUI.showToast(err.message, 'error');
+      }
     }
   }
 
@@ -69,8 +81,16 @@
     if (v) qs.set('village', v);
 
     try {
-      const res = await ApnaAPI.get(`/api/teams?${qs.toString()}`);
-      const list = res.teams || [];
+      const [res, localTeams] = await Promise.all([
+        ApnaAPI.get(`/api/teams?${qs.toString()}`).catch(() => ({ teams: [] })),
+        ApnaOffline.getLocalTeams().catch(() => [])
+      ]);
+      const list = [...(res.teams || [])];
+      for (const lt of localTeams) {
+        if (!lt.migrated && !list.some((t) => String(t._id) === String(lt._id) || (lt.clientId && t.clientId === lt.clientId))) {
+          list.unshift(Object.assign({}, lt, { _id: lt._id || lt.localId }));
+        }
+      }
       if (!list.length) {
         grid.innerHTML = `<div class="empty-state">No teams found. Create your first team!</div>`;
         return;

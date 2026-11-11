@@ -19,9 +19,42 @@
   });
 
   async function initProfilePage() {
-    if (!ApnaAuth.requireAuth()) return;
+    if (!ApnaAuth.isLoggedIn()) {
+      // Guest Mode or Unauthenticated -> show Guest Profile or Continue as Guest entry
+      if (!ApnaAuth.isGuest()) {
+        await ApnaAuth.continueAsGuest(null);
+      }
+      document.getElementById('profileSummaryCard').classList.add('hidden');
+      document.getElementById('profileUpdateForm').closest('.card').classList.add('hidden');
+      const gCard = document.getElementById('guestProfileCard');
+      gCard.classList.remove('hidden');
+
+      const gp = (await ApnaOffline.getGuestProfile()) || ApnaAuth.getGuestSession() || {};
+      const bundle = await ApnaOffline.getGuestMigrationBundle();
+      document.getElementById('guestSessionMeta').textContent = `Guest ID: ${gp.guestId || 'Local'} • Device: ${gp.deviceId || ApnaOffline.getDeviceId()}`;
+      document.getElementById('guestDataSummaryGrid').innerHTML = `
+        <div class="card" style="padding:10px;"><span class="text-sm text-muted">Matches</span><div style="font-size:1.3rem;font-weight:800;">${bundle.counts.matches}</div></div>
+        <div class="card" style="padding:10px;"><span class="text-sm text-muted">Teams</span><div style="font-size:1.3rem;font-weight:800;">${bundle.counts.teams}</div></div>
+        <div class="card" style="padding:10px;"><span class="text-sm text-muted">Players</span><div style="font-size:1.3rem;font-weight:800;">${bundle.counts.players}</div></div>
+        <div class="card" style="padding:10px;"><span class="text-sm text-muted">Custom Rules</span><div style="font-size:1.3rem;font-weight:800;">${bundle.counts.customRules}</div></div>
+      `;
+      document.getElementById('guestResetBtn').onclick = () => ApnaAuth.exitGuestMode();
+      return;
+    }
+
     const user = await ApnaAuth.refreshUser();
     if (!user) return;
+
+    // Check if registered user still has un-migrated guest data on device
+    if (window.ApnaMigrate) {
+      const eligible = await ApnaMigrate.detectEligibleGuestData();
+      if (eligible) {
+        const mb = document.getElementById('migrateBannerCard');
+        mb.classList.remove('hidden');
+        document.getElementById('migrateBannerMeta').textContent = `${eligible.counts.matches} match(es), ${eligible.counts.teams} team(s), ${eligible.counts.players} player(s) ready to migrate.`;
+        document.getElementById('openMigrateModalBtn').onclick = () => ApnaMigrate.showMigrationModal({ onDone: () => window.location.reload() });
+      }
+    }
 
     document.getElementById('profNameHeading').textContent = user.name;
     document.getElementById('profRoleSub').textContent = `${ApnaAuth.roleLabel(user.role)} • ${user.email}`;
@@ -74,7 +107,12 @@
     await loadSettingsData();
 
     document.getElementById('saveAllSettingsBtn').onclick = async () => {
-      if (!ApnaAuth.requireAuth()) return;
+      localStorage.setItem('apnascore_outdoor_mode', document.getElementById('setOutdoor').checked ? '1' : '0');
+      ApnaUI.applyTheme(themeSel.value);
+      if (!ApnaAuth.isLoggedIn()) {
+        ApnaUI.showToast('Theme & outdoor display settings saved locally.');
+        return;
+      }
       const rules = ApnaScoringEngine.getDefaultRules();
       rules.format.oversPerInnings = Number(document.getElementById('defOvers').value || 6);
       rules.format.playersPerTeam = Number(document.getElementById('defPlayers').value || 11);
@@ -84,9 +122,6 @@
       rules.extras.bye.enabled = document.getElementById('defByes').checked;
       rules.extras.legBye.enabled = document.getElementById('defByes').checked;
       rules.localRules.lastManBatting = document.getElementById('defLastMan').checked;
-
-      localStorage.setItem('apnascore_outdoor_mode', document.getElementById('setOutdoor').checked ? '1' : '0');
-      ApnaUI.applyTheme(themeSel.value);
 
       try {
         await ApnaAPI.put('/api/settings/preferences', {
@@ -109,7 +144,7 @@
     };
 
     document.getElementById('createPresetBtn').onclick = async () => {
-      if (!ApnaAuth.requireAuth()) return;
+      if (!ApnaAuth.isAuthenticatedOrGuest()) await ApnaAuth.continueAsGuest(null);
       const name = prompt('Enter custom preset name (e.g. My 6 Over Rules):');
       if (!name || !name.trim()) return;
       const rules = ApnaScoringEngine.getDefaultRules();
@@ -117,13 +152,13 @@
       rules.format.playersPerTeam = Number(document.getElementById('defPlayers').value || 11);
       rules.format.ballType = document.getElementById('defBall').value;
       rules.localRules.lastManBatting = document.getElementById('defLastMan').checked;
+      const clientId = 'lrule_' + Date.now();
+      await ApnaOffline.saveRuleLocally({ localId: clientId, clientId, name: name.trim(), rules });
       try {
-        await ApnaAPI.post('/api/settings/presets', { name: name.trim(), rules });
-        ApnaUI.showToast(`Preset "${name}" saved.`);
-        await loadSettingsData();
-      } catch (err) {
-        ApnaUI.showToast(err.message, 'error');
-      }
+        await ApnaAPI.post('/api/settings/presets', { name: name.trim(), rules, clientId });
+      } catch (_) {}
+      ApnaUI.showToast(`Preset "${name}" saved.`);
+      await loadSettingsData();
     };
 
     document.getElementById('changePasswordForm').onsubmit = async (e) => {
