@@ -9,6 +9,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node --watch backend/server.js",
+    "seed": "node backend/utils/seedSampleData.js",
     "test": "node --test backend/tests/scoringEngine.test.js backend/tests/rulesAndSync.test.js backend/tests/guestAuthAndMigrationUnit.test.js",
     "test:api": "node --test backend/tests/api.test.js",
     "test:e2e": "node --test backend/tests/guestAndMigration.test.js",
