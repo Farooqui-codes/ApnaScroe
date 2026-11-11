@@ -1,0 +1,374 @@
+/* ==========================================================================
+   ApnaScore Live Scoring Interface – Sunlight-Readable & One-Hand Mobile Ready
+   ========================================================================== */
+
+.scoring-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.scoreboard-hero {
+  background: var(--brand-primary-deep);
+  color: #FFFFFF;
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  border: 2px solid var(--brand-primary);
+}
+
+.scoreboard-top-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.batting-team-name {
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.bowling-team-sub {
+  font-size: 0.85rem;
+  color: #C3DDC8;
+  font-weight: 600;
+}
+
+.main-score-digits {
+  font-size: 2.55rem;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: #FFFFFF;
+}
+
+.overs-digits {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--brand-lime);
+  margin-left: 8px;
+}
+
+.score-metrics-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(195, 221, 200, 0.25);
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #E2F1E6;
+}
+
+.free-hit-banner {
+  margin-top: 8px;
+  background: #FFCA28;
+  color: #1A1200;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 900;
+  font-size: 0.86rem;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Striker / Non-striker & Bowler Cards */
+.crease-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.batter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface-alt);
+  margin-bottom: 6px;
+}
+
+.batter-row.on-strike {
+  border-color: var(--brand-primary);
+  background: var(--success-bg);
+}
+
+.batter-name {
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.batter-figures {
+  font-weight: 800;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+/* Recent Balls Timeline */
+.recent-balls-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 2px;
+  margin-bottom: 12px;
+}
+
+.ball-chip {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-weight: 800;
+  font-size: 0.88rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ball-chip.boundary-4 {
+  background: #1565C0;
+  border-color: #0D47A1;
+  color: #FFFFFF;
+}
+
+.ball-chip.boundary-6 {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary-deep);
+  color: #FFFFFF;
+}
+
+.ball-chip.wicket-ball {
+  background: var(--danger);
+  border-color: #8E0000;
+  color: #FFFFFF;
+}
+
+.ball-chip.extra-ball {
+  background: #F59E0B;
+  border-color: #B45309;
+  color: #1A1200;
+}
+
+/* Large Touch-Friendly Scoring Keypad (56px–64px solid buttons) */
+.scoring-pad-card {
+  background: var(--bg-surface);
+  border: 2px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.runs-keypad {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.score-btn {
+  min-height: 58px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-strong);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+  font-size: 1.35rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.08s ease, background-color 0.12s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.score-btn:active {
+  transform: scale(0.95);
+}
+
+.score-btn.btn-four {
+  background: #1565C0;
+  border-color: #0D47A1;
+  color: #FFFFFF;
+}
+
+.score-btn.btn-six {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary-deep);
+  color: #FFFFFF;
+}
+
+.score-btn.btn-wicket {
+  background: var(--danger);
+  border-color: #8E0000;
+  color: #FFFFFF;
+  font-size: 1.05rem;
+}
+
+.extras-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.extra-btn {
+  min-height: 50px;
+  border-radius: var(--radius-sm);
+  border: 2px solid #D97706;
+  background: #FEF3C7;
+  color: #78350F;
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+[data-theme="dark"] .extra-btn {
+  background: #422B05;
+  color: #FCD34D;
+  border-color: #D97706;
+}
+
+.actions-keypad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ctrl-btn {
+  min-height: 48px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 6px 8px;
+}
+
+.ctrl-btn.danger-outline {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ==========================================================================
+   Outdoor Sunlight Scoring Mode – Maximum Contrast, Zero Distraction
+   ========================================================================== */
+body.outdoor-mode {
+  --bg-page: #FFFFFF;
+  --bg-surface: #FFFFFF;
+  --bg-surface-alt: #F3FAF5;
+  --border-color: #0F3822;
+  --border-strong: #0F3822;
+  --text-primary: #000000;
+  --text-secondary: #082415;
+  --text-muted: #14452B;
+}
+
+body.outdoor-mode .scoreboard-hero {
+  background: #082415;
+  border-width: 3px;
+}
+
+body.outdoor-mode .main-score-digits {
+  font-size: 3.1rem;
+}
+
+body.outdoor-mode .score-btn {
+  min-height: 66px;
+  font-size: 1.55rem;
+  border-width: 3px;
+  background: #E2F1E6;
+  color: #000000;
+}
+
+body.outdoor-mode .score-btn.btn-four {
+  background: #0D47A1;
+  color: #FFFFFF;
+}
+
+body.outdoor-mode .score-btn.btn-six {
+  background: #135831;
+  color: #FFFFFF;
+}
+
+body.outdoor-mode .score-btn.btn-wicket {
+  background: #B71C1C;
+  color: #FFFFFF;
+}
+
+body.outdoor-mode .extra-btn {
+  min-height: 56px;
+  background: #FDE047;
+  color: #000000;
+  border: 3px solid #713F12;
+  font-size: 1rem;
+}
+
+body.outdoor-mode * {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+
+.commentary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.commentary-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-color);
+  font-size: 0.88rem;
+}
+
+.comm-over-pill {
+  font-weight: 800;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--brand-primary);
+  color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .crease-grid {
+    grid-template-columns: 1fr;
+  }
+  .main-score-digits {
+    font-size: 2.2rem;
+  }
+}

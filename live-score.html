@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Live Scoring – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="/css/scoring.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <!-- Matches Directory View (when no matchId in URL) -->
+      <section id="liveMatchesDirectory" class="hidden">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Live & Active Matches</h2>
+            <a href="/match-create.html" class="btn btn-primary btn-sm">+ Start New Match</a>
+          </div>
+          <div id="liveMatchesGrid" class="match-list-grid">
+            <div class="empty-state">Loading matches...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Match Scoring Screen -->
+      <section id="activeScoringView" class="hidden">
+        <!-- Dedicated Match Control Header -->
+        <div class="scoring-header-bar">
+          <div class="flex-gap">
+            <a href="/dashboard.html" class="btn btn-secondary btn-sm" id="backOverviewBtn">← Overview</a>
+            <span class="badge badge-live" id="matchStatusBadge"><span class="live-dot"></span>LIVE</span>
+          </div>
+          <div class="flex-gap">
+            <button type="button" class="btn btn-secondary btn-sm" id="outdoorModeBtn">☀ Outdoor Mode</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="shareMatchBtn">Share / QR</button>
+            <button type="button" class="btn btn-primary btn-sm" id="matchControlsBtn">Match Controls</button>
+          </div>
+        </div>
+
+        <!-- Scoreboard Hero -->
+        <div class="scoreboard-hero" id="scoreboardHero">
+          <div class="scoreboard-top-row">
+            <div>
+              <div class="batting-team-name" id="batTeamTitle">Batting Team</div>
+              <div class="bowling-team-sub" id="bowlTeamSub">vs Bowling Team</div>
+            </div>
+            <div style="text-align:right;">
+              <span class="main-score-digits" id="mainScoreDigits">0/0</span>
+              <span class="overs-digits" id="mainOversDigits">(0.0 / 6 ov)</span>
+            </div>
+          </div>
+          <div id="freeHitBanner" class="free-hit-banner hidden">⚡ FREE HIT NEXT BALL</div>
+          <div class="score-metrics-strip" id="scoreMetricsStrip">
+            <span id="crrText">CRR: 0.00</span>
+            <span id="targetText" class="hidden">Target: 0</span>
+            <span id="reqText" class="hidden">Need 0 off 0 balls (RRR: 0.00)</span>
+            <span id="extrasText">Extras: 0</span>
+          </div>
+        </div>
+
+        <!-- Innings Break / Result Banner -->
+        <div id="inningsActionBanner" class="card mb-2 hidden" style="border:2px solid var(--brand-primary);background:var(--success-bg);">
+          <div class="flex-between">
+            <strong id="inningsActionTitle">Innings Completed</strong>
+            <div class="flex-gap" id="inningsActionButtons"></div>
+          </div>
+        </div>
+
+        <!-- Striker / Non-Striker & Bowler Crease Info -->
+        <div class="crease-grid">
+          <div class="card" style="padding:12px;">
+            <div class="flex-between mb-2">
+              <strong class="text-sm">BATSMEN</strong>
+              <div class="flex-gap">
+                <button type="button" class="btn btn-secondary btn-sm" id="swapBatsmenBtn">⇄ Swap</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="selectOpenersBtn">Edit</button>
+              </div>
+            </div>
+            <div class="batter-row on-strike" id="strikerRow">
+              <div>
+                <div class="batter-name" id="strikerName">Select Striker *</div>
+                <div class="text-sm text-muted" id="strikerMeta">0b • 0x4 • 0x6 • SR 0.0</div>
+              </div>
+              <div class="batter-figures" id="strikerRuns">0</div>
+            </div>
+            <div class="batter-row" id="nonStrikerRow">
+              <div>
+                <div class="batter-name" id="nonStrikerName">Select Non-Striker</div>
+                <div class="text-sm text-muted" id="nonStrikerMeta">0b • 0x4 • 0x6 • SR 0.0</div>
+              </div>
+              <div class="batter-figures" id="nonStrikerRuns">0</div>
+            </div>
+            <div class="text-sm text-muted mt-1" id="partnershipText">Partnership: 0 (0)</div>
+          </div>
+
+          <div class="card" style="padding:12px;">
+            <div class="flex-between mb-2">
+              <strong class="text-sm">BOWLER</strong>
+              <button type="button" class="btn btn-secondary btn-sm" id="changeBowlerBtn">Change Bowler</button>
+            </div>
+            <div class="batter-row" style="margin-bottom:8px;">
+              <div>
+                <div class="batter-name" id="bowlerName">Select Bowler</div>
+                <div class="text-sm text-muted" id="bowlerMeta">0.0 ov • 0 M • Econ 0.00</div>
+              </div>
+              <div class="batter-figures" id="bowlerFigures">0-0</div>
+            </div>
+            <div class="text-sm text-muted" id="bowlerExtrasMeta">Wides: 0 • No-Balls: 0</div>
+          </div>
+        </div>
+
+        <!-- Recent Balls Timeline -->
+        <div class="card" style="padding:10px 14px;margin-bottom:12px;">
+          <div class="flex-between">
+            <strong class="text-sm">RECENT BALLS (Tap any ball to inspect / edit)</strong>
+            <span class="text-sm text-muted" id="ballCountLabel">0 balls</span>
+          </div>
+          <div class="recent-balls-strip" id="recentBallsStrip"></div>
+        </div>
+
+        <!-- Primary Sunlight-Readable Scoring Pad -->
+        <div class="scoring-pad-card" id="scoringPadCard">
+          <div class="runs-keypad">
+            <button type="button" class="score-btn" data-run="0">0<span>Dot</span></button>
+            <button type="button" class="score-btn" data-run="1">1<span>Single</span></button>
+            <button type="button" class="score-btn" data-run="2">2<span>Two</span></button>
+            <button type="button" class="score-btn" data-run="3">3<span>Three</span></button>
+            <button type="button" class="score-btn btn-four" data-run="4">4<span>FOUR</span></button>
+            <button type="button" class="score-btn" data-run="5">5<span>Five</span></button>
+            <button type="button" class="score-btn btn-six" data-run="6">6<span>SIX</span></button>
+            <button type="button" class="score-btn btn-wicket" id="wicketBtn">OUT<span>Wicket</span></button>
+          </div>
+
+          <div class="extras-keypad">
+            <button type="button" class="extra-btn" data-extra="wide">Wide</button>
+            <button type="button" class="extra-btn" data-extra="no_ball">No Ball</button>
+            <button type="button" class="extra-btn" data-extra="bye">Bye</button>
+            <button type="button" class="extra-btn" data-extra="leg_bye">Leg Bye</button>
+            <button type="button" class="extra-btn" id="overthrowBtn">Overthrow</button>
+            <button type="button" class="extra-btn" data-extra="penalty">Penalty / Custom</button>
+          </div>
+
+          <div class="actions-keypad">
+            <button type="button" class="ctrl-btn danger-outline" id="undoBallBtn">↶ Undo Ball</button>
+            <button type="button" class="ctrl-btn" id="retireBtn">Retire Batter</button>
+            <button type="button" class="ctrl-btn" id="endOverBtn">End Over</button>
+          </div>
+        </div>
+
+        <!-- Commentary & Full Mini Scorecard Tabs -->
+        <div class="card">
+          <div class="tabs-bar">
+            <button type="button" class="tab-btn active" data-scview="commentary">Commentary</button>
+            <button type="button" class="tab-btn" data-scview="scorecard">Full Scorecard</button>
+            <button type="button" class="tab-btn" data-scview="rules">Match Rules</button>
+          </div>
+
+          <div id="scPanel-commentary">
+            <div class="flex-gap mb-2">
+              <input class="form-control" id="manualCommentaryInput" placeholder="Add manual commentary note..." style="flex:1;" />
+              <button type="button" class="btn btn-secondary btn-sm" id="addCommNoteBtn">Post</button>
+            </div>
+            <div class="commentary-list" id="commentaryList"></div>
+          </div>
+
+          <div id="scPanel-scorecard" class="hidden"></div>
+          <div id="scPanel-rules" class="hidden"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Modal: Select Batsmen & Bowler / New Batsman / Change Bowler -->
+  <div class="modal-backdrop" id="playersSelectModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="playersModalTitle">Select Players</h3>
+        <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('playersSelectModal')">✕</button>
+      </div>
+      <div id="playersModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="ScoringUI.closeModal('playersSelectModal')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="playersModalSaveBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Extra Runs / Overthrow Details -->
+  <div class="modal-backdrop" id="extraModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="extraModalTitle">Extra Runs</h3>
+        <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('extraModal')">✕</button>
+      </div>
+      <div id="extraModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="ScoringUI.closeModal('extraModal')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="extraModalSaveBtn">Record Ball</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Wicket Details -->
+  <div class="modal-backdrop" id="wicketModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Record Wicket</h3>
+        <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('wicketModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="wicketTypeSelect">Dismissal Type</label>
+        <select class="form-control" id="wicketTypeSelect"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="dismissedSlotSelect">Who is Out?</label>
+        <select class="form-control" id="dismissedSlotSelect">
+          <option value="striker">Striker</option>
+          <option value="non_striker">Non-Striker (Run Out)</option>
+        </select>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label" for="fielderSelect">Fielder / Catcher (Optional)</label>
+          <select class="form-control" id="fielderSelect"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="wicketExtraType">Ball Type</label>
+          <select class="form-control" id="wicketExtraType">
+            <option value="none">Legal Delivery</option>
+            <option value="wide">Wide Ball</option>
+            <option value="no_ball">No Ball</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="wicketRunsCompleted">Completed Runs Before Wicket</label>
+        <input class="form-control" id="wicketRunsCompleted" type="number" min="0" max="6" value="0" />
+      </div>
+      <div class="switch-row hidden" id="oneTipRow">
+        <label for="oneTipCheck">One-Tip-One-Hand Catch</label>
+        <input type="checkbox" class="toggle-check" id="oneTipCheck" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="ScoringUI.closeModal('wicketModal')">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmWicketBtn">Confirm Wicket</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Retire Batsman -->
+  <div class="modal-backdrop" id="retireModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Retire Batsman</h3>
+        <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('retireModal')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="retireSlotSelect">Batsman</label>
+        <select class="form-control" id="retireSlotSelect"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="retireTypeSelect">Retirement Type</label>
+        <select class="form-control" id="retireTypeSelect">
+          <option value="retired_hurt">Retired Hurt (Not a wicket; can return if rules permit)</option>
+          <option value="retired_out">Retired Out (Counts as a wicket)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="retireReplacementSelect">Replacement Batsman (Optional now)</label>
+        <select class="form-control" id="retireReplacementSelect"></select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="ScoringUI.closeModal('retireModal')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="confirmRetireBtn">Confirm Retire</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Previous Ball -->
+  <div class="modal-backdrop" id="editBallModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Ball Details & Edit</h3>
+        <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('editBallModal')">✕</button>
+      </div>
+      <div id="editBallBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" id="voidBallBtn">Delete / Void Ball</button>
+        <button type="button" class="btn btn-primary" id="saveEditBallBtn">Save Correction</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Match Controls Menu -->
+  <div class="modal-backdrop" id="matchControlModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Match Controls</h3>
+        <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('matchControlModal')">✕</button>
+      </div>
+      <div class="form-grid-2" id="matchControlButtonsGrid">
+        <button type="button" class="btn btn-secondary" data-mc="pause">Pause Match</button>
+        <button type="button" class="btn btn-secondary" data-mc="resume">Resume Match</button>
+        <button type="button" class="btn btn-secondary" data-mc="change_bowler">Change Bowler</button>
+        <button type="button" class="btn btn-secondary" data-mc="swap_batsmen">Swap Batsmen</button>
+        <button type="button" class="btn btn-secondary" data-mc="change_striker">Change Striker</button>
+        <button type="button" class="btn btn-secondary" data-mc="retire">Retire Batsman</button>
+        <button type="button" class="btn btn-secondary" data-mc="undo">Undo Last Ball</button>
+        <button type="button" class="btn btn-secondary" data-mc="correct_score">Correct Score (+/-)</button>
+        <button type="button" class="btn btn-secondary" data-mc="end_innings">End Innings</button>
+        <button type="button" class="btn btn-primary" data-mc="start_2nd">Start 2nd Innings</button>
+        <button type="button" class="btn btn-secondary" data-mc="super_over">Start Super Over</button>
+        <button type="button" class="btn btn-primary" data-mc="complete">Complete Match & POTM</button>
+        <button type="button" class="btn btn-danger" data-mc="abandon">Abandon Match</button>
+        <button type="button" class="btn btn-secondary" data-mc="take_lock">Take Scorer Lock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Share Live Match & QR -->
+  <div class="modal-backdrop" id="shareModal">
+    <div class="modal-dialog" style="text-align:center;">
+      <div class="modal-header">
+        <h3 class="modal-title">Share Live Match</h3>
+        <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('shareModal')">✕</button>
+      </div>
+      <img id="shareQrImg" alt="Match QR Code" style="width:200px;height:200px;margin:0 auto 12px;border:1px solid var(--border-color);border-radius:12px;" />
+      <input class="form-control mb-2" id="sharePublicUrlInput" readonly />
+      <div class="flex-gap" style="justify-content:center;">
+        <button type="button" class="btn btn-primary" id="copyShareLinkBtn">Copy Link</button>
+        <a id="whatsappShareBtn" target="_blank" rel="noopener" class="btn btn-lime">Share on WhatsApp</a>
+        <a id="openScorecardPdfBtn" class="btn btn-secondary">Scorecard & PDF</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/scoring-engine.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/vendor/gsap.min.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/scoring.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+/* Lightweight Animations & Celebrations (prefers-reduced-motion aware) */
+@keyframes pulseLive {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(1.25); }
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes popCelebration {
+  0% { opacity: 0; transform: scale(0.75) translateY(16px); }
+  20% { opacity: 1; transform: scale(1.06) translateY(0); }
+  80% { opacity: 1; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(0.95) translateY(-12px); }
+}
+
+.live-dot {
+  animation: pulseLive 1.5s infinite ease-in-out;
+}
+
+.celebration-banner {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 250;
+  padding: 12px 26px;
+  border-radius: var(--radius-pill);
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: #FFFFFF;
+  background: var(--brand-primary);
+  border: 3px solid var(--brand-lime);
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  animation: popCelebration 1.9s ease forwards;
+}
+
+.celebration-banner.wicket {
+  background: var(--danger);
+  border-color: #FFCDD2;
+}
+
+.celebration-banner.boundary {
+  background: #1565C0;
+  border-color: #90CAF9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

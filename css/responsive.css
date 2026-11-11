@@ -1,0 +1,77 @@
+/* ==========================================================================
+   ApnaScore Responsive Breakpoints (320px .. 1920px)
+   Mobile is the highest priority: zero horizontal overflow, touch-friendly.
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .sidebar {
+    display: none;
+  }
+  .main-area,
+  body.sidebar-collapsed .main-area {
+    margin-left: 0;
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 12px);
+  }
+  .mobile-bottom-nav {
+    display: flex;
+  }
+  .topbar-mobile-brand {
+    display: flex;
+  }
+  .desktop-sidebar-toggle {
+    display: none !important;
+  }
+}
+
+/* Active Scoring Mode: keep bottom nav out of the way of scoring buttons */
+body.scoring-active .mobile-bottom-nav {
+  display: none !important;
+}
+body.scoring-active .main-area {
+  padding-bottom: 18px;
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 0 12px;
+    height: 58px;
+  }
+  .page-content {
+    padding: 12px;
+  }
+  .card {
+    padding: 14px;
+  }
+  .form-grid-2,
+  .form-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .topbar-page-title {
+    font-size: 0.96rem;
+  }
+  .sync-pill .sync-label-text {
+    display: none;
+  }
+  .modal-dialog {
+    padding: 14px;
+    border-radius: var(--radius-md);
+  }
+}
+
+@media (max-width: 360px) {
+  .page-content {
+    padding: 8px;
+  }
+  .card {
+    padding: 12px;
+  }
+  .bottom-tab {
+    font-size: 0.64rem;
+  }
+}

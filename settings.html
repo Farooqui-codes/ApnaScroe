@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Settings – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <div class="card mb-2">
+        <div class="card-header"><h2 class="card-title">General Settings</h2></div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="setTheme">Theme</label>
+            <select class="form-control" id="setTheme">
+              <option value="light">Premium Light Mode</option>
+              <option value="dark">Premium Dark Mode</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="setLang">Language</label>
+            <select class="form-control" id="setLang">
+              <option value="en">English</option>
+              <option value="hi">Hindi / Hinglish</option>
+            </select>
+          </div>
+          <div class="switch-row"><label for="setOutdoor">Default Outdoor Sunlight Mode</label><input type="checkbox" class="toggle-check" id="setOutdoor" /></div>
+          <div class="switch-row"><label for="setNotifMatch">Match Update Notifications</label><input type="checkbox" class="toggle-check" id="setNotifMatch" checked /></div>
+          <div class="switch-row"><label for="setPrivacyPub">Public Profile Visibility</label><input type="checkbox" class="toggle-check" id="setPrivacyPub" checked /></div>
+        </div>
+      </div>
+
+      <div class="card mb-2">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Default Scoring & Rule Settings (New Matches Only)</h2>
+            <span class="text-sm text-muted">Existing matches always keep their saved rules snapshot.</span>
+          </div>
+        </div>
+        <div class="form-grid-3">
+          <div class="form-group"><label class="form-label">Default Overs</label><input type="number" min="1" max="100" class="form-control" id="defOvers" value="6" /></div>
+          <div class="form-group"><label class="form-label">Default Players / Team</label><input type="number" min="2" max="20" class="form-control" id="defPlayers" value="11" /></div>
+          <div class="form-group"><label class="form-label">Default Ball Type</label>
+            <select class="form-control" id="defBall">
+              <option value="tennis">Tennis Ball</option>
+              <option value="leather">Leather Ball</option>
+              <option value="gully">Gully Cricket</option>
+              <option value="school">School Cricket</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-grid-2 mt-1">
+          <div class="switch-row"><label for="defWide">Wide Enabled (+1)</label><input type="checkbox" class="toggle-check" id="defWide" checked /></div>
+          <div class="switch-row"><label for="defNoBall">No-Ball Free Hit</label><input type="checkbox" class="toggle-check" id="defNoBall" checked /></div>
+          <div class="switch-row"><label for="defByes">Byes & Leg Byes Enabled</label><input type="checkbox" class="toggle-check" id="defByes" checked /></div>
+          <div class="switch-row"><label for="defLastMan">Last-Man Batting Default</label><input type="checkbox" class="toggle-check" id="defLastMan" /></div>
+        </div>
+        <button type="button" class="btn btn-primary mt-2" id="saveAllSettingsBtn">Save Settings</button>
+      </div>
+
+      <div class="card mb-2">
+        <div class="card-header">
+          <h2 class="card-title">Saved Custom Scoring Presets</h2>
+          <button type="button" class="btn btn-secondary btn-sm" id="createPresetBtn">+ Save New Preset</button>
+        </div>
+        <div id="savedPresetsList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Change Password</h2></div>
+        <form id="changePasswordForm" class="form-grid-3">
+          <input type="password" class="form-control" id="curPwd" placeholder="Current Password" required />
+          <input type="password" class="form-control" id="newPwd" placeholder="New Password (min 6)" minlength="6" required />
+          <button type="submit" class="btn btn-secondary">Update Password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/scoring-engine.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/vendor/gsap.min.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/settings.js"></script>
+</body>
+</html>

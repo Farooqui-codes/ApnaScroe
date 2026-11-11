@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Start New Match – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <div class="wizard-steps" id="wizardStepsBar">
+        <button type="button" class="wizard-step-pill active" data-step="1">1. Match Info</button>
+        <button type="button" class="wizard-step-pill" data-step="2">2. Format</button>
+        <button type="button" class="wizard-step-pill" data-step="3">3. Teams & Toss</button>
+        <button type="button" class="wizard-step-pill" data-step="4">4. Custom Rules</button>
+        <button type="button" class="wizard-step-pill" data-step="5">5. Confirm</button>
+      </div>
+
+      <form id="matchWizardForm">
+        <!-- STEP 1: Match Information -->
+        <section class="card wizard-panel" data-panel="1">
+          <div class="card-header">
+            <h2 class="card-title">Step 1: Match Information</h2>
+            <div class="flex-gap">
+              <button type="button" class="btn btn-secondary btn-sm" id="quickCreateTeamBtn">+ Quick Team</button>
+            </div>
+          </div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="matchTitle">Match Title</label>
+              <input class="form-control" id="matchTitle" placeholder="Auto-generated or e.g. Rampur Premier Final" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="matchTournament">Tournament (Optional)</label>
+              <select class="form-control" id="matchTournament"><option value="">Friendly / Standalone Match</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="teamASelect">Team A</label>
+              <select class="form-control" id="teamASelect" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="teamBSelect">Team B</label>
+              <select class="form-control" id="teamBSelect" required></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="matchDate">Match Date & Time</label>
+              <input class="form-control" id="matchDate" type="datetime-local" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="matchVenue">Location / Village Ground</label>
+              <input class="form-control" id="matchVenue" required placeholder="e.g. Panchayat Ground, Rampur" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="matchType">Match Type</label>
+              <select class="form-control" id="matchType">
+                <option value="friendly">Friendly Match</option>
+                <option value="tournament">Tournament Match</option>
+                <option value="league">League Match</option>
+                <option value="knockout">Knockout</option>
+                <option value="semi_final">Semi-Final</option>
+                <option value="final">Final</option>
+                <option value="practice">Practice</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="scorerNameInput">Scorer / Umpire Names (Optional)</label>
+              <input class="form-control" id="scorerNameInput" placeholder="Scorer / Umpire" />
+            </div>
+          </div>
+          <div class="flex-between mt-2">
+            <span></span>
+            <button type="button" class="btn btn-primary" onclick="MatchWizard.goStep(2)">Next: Match Format →</button>
+          </div>
+        </section>
+
+        <!-- STEP 2: Match Format -->
+        <section class="card wizard-panel hidden" data-panel="2">
+          <div class="card-header"><h2 class="card-title">Step 2: Select Match Format</h2></div>
+          <label class="form-label">Select Overs Per Innings</label>
+          <div class="overs-preset-grid mb-2" id="oversPresetsGrid">
+            <button type="button" class="preset-chip" data-overs="2">2 Overs</button>
+            <button type="button" class="preset-chip" data-overs="4">4 Overs</button>
+            <button type="button" class="preset-chip" data-overs="5">5 Overs</button>
+            <button type="button" class="preset-chip selected" data-overs="6">6 Overs</button>
+            <button type="button" class="preset-chip" data-overs="8">8 Overs</button>
+            <button type="button" class="preset-chip" data-overs="10">10 Overs</button>
+            <button type="button" class="preset-chip" data-overs="12">12 Overs</button>
+            <button type="button" class="preset-chip" data-overs="15">15 Overs</button>
+            <button type="button" class="preset-chip" data-overs="20">20 Overs</button>
+            <button type="button" class="preset-chip" data-overs="custom">Custom</button>
+          </div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label" for="customOversInput">Overs Per Innings</label>
+              <input class="form-control" id="customOversInput" type="number" min="1" max="100" value="6" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ballTypeSelect">Cricket Format / Ball Type</label>
+              <select class="form-control" id="ballTypeSelect">
+                <option value="tennis">Tennis Ball Cricket</option>
+                <option value="leather">Leather Ball Cricket</option>
+                <option value="gully">Gully Cricket</option>
+                <option value="street">Street Cricket</option>
+                <option value="box">Box Cricket</option>
+                <option value="school">School Cricket</option>
+                <option value="custom">Custom Cricket</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ballsPerOverInput">Balls Per Over</label>
+              <input class="form-control" id="ballsPerOverInput" type="number" min="1" max="12" value="6" />
+            </div>
+          </div>
+          <div class="flex-between mt-2">
+            <button type="button" class="btn btn-secondary" onclick="MatchWizard.goStep(1)">← Back</button>
+            <button type="button" class="btn btn-primary" onclick="MatchWizard.goStep(3)">Next: Team Settings →</button>
+          </div>
+        </section>
+
+        <!-- STEP 3: Team Settings & Toss -->
+        <section class="card wizard-panel hidden" data-panel="3">
+          <div class="card-header"><h2 class="card-title">Step 3: Team Settings & Toss</h2></div>
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label class="form-label" for="playersPerTeamInput">Players Per Team</label>
+              <input class="form-control" id="playersPerTeamInput" type="number" min="2" max="20" value="11" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tossWinnerSelect">Toss Winner</label>
+              <select class="form-control" id="tossWinnerSelect"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="tossDecisionSelect">Elected To</label>
+              <select class="form-control" id="tossDecisionSelect">
+                <option value="bat">Bat First</option>
+                <option value="bowl">Bowl First</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2 mt-1">
+            <div class="card" style="background:var(--bg-surface-alt);">
+              <div class="flex-between mb-2">
+                <strong id="squadATitle">Team A Playing Squad</strong>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="MatchWizard.openQuickPlayerModal('A')">+ Add Player</button>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label" for="capASelect">Captain</label>
+                  <select class="form-control" id="capASelect"></select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="wkASelect">Wicketkeeper</label>
+                  <select class="form-control" id="wkASelect"></select>
+                </div>
+              </div>
+              <div id="squadAList" class="text-sm"></div>
+            </div>
+
+            <div class="card" style="background:var(--bg-surface-alt);">
+              <div class="flex-between mb-2">
+                <strong id="squadBTitle">Team B Playing Squad</strong>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="MatchWizard.openQuickPlayerModal('B')">+ Add Player</button>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group">
+                  <label class="form-label" for="capBSelect">Captain</label>
+                  <select class="form-control" id="capBSelect"></select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="wkBSelect">Wicketkeeper</label>
+                  <select class="form-control" id="wkBSelect"></select>
+                </div>
+              </div>
+              <div id="squadBList" class="text-sm"></div>
+            </div>
+          </div>
+
+          <div class="flex-between mt-2">
+            <button type="button" class="btn btn-secondary" onclick="MatchWizard.goStep(2)">← Back</button>
+            <button type="button" class="btn btn-primary" onclick="MatchWizard.goStep(4)">Next: Custom Rules →</button>
+          </div>
+        </section>
+
+        <!-- STEP 4: Custom Cricket Rule Engine -->
+        <section class="card wizard-panel hidden" data-panel="4">
+          <div class="card-header">
+            <h2 class="card-title">Step 4: Custom Cricket Rule Engine</h2>
+            <button type="button" class="btn btn-secondary btn-sm" id="saveRulePresetBtn">Save as Preset</button>
+          </div>
+
+          <div class="form-grid-2 mb-2">
+            <div class="form-group">
+              <label class="form-label" for="rulePresetSelect">Rule Preset</label>
+              <select class="form-control" id="rulePresetSelect"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="maxOversBowlerInput">Max Overs Per Bowler (0 = Unlimited)</label>
+              <input class="form-control" id="maxOversBowlerInput" type="number" min="0" max="50" value="2" />
+            </div>
+          </div>
+
+          <div class="tabs-bar" id="ruleEngineTabs">
+            <button type="button" class="tab-btn active" data-ruletab="extras">Extras & Overthrows</button>
+            <button type="button" class="tab-btn" data-ruletab="boundaries">Boundaries</button>
+            <button type="button" class="tab-btn" data-ruletab="wickets">Wicket Rules</button>
+            <button type="button" class="tab-btn" data-ruletab="local">Local & Village Rules</button>
+          </div>
+
+          <div id="rulePanel-extras"></div>
+          <div id="rulePanel-boundaries" class="hidden"></div>
+          <div id="rulePanel-wickets" class="hidden"></div>
+          <div id="rulePanel-local" class="hidden"></div>
+
+          <div id="ruleWarningsBox" class="text-sm hidden mt-1" style="color:var(--warning);font-weight:600;"></div>
+
+          <div class="flex-between mt-2">
+            <button type="button" class="btn btn-secondary" onclick="MatchWizard.goStep(3)">← Back</button>
+            <button type="button" class="btn btn-primary" onclick="MatchWizard.goStep(5)">Next: Confirm →</button>
+          </div>
+        </section>
+
+        <!-- STEP 5: Confirm & Start Match -->
+        <section class="card wizard-panel hidden" data-panel="5">
+          <div class="card-header"><h2 class="card-title">Step 5: Confirm & Start Match</h2></div>
+          <div id="matchConfirmSummary" class="card" style="background:var(--bg-surface-alt);margin-bottom:16px;"></div>
+          <div class="flex-between">
+            <button type="button" class="btn btn-secondary" onclick="MatchWizard.goStep(4)">← Back</button>
+            <button type="submit" class="btn btn-primary btn-lg" id="startMatchSubmitBtn">Start Match & Open Scorer</button>
+          </div>
+        </section>
+      </form>
+    </div>
+  </div>
+
+  <!-- Quick Create Team Modal -->
+  <div class="modal-backdrop" id="quickTeamModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Quick Create Team</h3>
+        <button type="button" class="icon-btn" onclick="document.getElementById('quickTeamModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="qtName">Team Name</label>
+        <input class="form-control" id="qtName" placeholder="e.g. Gaon Warriors" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="qtVillage">Village</label>
+        <input class="form-control" id="qtVillage" placeholder="e.g. Rampur" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('quickTeamModal').classList.remove('open')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="qtSubmitBtn">Create Team</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Add Player Modal -->
+  <div class="modal-backdrop" id="quickPlayerModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Quick Add Player</h3>
+        <button type="button" class="icon-btn" onclick="document.getElementById('quickPlayerModal').classList.remove('open')">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="qpName">Player Name</label>
+        <input class="form-control" id="qpName" placeholder="e.g. Manoj Kumar" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="qpVillage">Village</label>
+        <input class="form-control" id="qpVillage" placeholder="e.g. Rampur" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="qpRole">Role</label>
+        <select class="form-control" id="qpRole">
+          <option value="All-rounder">All-rounder</option>
+          <option value="Batsman">Batsman</option>
+          <option value="Bowler">Bowler</option>
+          <option value="Wicketkeeper">Wicketkeeper</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('quickPlayerModal').classList.remove('open')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="qpSubmitBtn">Add Player</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/scoring-engine.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/vendor/gsap.min.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/match.js"></script>
+</body>
+</html>

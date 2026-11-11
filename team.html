@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Teams – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/tournament.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <section id="teamListView">
+        <div class="card mb-2">
+          <div class="flex-between">
+            <div>
+              <h2 class="card-title">Teams</h2>
+              <span class="text-sm text-muted">Create village teams, assign captains, and manage squads</span>
+            </div>
+            <div class="flex-gap">
+              <button type="button" class="btn btn-secondary btn-sm" id="joinByCodeBtn">Join via Code</button>
+              <button type="button" class="btn btn-primary" id="openCreateTeamBtn">+ Create Team</button>
+            </div>
+          </div>
+          <div class="form-grid-2 mt-2">
+            <input class="form-control" id="teamSearchInput" placeholder="Search team name..." />
+            <input class="form-control" id="teamVillageFilter" placeholder="Filter by village..." />
+          </div>
+        </div>
+        <div id="teamsGrid" class="entity-grid"><div class="empty-state">Loading teams...</div></div>
+      </section>
+
+      <section id="teamDetailView" class="hidden">
+        <div class="card mb-2">
+          <div class="flex-between">
+            <div class="flex-gap">
+              <a href="/team.html" class="btn btn-secondary btn-sm">← All Teams</a>
+              <h2 class="card-title" id="teamDetailName">Team</h2>
+            </div>
+            <span class="badge badge-success" id="teamInviteCodeBadge"></span>
+          </div>
+          <div class="text-sm text-muted mt-1" id="teamDetailMeta"></div>
+        </div>
+        <div class="form-grid-2">
+          <div class="card" id="teamRosterCard"></div>
+          <div class="card" id="teamHistoryCard"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Create Team Modal -->
+  <div class="modal-backdrop" id="createTeamModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Create New Team</h3>
+        <button type="button" class="icon-btn" onclick="document.getElementById('createTeamModal').classList.remove('open')">✕</button>
+      </div>
+      <form id="createTeamForm">
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">Team Name</label><input class="form-control" id="tName" required placeholder="e.g. Rampur Royals" /></div>
+          <div class="form-group"><label class="form-label">Short Code</label><input class="form-control" id="tShort" maxlength="6" placeholder="RR" /></div>
+          <div class="form-group"><label class="form-label">Village</label><input class="form-control" id="tVillage" required placeholder="e.g. Rampur" /></div>
+          <div class="form-group"><label class="form-label">Owner / Manager Name</label><input class="form-control" id="tOwner" placeholder="Optional" /></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('createTeamModal').classList.remove('open')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Team</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/vendor/gsap.min.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/team.js"></script>
+</body>
+</html>

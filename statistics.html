@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Statistics – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/tournament.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <div class="card mb-2">
+        <div class="card-header"><h2 class="card-title">Cricket Statistics & Analytics</h2></div>
+        <div class="form-grid-3">
+          <select class="form-control" id="statTournamentFilter"><option value="">All Tournaments</option></select>
+          <select class="form-control" id="statTeamFilter"><option value="">All Teams</option></select>
+          <input class="form-control" id="statVillageFilter" placeholder="Filter by village..." />
+        </div>
+        <div class="form-grid-3 mt-1">
+          <input class="form-control" id="statSeasonFilter" placeholder="Season (e.g. 2026)" />
+          <input class="form-control" id="statFromDate" type="date" />
+          <input class="form-control" id="statToDate" type="date" />
+        </div>
+        <button type="button" class="btn btn-primary btn-sm mt-1" id="applyStatFiltersBtn">Apply Filters</button>
+      </div>
+
+      <div class="cap-grid" id="statCapCards"></div>
+
+      <div class="tabs-bar" id="statCategoryTabs">
+        <button type="button" class="tab-btn active" data-cat="mostRuns">Most Runs</button>
+        <button type="button" class="tab-btn" data-cat="mostWickets">Most Wickets</button>
+        <button type="button" class="tab-btn" data-cat="highestScore">Highest Score</button>
+        <button type="button" class="tab-btn" data-cat="bestStrikeRate">Best Strike Rate</button>
+        <button type="button" class="tab-btn" data-cat="bestEconomy">Best Economy</button>
+        <button type="button" class="tab-btn" data-cat="mostSixes">Most Sixes</button>
+        <button type="button" class="tab-btn" data-cat="mostFours">Most Fours</button>
+        <button type="button" class="tab-btn" data-cat="mostCatches">Most Catches</button>
+        <button type="button" class="tab-btn" data-cat="mvpLeaderboard">MVP / POTT</button>
+      </div>
+
+      <div class="card" id="statTableCard">
+        <div class="empty-state">Loading statistics...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/vendor/gsap.min.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/statistics.js"></script>
+</body>
+</html>

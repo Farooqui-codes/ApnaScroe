@@ -1,0 +1,90 @@
+/* Tournament, Team, Player & Leaderboard Styles */
+.entity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.tournament-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.tournament-banner {
+  height: 110px;
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-deep) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  color: #FFFFFF;
+  position: relative;
+}
+
+.tournament-logo-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #FFFFFF;
+  padding: 2px;
+  border: 2px solid var(--brand-lime);
+}
+
+.avatar-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--brand-soft-mint);
+  color: var(--brand-primary);
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--border-color);
+}
+
+.cap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.cap-card {
+  border-radius: var(--radius-md);
+  padding: 16px;
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cap-orange {
+  background: linear-gradient(135deg, #EA580C 0%, #9A3412 100%);
+}
+.cap-purple {
+  background: linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%);
+}
+.cap-mvp {
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-deep) 100%);
+}
+
+.fixture-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface-alt);
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}

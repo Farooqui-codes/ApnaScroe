@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Players – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/tournament.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <section id="playerListView">
+        <div class="card mb-2">
+          <div class="flex-between">
+            <div>
+              <h2 class="card-title">Players</h2>
+              <span class="text-sm text-muted">Individual player profiles & career cricket statistics</span>
+            </div>
+            <button type="button" class="btn btn-primary" id="openCreatePlayerBtn">+ Add Player</button>
+          </div>
+          <div class="form-grid-3 mt-2">
+            <input class="form-control" id="pSearchInput" placeholder="Search player name..." />
+            <input class="form-control" id="pVillageFilter" placeholder="Filter by village..." />
+            <select class="form-control" id="pRoleFilter">
+              <option value="">All Roles</option>
+              <option value="Batsman">Batsman</option>
+              <option value="Bowler">Bowler</option>
+              <option value="All-rounder">All-rounder</option>
+              <option value="Wicketkeeper">Wicketkeeper</option>
+            </select>
+          </div>
+        </div>
+        <div id="playersGrid" class="entity-grid"><div class="empty-state">Loading players...</div></div>
+      </section>
+
+      <section id="playerDetailView" class="hidden">
+        <div class="card mb-2">
+          <div class="flex-between">
+            <a href="/player.html" class="btn btn-secondary btn-sm">← All Players</a>
+            <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+              Upload Photo <input type="file" accept="image/*" id="playerPhotoFileInp" class="hidden" />
+            </label>
+          </div>
+          <div class="flex-gap mt-2" id="playerProfileHeader"></div>
+        </div>
+        <div class="form-grid-2" id="playerCareerStatsGrid"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Add Player Modal -->
+  <div class="modal-backdrop" id="createPlayerModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Add Player Profile</h3>
+        <button type="button" class="icon-btn" onclick="document.getElementById('createPlayerModal').classList.remove('open')">✕</button>
+      </div>
+      <form id="createPlayerForm">
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">Player Name</label><input class="form-control" id="cpName" required /></div>
+          <div class="form-group"><label class="form-label">Village</label><input class="form-control" id="cpVillage" required /></div>
+          <div class="form-group"><label class="form-label">Age (Optional)</label><input class="form-control" id="cpAge" type="number" min="6" max="80" /></div>
+          <div class="form-group"><label class="form-label">Jersey Number</label><input class="form-control" id="cpJersey" type="number" min="0" max="999" /></div>
+          <div class="form-group"><label class="form-label">Role</label>
+            <select class="form-control" id="cpRole">
+              <option value="All-rounder">All-rounder</option>
+              <option value="Batsman">Batsman</option>
+              <option value="Bowler">Bowler</option>
+              <option value="Wicketkeeper">Wicketkeeper</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Assign to Team (Optional)</label><select class="form-control" id="cpTeam"><option value="">No Team Yet</option></select></div>
+          <div class="form-group"><label class="form-label">Batting Style</label>
+            <select class="form-control" id="cpBatStyle">
+              <option value="Right-hand bat">Right-hand bat</option>
+              <option value="Left-hand bat">Left-hand bat</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Bowling Style</label>
+            <select class="form-control" id="cpBowlStyle">
+              <option value="Right-arm medium">Right-arm medium</option>
+              <option value="Right-arm fast">Right-arm fast</option>
+              <option value="Right-arm offbreak">Right-arm offbreak</option>
+              <option value="Right-arm legbreak">Right-arm legbreak</option>
+              <option value="Left-arm medium">Left-arm medium</option>
+              <option value="Left-arm fast">Left-arm fast</option>
+              <option value="Left-arm orthodox">Left-arm orthodox</option>
+              <option value="None">None</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('createPlayerModal').classList.remove('open')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Player</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/scoring-engine.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/vendor/gsap.min.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/player.js"></script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Tournaments – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/tournament.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <!-- Tournament List View -->
+      <section id="tournamentListView">
+        <div class="card mb-2">
+          <div class="flex-between">
+            <div>
+              <h2 class="card-title">Cricket Tournaments</h2>
+              <span class="text-sm text-muted">Manage leagues, knockouts, fixtures, points tables & NRR</span>
+            </div>
+            <button type="button" class="btn btn-primary" id="openCreateTourBtn">+ Create Tournament</button>
+          </div>
+          <div class="form-grid-2 mt-2">
+            <input class="form-control" id="tourSearchInput" placeholder="Search tournament name..." />
+            <select class="form-control" id="tourStatusFilter">
+              <option value="">All Statuses</option>
+              <option value="ongoing">Ongoing</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <div id="tournamentsGrid" class="entity-grid">
+          <div class="empty-state">Loading tournaments...</div>
+        </div>
+      </section>
+
+      <!-- Tournament Detail View -->
+      <section id="tournamentDetailView" class="hidden">
+        <div class="card mb-2">
+          <div class="flex-between">
+            <div class="flex-gap">
+              <a href="/tournament.html" class="btn btn-secondary btn-sm">← All Tournaments</a>
+              <h2 class="card-title" id="tdTitle">Tournament</h2>
+            </div>
+            <div class="flex-gap">
+              <a id="tdShareBtn" target="_blank" class="btn btn-secondary btn-sm">Public Page</a>
+              <a id="tdPdfBtn" target="_blank" class="btn btn-primary btn-sm">Results PDF</a>
+            </div>
+          </div>
+          <p class="text-sm text-muted mt-1" id="tdMeta"></p>
+        </div>
+
+        <div class="tabs-bar" id="tourDetailTabs">
+          <button type="button" class="tab-btn active" data-ttab="points">Points Table</button>
+          <button type="button" class="tab-btn" data-ttab="fixtures">Fixtures & Matches</button>
+          <button type="button" class="tab-btn" data-ttab="teams">Teams & Registration</button>
+          <button type="button" class="tab-btn" data-ttab="awards">Awards & Winner</button>
+        </div>
+
+        <div id="tPanel-points" class="card"></div>
+        <div id="tPanel-fixtures" class="card hidden"></div>
+        <div id="tPanel-teams" class="card hidden"></div>
+        <div id="tPanel-awards" class="card hidden"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Create Tournament Modal -->
+  <div class="modal-backdrop" id="createTourModal">
+    <div class="modal-dialog" style="max-width:650px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Create Tournament</h3>
+        <button type="button" class="icon-btn" onclick="document.getElementById('createTourModal').classList.remove('open')">✕</button>
+      </div>
+      <form id="createTourForm">
+        <div class="form-grid-2">
+          <div class="form-group"><label class="form-label">Tournament Name</label><input class="form-control" id="ctName" required placeholder="e.g. Rampur Premier League" /></div>
+          <div class="form-group"><label class="form-label">Village / City</label><input class="form-control" id="ctVillage" required placeholder="e.g. Rampur" /></div>
+          <div class="form-group"><label class="form-label">Format</label>
+            <select class="form-control" id="ctFormat">
+              <option value="league_knockout">League + Knockout</option>
+              <option value="league">League</option>
+              <option value="round_robin">Round Robin</option>
+              <option value="group_stage">Group Stage</option>
+              <option value="knockout">Knockout</option>
+              <option value="double_elimination">Double Elimination</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Overs Per Match</label><input class="form-control" id="ctOvers" type="number" min="1" max="50" value="8" /></div>
+          <div class="form-group"><label class="form-label">Start Date</label><input class="form-control" id="ctStart" type="date" required /></div>
+          <div class="form-group"><label class="form-label">End Date</label><input class="form-control" id="ctEnd" type="date" required /></div>
+          <div class="form-group"><label class="form-label">Entry Fee (₹)</label><input class="form-control" id="ctFee" type="number" min="0" value="500" /></div>
+          <div class="form-group"><label class="form-label">Prize Money / Trophy</label><input class="form-control" id="ctPrize" placeholder="e.g. ₹21,000 + Trophy" /></div>
+          <div class="form-group"><label class="form-label">Max Teams</label><input class="form-control" id="ctMaxTeams" type="number" min="2" max="64" value="8" /></div>
+          <div class="form-group"><label class="form-label">Tie-Breaker Rule</label>
+            <select class="form-control" id="ctTieBreaker">
+              <option value="nrr">Net Run Rate (NRR)</option>
+              <option value="wins">Total Wins</option>
+              <option value="head_to_head">Head to Head</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pre-register Teams (Hold Ctrl/Cmd to select multiple)</label>
+          <select class="form-control" id="ctTeamsMulti" multiple style="min-height:90px;"></select>
+        </div>
+        <div class="switch-row mb-2">
+          <label for="ctPublic">Publicly Visible Tournament</label>
+          <input type="checkbox" class="toggle-check" id="ctPublic" checked />
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('createTourModal').classList.remove('open')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Tournament</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/scoring-engine.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/vendor/gsap.min.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/tournament.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Profile – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/tournament.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body data-page="profile">
+  <div id="appShell">
+    <div class="main-content-slot">
+      <div class="card mb-2" id="profileSummaryCard">
+        <div class="flex-between">
+          <div class="flex-gap">
+            <img id="profAvatarImg" src="/assets/icons/apnascore-icon.png" class="avatar-circle" style="width:72px;height:72px;" alt="Avatar" />
+            <div>
+              <h2 style="margin:0;" id="profNameHeading">Guest Scorer</h2>
+              <div class="text-sm text-muted" id="profRoleSub">Sign in to manage matches & tournaments</div>
+            </div>
+          </div>
+          <div class="flex-gap">
+            <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+              Change Photo <input type="file" accept="image/*" id="profAvatarInp" class="hidden" />
+            </label>
+            <button type="button" class="btn btn-danger btn-sm" id="profLogoutBtn">Logout</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Edit Profile Details</h2></div>
+        <form id="profileUpdateForm">
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="profNameInp" required /></div>
+            <div class="form-group"><label class="form-label">Village / City</label><input class="form-control" id="profVillageInp" /></div>
+            <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="profPhoneInp" /></div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+          <a href="/settings.html" class="btn btn-secondary">Open Settings</a>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/vendor/gsap.min.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/settings.js"></script>
+</body>
+</html>

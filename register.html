@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Create Account – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <style>
+    .auth-shell {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 14px;
+    }
+    .auth-card {
+      width: 100%;
+      max-width: 470px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 24px 22px;
+      box-shadow: var(--shadow-lg);
+    }
+  </style>
+</head>
+<body>
+  <main class="auth-shell">
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:16px;">
+        <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore" style="width:92px;height:92px;object-fit:contain;margin:0 auto 6px;border-radius:12px;" />
+        <h1 style="margin:0;font-size:1.3rem;font-weight:800;">Create Your ApnaScore Account</h1>
+        <p class="text-muted text-sm" style="margin:4px 0 0;">Start scoring matches & managing village tournaments</p>
+      </div>
+
+      <form id="registerForm">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="regName">Full Name</label>
+            <input class="form-control" id="regName" required placeholder="e.g. Rahul Verma" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regVillage">Village / City</label>
+            <input class="form-control" id="regVillage" required placeholder="e.g. Rampur" />
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="regEmail">Email Address</label>
+            <input class="form-control" id="regEmail" type="email" required placeholder="rahul@example.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regPhone">Phone (Optional)</label>
+            <input class="form-control" id="regPhone" type="tel" placeholder="9876543210" />
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" for="regRole">Account Role</label>
+            <select class="form-control" id="regRole">
+              <option value="scorer">Scorer (Score & Manage Matches)</option>
+              <option value="organizer">Tournament Organizer (Full Tournaments)</option>
+              <option value="team_manager">Team Manager (Manage Squads)</option>
+              <option value="viewer">Viewer (Watch Live Scores)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="regPassword">Password (min 6 chars)</label>
+            <input class="form-control" id="regPassword" type="password" minlength="6" required placeholder="******" />
+          </div>
+        </div>
+        <div id="regError" class="text-sm hidden" style="color:var(--danger);font-weight:600;margin-bottom:10px;"></div>
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;" id="regSubmitBtn">Create Account</button>
+      </form>
+
+      <div class="flex-between mt-2 text-sm">
+        <a href="/login.html">Already have an account? Login</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    ApnaUI.applyTheme(localStorage.getItem('apnascore_theme') || 'light');
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errEl = document.getElementById('regError');
+      const btn = document.getElementById('regSubmitBtn');
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      btn.textContent = 'Creating Account...';
+      try {
+        const res = await ApnaAPI.post('/api/auth/register', {
+          name: document.getElementById('regName').value.trim(),
+          village: document.getElementById('regVillage').value.trim(),
+          email: document.getElementById('regEmail').value.trim(),
+          phone: document.getElementById('regPhone').value.trim(),
+          role: document.getElementById('regRole').value,
+          password: document.getElementById('regPassword').value
+        });
+        ApnaAPI.setSession(res.token, res.user);
+        window.location.href = '/dashboard.html';
+      } catch (err) {
+        errEl.textContent = err.message;
+        errEl.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create Account';
+      }
+    });
+  </script>
+</body>
+</html>

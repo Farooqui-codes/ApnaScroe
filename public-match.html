@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Live Match Center – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/scoring.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore" style="width:40px;height:40px;object-fit:contain;border-radius:8px;" />
+      <div>
+        <div class="topbar-page-title">ApnaScore Live Center</div>
+        <div class="text-sm text-muted">Apne Gaon ka Apna Scorer • Read-Only Public Feed</div>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button type="button" class="btn btn-secondary btn-sm" id="pubCopyBtn">Copy Link</button>
+      <a id="pubWaBtn" target="_blank" rel="noopener" class="btn btn-primary btn-sm">WhatsApp</a>
+    </div>
+  </header>
+
+  <main class="page-content" style="max-width:960px;margin:0 auto;">
+    <div class="scoreboard-hero">
+      <div class="scoreboard-top-row">
+        <div>
+          <span class="badge badge-live" id="pubStatusBadge"><span class="live-dot"></span>LIVE</span>
+          <div class="batting-team-name mt-1" id="pubTitle">Loading match...</div>
+          <div class="bowling-team-sub" id="pubVenue"></div>
+        </div>
+        <div style="text-align:right;">
+          <span class="main-score-digits" id="pubScore">0/0</span>
+          <span class="overs-digits" id="pubOvers">(0.0 ov)</span>
+        </div>
+      </div>
+      <div class="score-metrics-strip" id="pubMetrics"></div>
+    </div>
+
+    <div class="card mb-2">
+      <div class="card-header"><h3 class="card-title">Recent Balls</h3></div>
+      <div class="recent-balls-strip" id="pubRecentBalls"></div>
+    </div>
+
+    <div class="card mb-2" id="pubCreaseCard"></div>
+    <div class="card mb-2" id="pubScorecardCard"></div>
+    <div class="card">
+      <div class="card-header"><h3 class="card-title">Ball-by-Ball Commentary</h3></div>
+      <div class="commentary-list" id="pubCommentary"></div>
+    </div>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    ApnaUI.applyTheme(localStorage.getItem('apnascore_theme') || 'light');
+    const id = new URLSearchParams(window.location.search).get('id');
+    const shareUrl = window.location.href;
+    document.getElementById('pubWaBtn').href = `https://wa.me/?text=${encodeURIComponent('Watch Live Cricket Score on ApnaScore: ' + shareUrl)}`;
+    document.getElementById('pubCopyBtn').onclick = () => { navigator.clipboard?.writeText(shareUrl); ApnaUI.showToast('Link copied!'); };
+
+    async function loadPublic() {
+      if (!id) return;
+      try {
+        const res = await ApnaAPI.get(`/api/public/matches/${encodeURIComponent(id)}`);
+        renderPublic(res.match, res.innings || []);
+        if (typeof io !== 'undefined') {
+          const socket = io();
+          socket.emit('join:match', String(res.match._id));
+          socket.on('match:update', () => loadPublic());
+        }
+      } catch (err) {
+        document.getElementById('pubTitle').textContent = err.message;
+      }
+    }
+
+    function renderPublic(m, innings) {
+      const curr = innings.find((i) => i.inningsNumber === (m.currentInningsNumber || 1)) || innings[0];
+      const st = curr?.computedState || {};
+      document.getElementById('pubStatusBadge').textContent = m.status.toUpperCase();
+      document.getElementById('pubTitle').textContent = `${curr ? curr.battingTeamName : m.teamA.name} — ${m.title}`;
+      document.getElementById('pubVenue').textContent = `${m.venue} • ${(m.result && m.result.marginText) || ''}`;
+      document.getElementById('pubScore').textContent = curr ? `${curr.totalRuns}/${curr.wickets}` : '0/0';
+      document.getElementById('pubOvers').textContent = curr ? `(${curr.oversString} ov)` : '(0.0 ov)';
+      document.getElementById('pubMetrics').innerHTML = `<span>CRR: ${(st.currentRunRate || 0).toFixed(2)}</span>${curr?.target ? `<span>Target: ${curr.target}</span>` : ''}`;
+
+      const balls = (st.recentBalls || []).slice(-14);
+      document.getElementById('pubRecentBalls').innerHTML = balls.map((b) => `<span class="ball-chip">${ApnaUI.escapeHtml(b.badge)}</span>`).join('') || '<span class="text-muted text-sm">No balls yet.</span>';
+
+      const sStat = st.strikerId && st.battingStats?.[st.strikerId];
+      const nsStat = st.nonStrikerId && st.battingStats?.[st.nonStrikerId];
+      const bw = st.currentBowlerId && st.bowlingStats?.[st.currentBowlerId];
+      document.getElementById('pubCreaseCard').innerHTML = `
+        <div class="form-grid-2">
+          <div><strong>Batsmen</strong><div class="mt-1">${sStat ? `${ApnaUI.escapeHtml(sStat.name)}* ${sStat.runs} (${sStat.balls})` : '-'}<br>${nsStat ? `${ApnaUI.escapeHtml(nsStat.name)} ${nsStat.runs} (${nsStat.balls})` : ''}</div></div>
+          <div><strong>Bowler</strong><div class="mt-1">${bw ? `${ApnaUI.escapeHtml(bw.name)} ${bw.overs}-${bw.maidens}-${bw.runs}-${bw.wickets}` : '-'}</div></div>
+        </div>
+      `;
+
+      document.getElementById('pubCommentary').innerHTML = (st.commentary || []).slice(0, 25).map((c) => `
+        <div class="commentary-item"><span class="comm-over-pill">${ApnaUI.escapeHtml(c.over)}</span><div>${ApnaUI.escapeHtml(c.text)}</div></div>
+      `).join('') || '<div class="text-muted text-sm">Waiting for live commentary...</div>';
+    }
+    loadPublic();
+  </script>
+</body>
+</html>
