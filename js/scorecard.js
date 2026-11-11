@@ -23,8 +23,16 @@
   async function loadScorecardList() {
     const grid = document.getElementById('scorecardsGrid');
     try {
-      const res = await ApnaAPI.get('/api/matches');
-      const matches = res.matches || [];
+      const [res, localMatches] = await Promise.all([
+        ApnaAPI.get('/api/matches').catch(() => ({ matches: [] })),
+        window.ApnaOffline ? ApnaOffline.getAllLocalMatches().catch(() => []) : []
+      ]);
+      const matches = [...(res.matches || [])];
+      for (const lm of localMatches) {
+        if (!matches.some((m) => String(m._id) === String(lm.serverMatchId || lm.localId) || (lm.clientMatchId && m.clientMatchId === lm.clientMatchId))) {
+          matches.unshift(Object.assign({}, lm.match, { _id: lm.localId, isLocalOnly: true }));
+        }
+      }
       if (!matches.length) {
         grid.innerHTML = `<div class="empty-state">No matches found yet.</div>`;
         return;
@@ -32,14 +40,14 @@
       grid.innerHTML = matches.map((m) => `
         <div class="match-card">
           <div class="flex-between">
-            <span class="text-sm text-muted">${new Date(m.matchDate).toLocaleDateString()} • ${ApnaUI.escapeHtml(m.venue)}</span>
-            <span class="badge badge-neutral">${ApnaUI.escapeHtml(m.status.toUpperCase())}</span>
+            <span class="text-sm text-muted">${new Date(m.matchDate || Date.now()).toLocaleDateString()} • ${ApnaUI.escapeHtml(m.venue || 'Ground')}</span>
+            <span class="badge badge-neutral">${ApnaUI.escapeHtml((m.status || 'live').toUpperCase())}</span>
           </div>
           <strong>${ApnaUI.escapeHtml(m.title)}</strong>
           <div class="text-sm" style="color:var(--brand-primary);font-weight:600;">${ApnaUI.escapeHtml((m.result && m.result.marginText) || 'In progress')}</div>
           <div class="flex-gap">
             <a href="/scorecard.html?matchId=${m._id}" class="btn btn-primary btn-sm">Open Scorecard</a>
-            <a href="/api/scorecards/${m._id}/pdf" target="_blank" class="btn btn-secondary btn-sm">PDF</a>
+            ${!m.isLocalOnly ? `<a href="/api/scorecards/${m._id}/pdf" target="_blank" class="btn btn-secondary btn-sm">PDF</a>` : ''}
           </div>
         </div>
       `).join('');
@@ -50,9 +58,43 @@
 
   async function loadScorecardDetail(matchId) {
     try {
-      const res = await ApnaAPI.get(`/api/scorecards/${matchId}`);
-      currentBundle = { match: res.match, innings: res.innings, scorecard: res.scorecard };
-      renderScorecard(res.match, res.innings || []);
+      let match = null;
+      let innings = [];
+      try {
+        if (!String(matchId).startsWith('cm_') && !String(matchId).startsWith('local_')) {
+          const res = await ApnaAPI.get(`/api/scorecards/${matchId}`);
+          match = res.match;
+          innings = res.innings || [];
+        }
+      } catch (_) {}
+
+      if (!match && window.ApnaOffline) {
+        const localRec = await ApnaOffline.getLocalMatch(matchId);
+        if (localRec) {
+          match = localRec.match;
+          const allEvs = await ApnaOffline.getEventsForMatch(localRec.localId);
+          innings = (localRec.innings || []).map((inn) => {
+            const innEvs = allEvs.filter((e) => Number(e.inningsNumber || 1) === Number(inn.inningsNumber || 1));
+            const st = ApnaScoringEngine.replayInnings({ ...inn, rules: match.rulesSnapshot }, innEvs);
+            return Object.assign({}, inn, {
+              totalRuns: st.totalRuns,
+              wickets: st.wickets,
+              legalBalls: st.legalBalls,
+              oversString: st.oversString,
+              extrasBreakdown: st.extrasBreakdown,
+              computedState: st
+            });
+          });
+        }
+      }
+
+      if (!match) {
+        document.getElementById('scorecardRenderRoot').innerHTML = `<div class="card empty-state">Scorecard not found locally or on server.</div>`;
+        return;
+      }
+
+      currentBundle = { match, innings };
+      renderScorecard(match, innings);
 
       document.getElementById('downloadPdfBtn').onclick = () => ApnaPDF.downloadMatchPDF(matchId, currentBundle);
       document.getElementById('printScorecardBtn').onclick = () => window.print();

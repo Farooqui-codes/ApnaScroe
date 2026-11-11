@@ -57,24 +57,46 @@
   }
 
   async function loadDashboard() {
+    const [localMatches, localTeams, localPlayers] = await Promise.all([
+      window.ApnaOffline ? ApnaOffline.getAllLocalMatches().catch(() => []) : [],
+      window.ApnaOffline ? ApnaOffline.getLocalTeams().catch(() => []) : [],
+      window.ApnaOffline ? ApnaOffline.getLocalPlayers().catch(() => []) : []
+    ]);
+
     try {
       const data = await ApnaAPI.get('/api/dashboard/summary');
       const c = data.counts || {};
-      document.getElementById('kpiTotalMatches').textContent = c.totalMatches ?? 0;
-      document.getElementById('kpiLiveMatches').textContent = c.liveMatches ?? 0;
+      const localOnlyMatches = localMatches.filter((lm) => !lm.serverMatchId);
+      document.getElementById('kpiTotalMatches').textContent = (c.totalMatches ?? 0) + localOnlyMatches.length;
+      document.getElementById('kpiLiveMatches').textContent = (c.liveMatches ?? 0) + localOnlyMatches.filter((m) => m.match?.status === 'live').length;
       document.getElementById('kpiUpcoming').textContent = c.upcomingMatches ?? 0;
-      document.getElementById('kpiCompleted').textContent = c.completedMatches ?? 0;
+      document.getElementById('kpiCompleted').textContent = (c.completedMatches ?? 0) + localOnlyMatches.filter((m) => m.match?.status === 'completed').length;
       document.getElementById('kpiTournaments').textContent = c.activeTournaments ?? 0;
-      document.getElementById('kpiTeams').textContent = c.totalTeams ?? 0;
-      document.getElementById('kpiPlayers').textContent = c.totalPlayers ?? 0;
+      document.getElementById('kpiTeams').textContent = Math.max(c.totalTeams ?? 0, localTeams.length);
+      document.getElementById('kpiPlayers').textContent = Math.max(c.totalPlayers ?? 0, localPlayers.length);
 
-      renderMatches([...(data.liveMatches || []), ...(data.recentMatches || []).filter((r) => !(data.liveMatches || []).some((l) => l._id === r._id))].slice(0, 6));
+      const srvCombined = [...(data.liveMatches || []), ...(data.recentMatches || []).filter((r) => !(data.liveMatches || []).some((l) => l._id === r._id))];
+      const merged = [
+        ...localOnlyMatches.map((lm) => Object.assign({}, lm.match, { _id: lm.localId })),
+        ...srvCombined
+      ];
+      renderMatches(merged.slice(0, 6));
       renderFixtures(data.upcomingFixtures || []);
       renderLeaders('topBatsmenList', data.topBatsmen || [], 'runs', 'Runs');
       renderLeaders('topBowlersList', data.topBowlers || [], 'wickets', 'Wkts');
       renderWinners(data.recentWinners || []);
-    } catch (err) {
-      document.getElementById('recentMatchesList').innerHTML = `<div class="empty-state">${ApnaUI.escapeHtml(err.message)}</div>`;
+    } catch (_) {
+      // Offline / local fallback using IndexedDB data
+      document.getElementById('kpiTotalMatches').textContent = localMatches.length;
+      document.getElementById('kpiLiveMatches').textContent = localMatches.filter((m) => m.match?.status === 'live').length;
+      document.getElementById('kpiCompleted').textContent = localMatches.filter((m) => m.match?.status === 'completed').length;
+      document.getElementById('kpiTeams').textContent = localTeams.length;
+      document.getElementById('kpiPlayers').textContent = localPlayers.length;
+      renderMatches(localMatches.map((lm) => Object.assign({}, lm.match, { _id: lm.localId })).slice(0, 6));
+      renderFixtures([]);
+      renderLeaders('topBatsmenList', [], 'runs', 'Runs');
+      renderLeaders('topBowlersList', [], 'wickets', 'Wkts');
+      renderWinners([]);
     }
   }
 

@@ -53,6 +53,15 @@ async function authenticate(req, res, next) {
   try {
     const token = extractToken(req);
     if (!token) {
+      const guest = await resolveGuestFromRequest(req);
+      if (guest) {
+        req.guest = guest;
+        return res.status(401).json({
+          success: false,
+          requiresAccount: true,
+          message: 'Create a free account to publish your match and manage tournaments.'
+        });
+      }
       return res.status(401).json({ success: false, message: 'Authentication required. Please log in.' });
     }
     const decoded = jwt.verify(token, config.jwtSecret);

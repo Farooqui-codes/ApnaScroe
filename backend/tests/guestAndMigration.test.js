@@ -24,9 +24,14 @@ describe('Guest Access & Guest-to-Account Migration (MongoDB + HTTP E2E)', () =>
   let baseUrl;
 
   before(async () => {
-    mongod = await MongoMemoryServer.create();
-    const uri = mongod.getUri();
-    await mongoose.connect(uri);
+    const localTestUri = process.env.TEST_MONGODB_URI || 'mongodb://127.0.0.1:27017/apnascore_e2e_test';
+    try {
+      await mongoose.connect(localTestUri, { serverSelectionTimeoutMS: 2500 });
+      await mongoose.connection.dropDatabase();
+    } catch (_) {
+      mongod = await MongoMemoryServer.create();
+      await mongoose.connect(mongod.getUri());
+    }
     await seedSystemPresets();
 
     const app = createApp();
@@ -37,9 +42,12 @@ describe('Guest Access & Guest-to-Account Migration (MongoDB + HTTP E2E)', () =>
   });
 
   after(async () => {
-    await new Promise((resolve) => server.close(resolve));
-    await mongoose.disconnect();
-    await mongod.stop();
+    if (server) await new Promise((resolve) => server.close(resolve));
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.connection.dropDatabase().catch(() => {});
+      await mongoose.disconnect();
+    }
+    if (mongod) await mongod.stop();
   });
 
   async function api(method, path, body = null, headers = {}) {
@@ -236,7 +244,7 @@ describe('Guest Access & Guest-to-Account Migration (MongoDB + HTTP E2E)', () =>
     });
     const exHeaders = { Authorization: `Bearer ${existingReg.data.token}` };
     const exTeam = await api('POST', '/api/teams', { name: 'Gaon Strikers', village: 'Rampur', ownerName: 'Original Owner' }, exHeaders);
-    const exPlayer = await api('POST', '/api/players', { name: 'Raju', village: 'Rampur', role: 'Bowler' }, exHeaders);
+    const exPlayer = await api('POST', '/api/players', { name: 'Raju', village: 'Rampur', role: 'Bowler', allowDuplicate: true }, exHeaders);
     assert.equal(exTeam.status, 201);
     assert.equal(exPlayer.status, 201);
 
