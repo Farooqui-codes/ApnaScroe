@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "ApnaScore – Complete Cricket Scoring & Tournament Management Platform (Apne Gaon ka Apna Scorer)",
   "main": "backend/server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node --watch backend/server.js",

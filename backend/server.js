@@ -31,6 +31,9 @@ function createApp() {
   const app = express();
   const rootDir = path.resolve(__dirname, '..');
 
+  // Trust Render / reverse-proxy headers (required for HTTPS og:image URLs & express-rate-limit)
+  app.set('trust proxy', 1);
+
   app.use(
     helmet({
       contentSecurityPolicy: {
