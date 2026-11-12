@@ -88,3 +88,202 @@
   }
   .reveal { opacity: 1; transform: none; }
 }
+
+/* ==========================================================================
+   9. Pure-CSS Hover & Interaction Effects (GPU transform/opacity/shadow)
+   ========================================================================== */
+button, .btn, .tab-btn, .preset-chip, .choice-pill-btn, .wizard-step-pill,
+.icon-btn, .score-btn, .extra-btn, .ctrl-btn, .ball-chip, summary, [data-tooltip] {
+  cursor: pointer;
+}
+button:disabled, .btn:disabled, .btn[aria-disabled="true"] {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Touch & Press Active Feedback */
+.btn:active, .score-btn:active, .extra-btn:active, .ctrl-btn:active,
+.tab-btn:active, .icon-btn:active, .preset-chip:active, .choice-pill-btn:active {
+  transform: scale(0.97);
+}
+
+/* Button Shine & Secondary Sweep Setup */
+.btn-primary { position: relative; overflow: hidden; }
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 25%, rgba(255,255,255,.28) 50%, transparent 75%);
+  transform: translateX(-120%);
+  transition: transform 420ms var(--hover-ease);
+  pointer-events: none;
+}
+.btn-secondary { position: relative; overflow: hidden; z-index: 0; }
+.btn-secondary::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--hover-tint);
+  transform-origin: left center;
+  transform: scaleX(0);
+  transition: transform var(--hover-mid) var(--hover-ease);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Preview Gallery Image Frame */
+.lp-preview-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+.lp-preview-frame img {
+  display: block;
+  width: 100%;
+  transition: transform 320ms var(--hover-ease);
+}
+.lp-preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 24, 16, 0.45);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity var(--hover-mid) var(--hover-ease);
+  pointer-events: none;
+}
+
+/* Lightweight CSS Tooltip */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #0F3822;
+  color: #FFFFFF;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--hover-fast) ease, transform var(--hover-fast) ease;
+  z-index: 250;
+}
+[data-tooltip]:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Desktop Pointer-Only Hover Effects (prevents sticky hover on touch screens) */
+@media (hover: hover) and (pointer: fine) {
+  /* 9.1 Buttons */
+  .btn-primary:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--hover-glow-green);
+    background: linear-gradient(135deg, #259F5A 0%, var(--brand-primary) 100%);
+  }
+  .btn-primary:not(:disabled):hover::after { transform: translateX(120%); }
+  .btn-secondary:not(:disabled):hover { border-color: var(--brand-primary); }
+  .btn-secondary:not(:disabled):hover::before { transform: scaleX(1); }
+  .btn-lime:not(:disabled):hover { transform: translateY(-2px); box-shadow: var(--hover-glow-green); }
+  .btn:not(:disabled):hover svg, .icon-btn:not(:disabled):hover svg {
+    transform: translateX(2px) scale(1.08);
+    transition: transform var(--hover-fast) var(--hover-ease);
+  }
+  .icon-btn:not(:disabled):hover {
+    border-color: var(--brand-primary);
+    box-shadow: var(--shadow-sm);
+    transform: rotate(-4deg) scale(1.05);
+  }
+
+  /* 9.2 Cards */
+  .choice-card:hover, .match-card:hover, .tournament-card:hover,
+  #pricingCardsGrid .card:hover, .lp-stat-box:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--brand-primary);
+    background-color: var(--bg-surface-alt);
+  }
+  .choice-card:hover .choice-icon-box,
+  .card:hover .lp-feature-icon,
+  .quick-action-card:hover .quick-action-icon {
+    transform: scale(1.08) rotate(-5deg);
+    transition: transform var(--hover-mid) var(--hover-ease);
+  }
+  .pricing-card-featured:hover {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: var(--hover-glow-green);
+  }
+  .match-card:hover .match-team-score {
+    color: var(--text-brand);
+    transform: scale(1.04);
+    transition: transform var(--hover-fast) ease;
+  }
+
+  /* 9.3 Navigation, Links & Footer */
+  .lp-nav-links a { position: relative; }
+  .lp-nav-links a::after {
+    content: "";
+    position: absolute;
+    left: 10%;
+    right: 10%;
+    bottom: 4px;
+    height: 2px;
+    background: var(--brand-primary);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform var(--hover-mid) var(--hover-ease);
+  }
+  .lp-nav-links a:hover { color: var(--text-brand); }
+  .lp-nav-links a:hover::after { transform: scaleX(1); }
+  .lp-footer a:hover {
+    color: var(--text-brand);
+    transform: translateY(-2px);
+    display: inline-block;
+    transition: transform var(--hover-fast) ease, color var(--hover-fast) ease;
+  }
+
+  /* 9.4 Tables, Lists & Scorecards */
+  table.data-table tbody tr {
+    transition: background-color var(--hover-fast) ease, box-shadow var(--hover-fast) ease;
+  }
+  table.data-table tbody tr:hover {
+    background: var(--hover-tint);
+    box-shadow: inset 4px 0 0 var(--brand-primary);
+  }
+  .fixture-card, .batter-row {
+    transition: transform var(--hover-fast) var(--hover-ease), border-color var(--hover-fast) ease;
+  }
+  .fixture-card:hover, .batter-row:hover {
+    transform: translateX(3px);
+    border-color: var(--brand-primary);
+  }
+
+  /* 9.5 Images, Tooltips & Form Inputs */
+  .lp-preview-frame:hover img { transform: scale(1.05); }
+  .lp-preview-frame:hover .lp-preview-overlay { opacity: 1; }
+  [data-tooltip]:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .form-control:hover:not(:focus) {
+    border-color: var(--brand-sage);
+    box-shadow: 0 0 0 2px rgba(32, 139, 78, 0.10);
+  }
+
+  /* 9.6 Cricket-Themed Touches (fast & zero layout shift) */
+  .score-btn:hover { transform: translateY(-2px); border-color: var(--brand-primary); }
+  .score-btn.btn-four:hover { box-shadow: 0 0 16px rgba(32, 139, 78, 0.45); }
+  .score-btn.btn-six:hover { box-shadow: var(--hover-glow-gold); }
+  .score-btn.btn-wicket:hover { box-shadow: 0 0 14px rgba(198, 40, 40, 0.40); }
+  .lp-hero-visual:hover .float-slow { transform: translateY(-4px) rotate(-4deg); transition: transform var(--hover-mid) ease; }
+  .brand-lockup:hover .brand-logo-img, .lp-brand:hover img {
+    transform: rotate(-5deg) scale(1.05);
+    transition: transform var(--hover-mid) var(--hover-ease);
+  }
+}
