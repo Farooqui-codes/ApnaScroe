@@ -8,6 +8,7 @@ const TournamentFixture = require('../models/TournamentFixture');
 const PointsTable = require('../models/PointsTable');
 const Team = require('../models/Team');
 const Player = require('../models/Player');
+const User = require('../models/User');
 const statsService = require('../services/statsService');
 const { hasProAccess } = require('../config/plans');
 const router = express.Router();
@@ -160,6 +161,55 @@ router.post('/tournaments/:idOrCode/register', publicRegLimiter, async (req, res
       success: true,
       message: 'Team registration submitted! Waiting for organizer approval.',
       team: teamDoc
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Privacy-safe public user profile (never exposes email or hidden private fields)
+router.get('/profiles/:idOrUsername', async (req, res, next) => {
+  try {
+    const val = String(req.params.idOrUsername || '').trim();
+    const isObjId = /^[0-9a-fA-F]{24}$/.test(val);
+    const user = await User.findOne(isObjId ? { _id: val } : { username: val.toLowerCase() }).lean();
+    if (!user || !user.isActive) {
+      return res.status(404).json({ success: false, message: 'Profile not found.' });
+    }
+
+    const priv = user.preferences?.privacy || {};
+    if (priv.showProfilePublicly === false) {
+      return res.status(403).json({ success: false, message: 'This profile is set to private.' });
+    }
+
+    const [linkedPlayer, recentMatches] = await Promise.all([
+      user.linkedPlayerId ? Player.findById(user.linkedPlayerId).lean() : null,
+      Match.find({ userId: user._id, isPublic: true })
+        .select('title status matchDate oversPerInnings result')
+        .sort({ matchDate: -1 })
+        .limit(6)
+        .lean()
+    ]);
+
+    const computedAge = user.age || (user.dob ? Math.floor((Date.now() - new Date(user.dob).getTime()) / (365.25 * 24 * 3600 * 1000)) : null);
+
+    res.json({
+      success: true,
+      profile: {
+        _id: user._id,
+        name: user.displayName || user.name,
+        username: user.username || '',
+        avatarUrl: user.avatarUrl || '',
+        role: user.role,
+        bio: user.bio || '',
+        cricketProfile: user.cricketProfile || {},
+        organizerProfile: user.organizerProfile || {},
+        location: priv.showLocation !== false ? [user.village, user.district, user.state].filter(Boolean).join(', ') : '',
+        age: priv.showAge !== false ? computedAge : null,
+        phone: priv.showPhone === true ? (user.phone || '') : ''
+      },
+      stats: linkedPlayer ? linkedPlayer.stats : null,
+      recentMatches
     });
   } catch (err) {
     next(err);

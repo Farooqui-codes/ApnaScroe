@@ -49,6 +49,7 @@ describe('Express App HTTP, Security & RBAC Integration Checks', () => {
       '/profile.html',
       '/public-match.html',
       '/public-tournament.html',
+      '/public-profile.html',
       '/pricing.html',
       '/policies.html',
       '/admin-pro.html',

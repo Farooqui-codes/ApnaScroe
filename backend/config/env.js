@@ -14,5 +14,8 @@ module.exports = {
   maxUploadSize: Number(process.env.MAX_UPLOAD_SIZE) || 5 * 1024 * 1024,
   razorpayKeyId: process.env.RAZORPAY_KEY_ID || '',
   razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || '',
-  razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || ''
+  razorpayWebhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
+  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
+  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
+  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || ''
 };

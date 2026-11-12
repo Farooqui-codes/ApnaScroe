@@ -4,22 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#208B4E" />
-  <title>Profile – ApnaScore</title>
-  <meta name="description" content="Manage your ApnaScore profile, Guest Mode session, and safely migrate local matches, teams & players to your registered account." />
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="ApnaScore" />
-  <meta property="og:title" content="Scorer Profile & Guest Migration – ApnaScore" />
-  <meta property="og:description" content="Manage your ApnaScore profile, Guest Mode session, and safely migrate local matches, teams & players to your registered account." />
-  <meta property="og:image" content="/assets/images/apnascore-og-preview.jpg" />
-  <meta property="og:image:type" content="image/jpeg" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="ApnaScore – Your Local Cricket Scorer" />
-  <meta property="og:url" content="/profile.html" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Scorer Profile & Guest Migration – ApnaScore" />
-  <meta name="twitter:description" content="Manage your ApnaScore profile, Guest Mode session, and safely migrate local matches, teams & players to your registered account." />
-  <meta name="twitter:image" content="/assets/images/apnascore-og-preview.jpg" />
+  <title>My Profile – ApnaScore</title>
+  <meta name="description" content="Manage your ApnaScore profile, cricket stats, privacy controls, and guest-to-account migration." />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/css/style.css" />
@@ -30,12 +16,13 @@
 <body data-page="profile">
   <div id="appShell">
     <div class="main-content-slot">
+      <!-- Guest View -->
       <div class="card hidden mb-2" id="guestProfileCard" style="border-left:5px solid var(--brand-primary);">
         <div class="flex-between">
           <div>
             <span class="badge badge-warning mb-2">Guest Mode</span>
-            <h2 style="margin:4px 0;">Guest Scorer Session</h2>
-            <div class="text-sm text-muted" id="guestSessionMeta">Local IndexedDB data is preserved safely.</div>
+            <h2 style="margin:4px 0;">Create account to save your profile</h2>
+            <div class="text-sm text-muted" id="guestSessionMeta">Local IndexedDB data is preserved safely on this device.</div>
           </div>
           <div class="flex-gap">
             <a href="/register.html" class="btn btn-primary btn-sm">Create Account</a>
@@ -48,6 +35,7 @@
         </div>
       </div>
 
+      <!-- Guest Migration Banner -->
       <div class="card mb-2 hidden" id="migrateBannerCard" style="border:2px solid var(--brand-primary);background:var(--success-bg);">
         <div class="flex-between">
           <div>
@@ -58,35 +46,179 @@
         </div>
       </div>
 
+      <!-- Skeleton Loader -->
+      <div class="card mb-2 hidden" id="profSkeleton">
+        <div class="skeleton" style="height:24px;width:40%;margin-bottom:10px;"></div>
+        <div class="skeleton" style="height:64px;width:100%;"></div>
+      </div>
+
+      <!-- Profile Summary Card (View Mode) -->
       <div class="card mb-2" id="profileSummaryCard">
         <div class="flex-between">
           <div class="flex-gap">
             <img id="profAvatarImg" src="/assets/icons/apnascore-icon.png" class="avatar-circle" style="width:72px;height:72px;" alt="Avatar" />
             <div>
-              <h2 style="margin:0;" id="profNameHeading">Guest Scorer</h2>
-              <div class="text-sm text-muted" id="profRoleSub">Sign in to manage matches & tournaments</div>
+              <h1 style="margin:0;font-size:1.3rem;" id="profNameHeading">Scorer Profile</h1>
+              <div class="text-sm text-muted" id="profRoleSub">Loading profile...</div>
+              <div class="text-sm text-muted" id="profLocationLine"></div>
+              <div class="text-sm mt-1" id="profBioLine"></div>
             </div>
           </div>
           <div class="flex-gap">
-            <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
-              Change Photo <input type="file" accept="image/*" id="profAvatarInp" class="hidden" />
-            </label>
+            <button type="button" class="btn btn-primary btn-sm" id="toggleEditProfileBtn">Edit Profile</button>
+            <a id="profPublicLinkBtn" href="#" target="_blank" class="btn btn-secondary btn-sm hidden">Public Profile</a>
+            <a id="profShareWaBtn" href="#" target="_blank" rel="noopener" class="btn btn-lime btn-sm hidden">Share on WhatsApp</a>
             <button type="button" class="btn btn-danger btn-sm" id="profLogoutBtn">Logout</button>
           </div>
         </div>
+
+        <div id="profProgressWrap" class="mt-2 hidden">
+          <div class="flex-between text-sm mb-1">
+            <strong id="profPctLabel">Profile 0% complete</strong>
+            <span class="text-muted" id="profMissingHint"></span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="profProgressBar" style="transform:scaleX(0);"></div></div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-header"><h2 class="card-title">Edit Profile Details</h2></div>
-        <form id="profileUpdateForm">
-          <div class="form-grid-3">
-            <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="profNameInp" required /></div>
-            <div class="form-group"><label class="form-label">Village / City</label><input class="form-control" id="profVillageInp" /></div>
-            <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="profPhoneInp" /></div>
+      <!-- Edit Profile Form -->
+      <div class="card mb-2" id="profileEditCard">
+        <div class="card-header">
+          <h2 class="card-title">Update Your Profile</h2>
+          <div class="flex-gap">
+            <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+              Gallery Photo <input type="file" accept="image/png,image/jpeg,image/webp" id="profAvatarInp" class="hidden" />
+            </label>
+            <label class="btn btn-secondary btn-sm" style="cursor:pointer;">
+              Camera <input type="file" accept="image/png,image/jpeg,image/webp" capture="user" id="profCameraInp" class="hidden" />
+            </label>
+            <button type="button" class="btn btn-danger btn-sm" id="profRemoveAvatarBtn">Remove Photo</button>
           </div>
-          <button type="submit" class="btn btn-primary">Save Profile</button>
-          <a href="/settings.html" class="btn btn-secondary">Open Settings</a>
+        </div>
+
+        <form id="profileUpdateForm" novalidate>
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label" for="profNameInp">Full Name *</label><input class="form-control" id="profNameInp" required /></div>
+            <div class="form-group"><label class="form-label" for="profDisplayInp">Display Name / Nickname</label><input class="form-control" id="profDisplayInp" placeholder="e.g. RajuBhai" /></div>
+            <div class="form-group">
+              <label class="form-label" for="profUsernameInp">Username (unique)</label>
+              <input class="form-control" id="profUsernameInp" placeholder="e.g. raju_scorer" />
+              <span class="text-sm text-muted" id="profUsernameStatus"></span>
+            </div>
+          </div>
+
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label" for="profVillageInp">Village / City</label><input class="form-control" id="profVillageInp" /></div>
+            <div class="form-group"><label class="form-label" for="profDistrictInp">District</label><input class="form-control" id="profDistrictInp" /></div>
+            <div class="form-group"><label class="form-label" for="profStateInp">State</label><input class="form-control" id="profStateInp" /></div>
+          </div>
+
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label" for="profPhoneInp">Phone (Optional)</label><input class="form-control" id="profPhoneInp" type="tel" /></div>
+            <div class="form-group"><label class="form-label" for="profEmailInp">Email (Read-Only)</label><input class="form-control" id="profEmailInp" readonly /></div>
+            <div class="form-group"><label class="form-label" for="profAgeInp">Age (Optional)</label><input class="form-control" id="profAgeInp" type="number" min="6" max="100" /></div>
+          </div>
+
+          <div class="form-group">
+            <div class="flex-between"><label class="form-label" for="profBioInp">Short Bio</label><span class="text-sm text-muted" id="profBioCounter">0 / 150</span></div>
+            <textarea class="form-control" id="profBioInp" maxlength="150" rows="2" placeholder="Tell everyone about your cricket role or club..."></textarea>
+          </div>
+
+          <h3 class="card-title mb-2" style="font-size:0.98rem;">Cricket Details</h3>
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label" for="profRoleSel">Playing Role</label>
+              <select class="form-control" id="profRoleSel">
+                <option value="">Select Role</option>
+                <option value="Batsman">Batsman</option>
+                <option value="Bowler">Bowler</option>
+                <option value="All-rounder">All-rounder</option>
+                <option value="Wicketkeeper">Wicketkeeper</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label" for="profBatSel">Batting Style</label>
+              <select class="form-control" id="profBatSel">
+                <option value="">Select</option>
+                <option value="Right-hand bat">Right-hand bat</option>
+                <option value="Left-hand bat">Left-hand bat</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label" for="profBowlSel">Bowling Style</label>
+              <select class="form-control" id="profBowlSel">
+                <option value="">Select</option>
+                <option value="Fast">Fast</option>
+                <option value="Medium">Medium</option>
+                <option value="Spin">Spin</option>
+                <option value="None">None</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label" for="profJerseyInp">Jersey Number</label><input class="form-control" id="profJerseyInp" type="number" min="0" max="999" /></div>
+            <div class="form-group"><label class="form-label" for="profFavInp">Favourite Player</label><input class="form-control" id="profFavInp" placeholder="e.g. MS Dhoni" /></div>
+            <div class="form-group"><label class="form-label" for="profClubInp">Team / Club Name</label><input class="form-control" id="profClubInp" /></div>
+          </div>
+
+          <h3 class="card-title mb-2" style="font-size:0.98rem;">Organizer Details (Optional)</h3>
+          <div class="form-grid-2 mb-2">
+            <div class="form-group"><label class="form-label" for="profOrgNameInp">Organization / Cup Name</label><input class="form-control" id="profOrgNameInp" /></div>
+            <div class="form-group">
+              <label class="form-label">Organization Logo</label>
+              <label class="btn btn-secondary btn-sm" style="cursor:pointer;width:fit-content;">Upload Club Logo <input type="file" accept="image/png,image/jpeg,image/webp" id="profOrgLogoInp" class="hidden" /></label>
+            </div>
+          </div>
+
+          <h3 class="card-title mb-2" style="font-size:0.98rem;">Public Profile Privacy</h3>
+          <div class="form-grid-2 mb-2">
+            <div class="switch-row"><label for="privPublic">Public Profile Visible</label><input type="checkbox" class="toggle-check" id="privPublic" checked /></div>
+            <div class="switch-row"><label for="privLocation">Show Location (Village/State)</label><input type="checkbox" class="toggle-check" id="privLocation" checked /></div>
+            <div class="switch-row"><label for="privAge">Show Age</label><input type="checkbox" class="toggle-check" id="privAge" checked /></div>
+            <div class="switch-row"><label for="privPhone">Show Phone Number</label><input type="checkbox" class="toggle-check" id="privPhone" /></div>
+          </div>
+
+          <div class="flex-gap">
+            <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save Profile</button>
+            <a href="/settings.html" class="btn btn-secondary">Open Settings</a>
+          </div>
         </form>
+      </div>
+
+      <!-- Linked Player Stats & Recent Matches -->
+      <div class="card mb-2" id="profStatsCard">
+        <div class="card-header">
+          <h2 class="card-title">My Cricket Stats & Linked Player</h2>
+        </div>
+        <div class="flex-gap mb-2">
+          <select class="form-control" id="linkPlayerSel" style="max-width:300px;"><option value="">Not linked to a player yet</option></select>
+          <button type="button" class="btn btn-secondary btn-sm" id="saveLinkPlayerBtn">Link Player Profile</button>
+        </div>
+        <div id="profStatsGrid" class="kpi-grid mb-2"></div>
+        <div id="profRecentMatches"></div>
+      </div>
+
+      <!-- Data Control & Account Danger Zone -->
+      <div class="card" id="profAccountDataCard">
+        <div class="card-header"><h2 class="card-title">Account & Data Controls</h2></div>
+        <div class="flex-gap">
+          <button type="button" class="btn btn-secondary btn-sm" id="downloadMyDataBtn">Download My Data (JSON)</button>
+          <button type="button" class="btn btn-danger btn-sm" id="openDeleteAccBtn">Delete Account</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Account Confirmation Modal -->
+  <div class="modal-backdrop" id="deleteAccModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Delete Your Account</h3>
+        <button type="button" class="icon-btn" onclick="document.getElementById('deleteAccModal').classList.remove('open')">✕</button>
+      </div>
+      <p class="text-sm" style="color:var(--danger);font-weight:700;">Warning: This permanently deletes your ApnaScore login account. This cannot be undone.</p>
+      <div class="form-group">
+        <label class="form-label" for="delAccConfirmInp">Type DELETE to confirm</label>
+        <input class="form-control" id="delAccConfirmInp" placeholder="DELETE" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('deleteAccModal').classList.remove('open')">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteAccBtn">Delete Permanently</button>
       </div>
     </div>
   </div>
@@ -96,7 +228,6 @@
   <script src="/js/auth.js"></script>
   <script src="/js/offline-sync.js"></script>
   <script src="/js/migrate.js"></script>
-  <script src="/js/vendor/gsap.min.js"></script>
   <script src="/js/animations.js"></script>
   <script src="/js/main.js"></script>
   <script src="/js/settings.js"></script>

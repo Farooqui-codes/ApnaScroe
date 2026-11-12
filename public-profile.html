@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Player Profile – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/tournament.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <a href="/" class="brand-lockup"><img src="/assets/icons/apnascore-icon.png" alt="ApnaScore" style="width:32px;height:32px;border-radius:8px;" /><span class="topbar-page-title">ApnaScore Profile</span></a>
+    </div>
+    <div class="topbar-actions">
+      <a id="ppShareWaBtn" target="_blank" rel="noopener" class="btn btn-lime btn-sm">Share on WhatsApp</a>
+      <a href="/dashboard.html" class="btn btn-primary btn-sm">Open App</a>
+    </div>
+  </header>
+
+  <main class="page-content" style="max-width:860px;margin:0 auto;">
+    <div class="card mb-2" id="ppHeaderCard"><div class="empty-state">Loading profile...</div></div>
+    <div class="card mb-2 hidden" id="ppStatsCard"></div>
+    <div class="card hidden" id="ppMatchesCard"></div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    ApnaUI.applyTheme(localStorage.getItem('apnascore_theme') || 'light');
+    const id = new URLSearchParams(window.location.search).get('id');
+    document.getElementById('ppShareWaBtn').href = `https://wa.me/?text=${encodeURIComponent(`Check out this cricket profile on ApnaScore: ${window.location.href}`)}`;
+    (async function () {
+      if (!id) { document.getElementById('ppHeaderCard').innerHTML = '<div class="empty-state">No profile ID specified.</div>'; return; }
+      try {
+        const res = await ApnaAPI.get(`/api/public/profiles/${encodeURIComponent(id)}`);
+        const p = res.profile;
+        const cp = p.cricketProfile || {};
+        document.getElementById('ppHeaderCard').innerHTML = `
+          <div class="flex-gap">
+            <img src="${ApnaUI.escapeHtml(p.avatarUrl || '/assets/icons/apnascore-icon.png')}" class="avatar-circle" style="width:76px;height:76px;" alt="Avatar" />
+            <div>
+              <h1 style="margin:0;font-size:1.35rem;">${ApnaUI.escapeHtml(p.name)} ${p.username ? `<span class="text-sm text-muted">@${ApnaUI.escapeHtml(p.username)}</span>` : ''}</h1>
+              <div class="text-sm text-muted">${[cp.playingRole, cp.battingStyle, cp.bowlingStyle].filter(Boolean).map(ApnaUI.escapeHtml).join(' • ') || ApnaUI.escapeHtml(p.role)}</div>
+              <div class="text-sm text-muted">${[p.location, p.age ? `Age ${p.age}` : '', p.phone].filter(Boolean).map(ApnaUI.escapeHtml).join(' • ')}</div>
+              ${p.bio ? `<p class="text-sm mt-1" style="margin-bottom:0;">${ApnaUI.escapeHtml(p.bio)}</p>` : ''}
+            </div>
+          </div>
+        `;
+        if (res.stats) {
+          const st = res.stats;
+          const card = document.getElementById('ppStatsCard');
+          card.classList.remove('hidden');
+          card.innerHTML = `
+            <div class="card-header"><h2 class="card-title">Career Statistics</h2></div>
+            <div class="kpi-grid">
+              <div class="kpi-card"><span class="kpi-label">Matches</span><span class="kpi-value">${st.matches || 0}</span></div>
+              <div class="kpi-card"><span class="kpi-label">Runs</span><span class="kpi-value">${st.runs || 0}</span></div>
+              <div class="kpi-card"><span class="kpi-label">Wickets</span><span class="kpi-value">${st.wickets || 0}</span></div>
+              <div class="kpi-card"><span class="kpi-label">Best Score</span><span class="kpi-value">${st.highestScore || 0}${st.highestNotOut ? '*' : ''}</span></div>
+              <div class="kpi-card"><span class="kpi-label">Strike Rate</span><span class="kpi-value">${(st.strikeRate || 0).toFixed(1)}</span></div>
+            </div>
+          `;
+        }
+      } catch (err) {
+        document.getElementById('ppHeaderCard').innerHTML = `<div class="empty-state">${ApnaUI.escapeHtml(err.message)}</div>`;
+      }
+    }());
+  </script>
+</body>
+</html>

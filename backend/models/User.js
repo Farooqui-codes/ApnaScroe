@@ -16,6 +16,26 @@ const userSchema = new mongoose.Schema(
       index: true
     },
     avatarUrl: { type: String, default: '' },
+    displayName: { type: String, trim: true, maxlength: 50, default: '' },
+    username: { type: String, trim: true, lowercase: true, maxlength: 30, unique: true, sparse: true, index: true },
+    district: { type: String, trim: true, maxlength: 60, default: '' },
+    state: { type: String, trim: true, maxlength: 60, default: '' },
+    dob: { type: Date, default: null },
+    age: { type: Number, min: 6, max: 100, default: null },
+    bio: { type: String, trim: true, maxlength: 150, default: '' },
+    cricketProfile: {
+      playingRole: { type: String, enum: ['Batsman', 'Bowler', 'All-rounder', 'Wicketkeeper', ''], default: '' },
+      battingStyle: { type: String, enum: ['Right-hand bat', 'Left-hand bat', ''], default: '' },
+      bowlingStyle: { type: String, enum: ['Fast', 'Medium', 'Spin', 'None', ''], default: '' },
+      jerseyNumber: { type: Number, min: 0, max: 999, default: null },
+      favouritePlayer: { type: String, trim: true, maxlength: 60, default: '' },
+      clubName: { type: String, trim: true, maxlength: 80, default: '' }
+    },
+    organizerProfile: {
+      orgName: { type: String, trim: true, maxlength: 100, default: '' },
+      orgLogoUrl: { type: String, default: '' }
+    },
+    linkedPlayerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', default: null },
     isActive: { type: Boolean, default: true },
     proExpiresAt: { type: Date, default: null },
     preferences: {
@@ -28,7 +48,10 @@ const userSchema = new mongoose.Schema(
       },
       privacy: {
         showProfilePublicly: { type: Boolean, default: true },
-        showPhoneToOrganizers: { type: Boolean, default: false }
+        showPhoneToOrganizers: { type: Boolean, default: false },
+        showPhone: { type: Boolean, default: false },
+        showAge: { type: Boolean, default: true },
+        showLocation: { type: Boolean, default: true }
       },
       defaultScoring: {
         overs: { type: Number, default: 6 },

@@ -159,7 +159,21 @@
             <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark mode"></button>
             ${
               user
-                ? `<a href="/profile.html" class="btn btn-secondary btn-sm hide-on-mobile">${escapeHtml(user.name.split(' ')[0])}</a>`
+                ? `<div class="profile-menu-wrap">
+                    <button type="button" class="profile-trigger-btn" id="profileMenuTrigger" aria-expanded="false" aria-label="Account menu">
+                      ${user.avatarUrl
+                        ? `<img src="${escapeHtml(user.avatarUrl)}" alt="${escapeHtml(user.name)}" class="avatar-initials" />`
+                        : `<span class="avatar-initials">${escapeHtml((user.name || 'U').split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 2))}</span>`}
+                      <span class="hide-on-mobile">${escapeHtml((user.displayName || user.name || 'User').split(' ')[0])}</span>
+                    </button>
+                    <div class="profile-dropdown" id="profileDropdownMenu">
+                      <a href="/profile.html">My Profile</a>
+                      <a href="/my-matches.html">My Matches</a>
+                      <a href="/tournament.html">My Tournaments</a>
+                      <a href="/settings.html">Settings</a>
+                      <button type="button" id="topDropdownLogoutBtn" style="color:var(--danger);">Logout</button>
+                    </div>
+                  </div>`
                 : (root.ApnaAuth && root.ApnaAuth.isGuest()
                   ? `<a href="/profile.html" class="badge badge-warning" title="Guest Mode active">Guest Mode</a><a href="/register.html" class="btn btn-primary btn-sm hide-on-mobile">Create Account</a>`
                   : `<a href="/login.html" class="btn btn-primary btn-sm">Login</a>`)
@@ -173,6 +187,76 @@
     `;
 
     applyTheme(localStorage.getItem(THEME_KEY) || 'light');
+
+    // Profile Dropdown Bindings
+    const pTrig = document.getElementById('profileMenuTrigger');
+    const pMenu = document.getElementById('profileDropdownMenu');
+    if (pTrig && pMenu) {
+      pTrig.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const open = pMenu.classList.toggle('open');
+        pTrig.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+      document.addEventListener('click', () => {
+        pMenu.classList.remove('open');
+        pTrig.setAttribute('aria-expanded', 'false');
+      });
+      document.getElementById('topDropdownLogoutBtn')?.addEventListener('click', () => root.ApnaAuth?.logout());
+    }
+
+    // Non-annoying Profile Completion Reminder (once per session, stops after 3 dismissals)
+    if (user && activePage !== 'profile') {
+      const fields = [
+        { ok: Boolean(user.name), label: 'Full Name' },
+        { ok: Boolean(user.username), label: 'Username' },
+        { ok: Boolean(user.village), label: 'Village/City' },
+        { ok: Boolean(user.avatarUrl), label: 'Photo' },
+        { ok: Boolean(user.bio), label: 'Bio' },
+        { ok: Boolean(user.cricketProfile && user.cricketProfile.playingRole), label: 'Cricket Role' }
+      ];
+      const doneCount = fields.filter((f) => f.ok).length;
+      const pct = Math.round((doneCount / fields.length) * 100);
+      const dismissals = Number(localStorage.getItem('apna_prof_dismiss_count') || 0);
+      if (pct < 100 && dismissals < 3 && sessionStorage.getItem('apna_prof_prompt_seen') !== '1') {
+        sessionStorage.setItem('apna_prof_prompt_seen', '1');
+        const missing = fields.filter((f) => !f.ok).slice(0, 2).map((f) => f.label).join(', ');
+        const slot = document.getElementById('pageContentSlot');
+        if (slot) {
+          const banner = document.createElement('div');
+          banner.className = 'card mb-2';
+          banner.id = 'apnaProfilePromptBanner';
+          banner.style.borderLeft = '5px solid var(--brand-primary)';
+          banner.innerHTML = `
+            <div class="flex-between">
+              <div>
+                <strong>Apni profile update karein</strong> <span class="badge badge-success">Profile ${pct}% complete</span>
+                <div class="text-sm text-muted">Missing: ${escapeHtml(missing)}</div>
+              </div>
+              <div class="flex-gap">
+                <a href="/profile.html" class="btn btn-primary btn-sm">Update Profile</a>
+                <button type="button" class="btn btn-secondary btn-sm" id="profPromptLaterBtn">Baad me</button>
+              </div>
+            </div>
+          `;
+          slot.prepend(banner);
+          document.getElementById('profPromptLaterBtn').onclick = () => {
+            localStorage.setItem('apna_prof_dismiss_count', String(dismissals + 1));
+            banner.remove();
+          };
+        }
+      }
+    }
+
+    // Flush queued offline profile edit if back online
+    if (user && navigator.onLine && localStorage.getItem('apnascore_pending_profile') && root.ApnaAPI) {
+      try {
+        const queued = JSON.parse(localStorage.getItem('apnascore_pending_profile'));
+        root.ApnaAPI.put('/api/auth/profile', queued).then((res) => {
+          localStorage.removeItem('apnascore_pending_profile');
+          if (res?.user) root.ApnaAPI.setSession(root.ApnaAPI.getToken(), res.user);
+        }).catch(() => {});
+      } catch (_) {}
+    }
 
     // Bind Shell Controls
     document.getElementById('themeToggleBtn')?.addEventListener('click', toggleTheme);

@@ -31,6 +31,7 @@ const playerSchema = new mongoose.Schema(
       default: 'All-rounder'
     },
     teams: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Team' }],
+    linkedUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     stats: {
       matches: { type: Number, default: 0 },

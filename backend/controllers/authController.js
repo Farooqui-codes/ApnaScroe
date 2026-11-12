@@ -2,6 +2,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const config = require('../config/env');
 const User = require('../models/User');
+const Player = require('../models/Player');
+const Match = require('../models/Match');
+const Team = require('../models/Team');
+const { storeUploadedImage } = require('../services/imageStorageService');
 const { logAudit } = require('../utils/logger');
 
 function signToken(user) {
@@ -98,15 +102,99 @@ async function me(req, res) {
   res.json({ success: true, user: req.user.toSafeJSON() });
 }
 
+async function checkUsername(req, res, next) {
+  try {
+    const raw = String(req.query.username || '').trim().toLowerCase();
+    if (!/^[a-z0-9_]{3,24}$/.test(raw)) {
+      return res.json({ success: true, available: false, reason: 'Use 3–24 lowercase letters, numbers, or underscores.' });
+    }
+    const existing = await User.findOne({ username: raw, _id: { $ne: req.user._id } }).select('_id').lean();
+    res.json({ success: true, available: !existing });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function updateProfile(req, res, next) {
   try {
-    const { name, phone, village, avatarUrl } = req.body;
+    const {
+      name, phone, village, avatarUrl, displayName, username,
+      district, state, dob, age, bio, cricketProfile, organizerProfile, privacy
+    } = req.body;
     const user = req.user;
-    if (name) user.name = String(name).trim();
-    if (phone !== undefined) user.phone = String(phone).trim();
-    if (village !== undefined) user.village = String(village).trim();
+
+    if (name !== undefined) {
+      const cleanName = String(name).trim();
+      if (!cleanName) return res.status(400).json({ success: false, message: 'Full name cannot be empty.' });
+      user.name = cleanName.slice(0, 80);
+    }
+    if (displayName !== undefined) user.displayName = String(displayName).trim().slice(0, 50);
+    if (username !== undefined) {
+      const cleanUser = String(username).trim().toLowerCase();
+      if (cleanUser === '') {
+        user.username = undefined;
+      } else {
+        if (!/^[a-z0-9_]{3,24}$/.test(cleanUser)) {
+          return res.status(400).json({ success: false, message: 'Username must be 3–24 characters (letters, numbers, underscore).' });
+        }
+        const taken = await User.findOne({ username: cleanUser, _id: { $ne: user._id } }).select('_id').lean();
+        if (taken) return res.status(409).json({ success: false, message: 'Username is already taken.' });
+        user.username = cleanUser;
+      }
+    }
+    if (phone !== undefined) {
+      const cleanPhone = String(phone).replace(/[^\d+\s-]/g, '').trim();
+      if (cleanPhone && cleanPhone.replace(/\D/g, '').length < 8) {
+        return res.status(400).json({ success: false, message: 'Please enter a valid phone number.' });
+      }
+      user.phone = cleanPhone;
+    }
+    if (village !== undefined) user.village = String(village).trim().slice(0, 80);
+    if (district !== undefined) user.district = String(district).trim().slice(0, 60);
+    if (state !== undefined) user.state = String(state).trim().slice(0, 60);
+    if (dob !== undefined) user.dob = dob ? new Date(dob) : null;
+    if (age !== undefined) user.age = (age === '' || age === null) ? null : Math.max(6, Math.min(100, Number(age)));
+    if (bio !== undefined) user.bio = String(bio).trim().slice(0, 150);
     if (avatarUrl !== undefined) user.avatarUrl = String(avatarUrl).trim();
+
+    if (cricketProfile && typeof cricketProfile === 'object') {
+      user.cricketProfile = Object.assign({}, user.cricketProfile || {}, {
+        playingRole: cricketProfile.playingRole ?? user.cricketProfile?.playingRole ?? '',
+        battingStyle: cricketProfile.battingStyle ?? user.cricketProfile?.battingStyle ?? '',
+        bowlingStyle: cricketProfile.bowlingStyle ?? user.cricketProfile?.bowlingStyle ?? '',
+        jerseyNumber: (cricketProfile.jerseyNumber === '' || cricketProfile.jerseyNumber === null)
+          ? null
+          : (cricketProfile.jerseyNumber !== undefined ? Number(cricketProfile.jerseyNumber) : user.cricketProfile?.jerseyNumber),
+        favouritePlayer: cricketProfile.favouritePlayer !== undefined ? String(cricketProfile.favouritePlayer).trim().slice(0, 60) : (user.cricketProfile?.favouritePlayer || ''),
+        clubName: cricketProfile.clubName !== undefined ? String(cricketProfile.clubName).trim().slice(0, 80) : (user.cricketProfile?.clubName || '')
+      });
+    }
+
+    if (organizerProfile && typeof organizerProfile === 'object') {
+      user.organizerProfile = Object.assign({}, user.organizerProfile || {}, {
+        orgName: organizerProfile.orgName !== undefined ? String(organizerProfile.orgName).trim().slice(0, 100) : (user.organizerProfile?.orgName || '')
+      });
+    }
+
+    if (privacy && typeof privacy === 'object') {
+      user.preferences = user.preferences || {};
+      user.preferences.privacy = Object.assign({}, user.preferences.privacy || {}, {
+        showProfilePublicly: privacy.showProfilePublicly !== undefined ? Boolean(privacy.showProfilePublicly) : (user.preferences.privacy?.showProfilePublicly ?? true),
+        showPhone: privacy.showPhone !== undefined ? Boolean(privacy.showPhone) : (user.preferences.privacy?.showPhone ?? false),
+        showAge: privacy.showAge !== undefined ? Boolean(privacy.showAge) : (user.preferences.privacy?.showAge ?? true),
+        showLocation: privacy.showLocation !== undefined ? Boolean(privacy.showLocation) : (user.preferences.privacy?.showLocation ?? true)
+      });
+    }
+
     await user.save();
+
+    if (user.linkedPlayerId) {
+      await Player.findByIdAndUpdate(user.linkedPlayerId, {
+        name: user.displayName || user.name,
+        photoUrl: user.avatarUrl || '',
+        village: user.village || 'Local Ground'
+      }).catch(() => {});
+    }
 
     res.json({ success: true, user: user.toSafeJSON() });
   } catch (err) {
@@ -142,9 +230,117 @@ async function uploadAvatar(req, res, next) {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No image file uploaded.' });
     }
-    req.user.avatarUrl = `/assets/uploads/${req.file.filename}`;
+    const url = await storeUploadedImage(req.file, 'apnascore/avatars');
+    req.user.avatarUrl = url;
     await req.user.save();
-    res.json({ success: true, avatarUrl: req.user.avatarUrl, user: req.user.toSafeJSON() });
+    if (req.user.linkedPlayerId) {
+      await Player.findByIdAndUpdate(req.user.linkedPlayerId, { photoUrl: url }).catch(() => {});
+    }
+    res.json({ success: true, avatarUrl: url, user: req.user.toSafeJSON() });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function removeAvatar(req, res, next) {
+  try {
+    req.user.avatarUrl = '';
+    await req.user.save();
+    if (req.user.linkedPlayerId) {
+      await Player.findByIdAndUpdate(req.user.linkedPlayerId, { photoUrl: '' }).catch(() => {});
+    }
+    res.json({ success: true, user: req.user.toSafeJSON() });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function uploadOrgLogo(req, res, next) {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'No logo file uploaded.' });
+    const url = await storeUploadedImage(req.file, 'apnascore/org-logos');
+    req.user.organizerProfile = Object.assign({}, req.user.organizerProfile || {}, { orgLogoUrl: url });
+    await req.user.save();
+    res.json({ success: true, orgLogoUrl: url, user: req.user.toSafeJSON() });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getProfileStats(req, res, next) {
+  try {
+    const user = req.user;
+    const [linkedPlayer, myPlayers, recentMatches] = await Promise.all([
+      user.linkedPlayerId ? Player.findById(user.linkedPlayerId).lean() : null,
+      Player.find({ userId: user._id }).select('name village role stats photoUrl').sort({ createdAt: -1 }).limit(50).lean(),
+      Match.find({ $or: [{ userId: user._id }, { scorerId: user._id }] })
+        .select('title status matchDate oversPerInnings result')
+        .sort({ matchDate: -1 })
+        .limit(8)
+        .lean()
+    ]);
+
+    res.json({ success: true, linkedPlayer, myPlayers, recentMatches });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function linkPlayer(req, res, next) {
+  try {
+    const { playerId } = req.body || {};
+    if (!playerId) {
+      req.user.linkedPlayerId = null;
+      await req.user.save();
+      return res.json({ success: true, user: req.user.toSafeJSON(), linkedPlayer: null });
+    }
+    const player = await Player.findById(playerId);
+    if (!player) return res.status(404).json({ success: false, message: 'Player not found.' });
+    if (req.user.role !== 'super_admin' && String(player.userId) !== String(req.user._id)) {
+      return res.status(403).json({ success: false, message: 'You can only link a player profile you created.' });
+    }
+
+    req.user.linkedPlayerId = player._id;
+    await req.user.save();
+    player.linkedUserId = req.user._id;
+    if (req.user.avatarUrl) player.photoUrl = req.user.avatarUrl;
+    await player.save();
+
+    res.json({ success: true, user: req.user.toSafeJSON(), linkedPlayer: player });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function exportMyData(req, res, next) {
+  try {
+    const [matches, teams, players] = await Promise.all([
+      Match.find({ userId: req.user._id }).lean(),
+      Team.find({ userId: req.user._id }).lean(),
+      Player.find({ userId: req.user._id }).lean()
+    ]);
+    res.setHeader('Content-Disposition', 'attachment; filename="apnascore_my_data.json"');
+    res.json({
+      exportedAt: new Date().toISOString(),
+      profile: req.user.toSafeJSON(),
+      matches,
+      teams,
+      players
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteMyAccount(req, res, next) {
+  try {
+    const { confirmText } = req.body || {};
+    if (confirmText !== 'DELETE') {
+      return res.status(400).json({ success: false, message: 'Type DELETE to confirm account deletion.' });
+    }
+    await User.findByIdAndDelete(req.user._id);
+    await logAudit({ req, action: 'USER_DELETED_SELF', entityType: 'User', entityId: req.user._id });
+    res.json({ success: true, message: 'Your account has been permanently deleted.' });
   } catch (err) {
     next(err);
   }
@@ -154,7 +350,14 @@ module.exports = {
   register,
   login,
   me,
+  checkUsername,
   updateProfile,
   changePassword,
-  uploadAvatar
+  uploadAvatar,
+  removeAvatar,
+  uploadOrgLogo,
+  getProfileStats,
+  linkPlayer,
+  exportMyData,
+  deleteMyAccount
 };

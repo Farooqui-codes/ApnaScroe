@@ -131,7 +131,7 @@
     get: (p) => request(p, { method: 'GET' }),
     post: (p, body) => request(p, { method: 'POST', body }),
     put: (p, body) => request(p, { method: 'PUT', body }),
-    del: (p) => request(p, { method: 'DELETE' }),
+    del: (p, body) => request(p, body !== undefined ? { method: 'DELETE', body } : { method: 'DELETE' }),
     upload: (p, formData) => request(p, { method: 'POST', body: formData })
   };
 }(window));
