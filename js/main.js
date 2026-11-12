@@ -137,14 +137,24 @@
           </a>
           <button class="icon-btn" id="closeDrawerBtn" aria-label="Close menu">${root.ApnaIcons.icon('x', 18)}</button>
         </div>
-        <nav class="sidebar-nav">${navHtml}</nav>
+        <div class="drawer-status-row" id="drawerOnlineStatus" role="status">
+          <span class="status-dot ${navigator.onLine ? 'online' : 'offline'}" id="drawerStatusDot"></span>
+          <span id="drawerStatusText">${navigator.onLine ? 'Online' : 'Offline'}</span>
+        </div>
+        <nav class="sidebar-nav" id="mobileDrawerNav">
+          ${navHtml}
+          <button type="button" class="nav-item hidden" id="drawerInstallBtn" style="width:100%;text-align:left;background:none;border:0;cursor:pointer;">
+            ${root.ApnaIcons.icon('plusBat', 20)}<span class="nav-label">Install App</span>
+          </button>
+          <div class="drawer-ios-tip hidden" id="drawerIosTip">Install: Tap <strong>Share → Add to Home Screen</strong></div>
+        </nav>
       </aside>
 
       <div class="main-area">
         <header class="topbar">
           <div class="topbar-left">
             <button class="icon-btn desktop-sidebar-toggle" id="sidebarCollapseBtn" aria-label="Toggle sidebar">${root.ApnaIcons.icon('menu', 18)}</button>
-            <button class="icon-btn topbar-mobile-brand" id="openDrawerBtn" aria-label="Open menu">${root.ApnaIcons.icon('menu', 18)}</button>
+            <button class="icon-btn topbar-mobile-brand" id="openDrawerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">${root.ApnaIcons.icon('menu', 18)}</button>
             <a href="/dashboard.html" class="topbar-mobile-brand">
               <img src="/assets/icons/apnascore-icon.png" alt="ApnaScore" style="width:32px;height:32px;border-radius:8px;object-fit:contain;" />
             </a>
@@ -269,13 +279,57 @@
 
     const drawer = document.getElementById('mobileDrawer');
     const backdrop = document.getElementById('mobileDrawerBackdrop');
+    const openDrawerBtn = document.getElementById('openDrawerBtn');
+    const closeDrawerBtn = document.getElementById('closeDrawerBtn');
     const toggleDrawer = (open) => {
-      drawer?.classList.toggle('open', open);
+      if (!drawer) return;
+      drawer.classList.toggle('open', open);
       backdrop?.classList.toggle('open', open);
+      openDrawerBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        setTimeout(() => closeDrawerBtn?.focus(), 60);
+      } else {
+        openDrawerBtn?.focus();
+      }
     };
-    document.getElementById('openDrawerBtn')?.addEventListener('click', () => toggleDrawer(true));
-    document.getElementById('closeDrawerBtn')?.addEventListener('click', () => toggleDrawer(false));
+    openDrawerBtn?.addEventListener('click', () => toggleDrawer(true));
+    closeDrawerBtn?.addEventListener('click', () => toggleDrawer(false));
     backdrop?.addEventListener('click', () => toggleDrawer(false));
+    drawer?.querySelectorAll('a.nav-item').forEach((link) => {
+      link.addEventListener('click', () => toggleDrawer(false));
+    });
+    document.addEventListener('keydown', (e) => {
+      if (!drawer || !drawer.classList.contains('open')) return;
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        toggleDrawer(false);
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusables = Array.from(drawer.querySelectorAll('a[href], button:not([disabled]):not(.hidden)')).filter((el) => el.offsetParent !== null);
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    const updateDrawerNetwork = () => {
+      const dot = document.getElementById('drawerStatusDot');
+      const txt = document.getElementById('drawerStatusText');
+      const online = navigator.onLine;
+      if (dot) dot.className = `status-dot ${online ? 'online' : 'offline'}`;
+      if (txt) txt.textContent = online ? 'Online' : 'Offline';
+    };
+    window.addEventListener('online', updateDrawerNetwork);
+    window.addEventListener('offline', updateDrawerNetwork);
+    updateDrawerNetwork();
 
     // Sync status pill binding
     const syncPill = document.getElementById('globalSyncPill');
@@ -308,19 +362,40 @@
     }
 
     const installBtn = document.getElementById('pwaInstallBtn');
-    if (installBtn && root.__apnaInstallPrompt) {
-      installBtn.classList.remove('hidden');
-    }
-    if (installBtn) {
-      installBtn.addEventListener('click', async () => {
-        const promptEvt = root.__apnaInstallPrompt;
-        if (!promptEvt) return;
-        promptEvt.prompt();
-        await promptEvt.userChoice.catch(() => {});
-        root.__apnaInstallPrompt = null;
-        installBtn.classList.add('hidden');
-      });
-    }
+    const drawerInstallBtn = document.getElementById('drawerInstallBtn');
+    const drawerIosTip = document.getElementById('drawerIosTip');
+    const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    const isIosSafari = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+    const syncInstallButtons = () => {
+      if (isStandalone) {
+        installBtn?.classList.add('hidden');
+        drawerInstallBtn?.classList.add('hidden');
+        drawerIosTip?.classList.add('hidden');
+        return;
+      }
+      if (root.__apnaInstallPrompt) {
+        installBtn?.classList.remove('hidden');
+        drawerInstallBtn?.classList.remove('hidden');
+        drawerIosTip?.classList.add('hidden');
+      } else if (isIosSafari) {
+        drawerIosTip?.classList.remove('hidden');
+      }
+    };
+    syncInstallButtons();
+
+    const triggerInstall = async () => {
+      const promptEvt = root.__apnaInstallPrompt;
+      if (!promptEvt) return;
+      promptEvt.prompt();
+      await promptEvt.userChoice.catch(() => {});
+      root.__apnaInstallPrompt = null;
+      installBtn?.classList.add('hidden');
+      drawerInstallBtn?.classList.add('hidden');
+      toggleDrawer(false);
+    };
+    installBtn?.addEventListener('click', triggerInstall);
+    drawerInstallBtn?.addEventListener('click', triggerInstall);
 
     return true;
   }
@@ -329,7 +404,12 @@
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       root.__apnaInstallPrompt = e;
-      document.getElementById('pwaInstallBtn')?.classList.remove('hidden');
+      const isStandalone = window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      if (!isStandalone) {
+        document.getElementById('pwaInstallBtn')?.classList.remove('hidden');
+        document.getElementById('drawerInstallBtn')?.classList.remove('hidden');
+        document.getElementById('drawerIosTip')?.classList.add('hidden');
+      }
     });
   }
 

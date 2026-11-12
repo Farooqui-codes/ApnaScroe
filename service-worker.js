@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apnascore-shell-v9';
+const CACHE_NAME = 'apnascore-shell-v10';
 
 const APP_SHELL_ASSETS = [
   '/',
@@ -62,6 +62,8 @@ const APP_SHELL_ASSETS = [
   '/js/vendor/jspdf.plugin.autotable.min.js',
   '/assets/logos/apnascore-logo.png',
   '/assets/images/apnascore-og-preview.jpg',
+  '/assets/images/umair-farooqui.webp',
+  '/assets/images/umair-farooqui.jpg',
   '/assets/icons/apnascore-icon.png',
   '/assets/icons/favicon-32.png',
   '/assets/icons/icon-192.png',

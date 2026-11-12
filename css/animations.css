@@ -329,4 +329,86 @@ button:disabled, .btn:disabled, .btn[aria-disabled="true"] {
     transform: rotate(-5deg) scale(1.05);
     transition: transform var(--hover-mid) var(--hover-ease);
   }
+  .dev-social-btn:hover {
+    transform: translateY(-3px) scale(1.08);
+    color: #FFFFFF;
+    border-color: transparent;
+    box-shadow: var(--shadow-md);
+  }
+  .dev-social-btn.dev-wa:hover { background: #25D366; }
+  .dev-social-btn.dev-ig:hover { background: linear-gradient(135deg, #F58529, #DD2A7B, #8134AF); }
+  .dev-social-btn.dev-mail:hover { background: var(--brand-primary); }
+}
+
+/* 11. Meet the Developer Card */
+.dev-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
+}
+.dev-photo-wrap {
+  flex-shrink: 0;
+  width: 136px;
+  height: 136px;
+}
+.dev-photo {
+  width: 136px;
+  height: 136px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--brand-primary);
+  box-shadow: 0 8px 22px rgba(32, 139, 78, 0.22);
+  display: block;
+  transition: transform var(--hover-mid) var(--hover-ease);
+}
+.reveal.revealed .dev-photo { transform: scale(1); }
+.reveal:not(.revealed) .dev-photo { transform: scale(0.92); }
+.dev-info { flex: 1; min-width: 0; }
+.dev-kicker {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-brand);
+  margin-bottom: 4px;
+}
+.dev-name {
+  margin: 0 0 6px;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--text-primary);
+}
+.dev-bio {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+.dev-social-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.dev-social-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform var(--hover-fast) var(--hover-ease), background-color var(--hover-fast) ease, color var(--hover-fast) ease, box-shadow var(--hover-fast) ease;
+}
+.dev-social-btn:active { transform: scale(0.94); }
+.dev-social-btn:focus-visible { outline: 2px solid var(--brand-primary); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .dev-card { flex-direction: column; text-align: center; padding: 20px 16px; gap: 16px; }
+  .dev-social-row { justify-content: center; }
 }

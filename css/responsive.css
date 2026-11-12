@@ -46,9 +46,48 @@ body.scoring-active .main-area {
   .form-grid-3 {
     grid-template-columns: 1fr;
   }
-  .hide-on-mobile {
+  .hide-on-mobile,
+  #pwaInstallBtn,
+  #globalSyncPill,
+  #themeToggleBtn {
     display: none !important;
   }
+}
+
+.drawer-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin: 8px 12px 4px;
+  border-radius: 10px;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-color);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.status-dot.online { background: #16A34A; box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2); }
+.status-dot.offline { background: #D97706; box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.22); }
+.drawer-ios-tip {
+  margin: 8px 14px 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-surface-alt);
+  border: 1px dashed var(--border-color);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+#mobileDrawer .nav-item {
+  min-height: 46px;
+  padding: 11px 14px;
 }
 
 @media (max-width: 480px) {
