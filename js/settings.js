@@ -431,11 +431,17 @@
     themeSel.onchange = () => ApnaUI.applyTheme(themeSel.value);
 
     document.getElementById('setOutdoor').checked = localStorage.getItem('apnascore_outdoor_mode') === '1';
+    const fxEl = document.getElementById('setEffects');
+    if (fxEl) {
+      fxEl.checked = localStorage.getItem('apnascore_effects') !== '0';
+      fxEl.onchange = () => localStorage.setItem('apnascore_effects', fxEl.checked ? '1' : '0');
+    }
 
     await loadSettingsData();
 
     document.getElementById('saveAllSettingsBtn').onclick = async () => {
       localStorage.setItem('apnascore_outdoor_mode', document.getElementById('setOutdoor').checked ? '1' : '0');
+      if (fxEl) localStorage.setItem('apnascore_effects', fxEl.checked ? '1' : '0');
       ApnaUI.applyTheme(themeSel.value);
       if (!ApnaAuth.isLoggedIn()) {
         ApnaUI.showToast('Theme & outdoor display settings saved locally.');

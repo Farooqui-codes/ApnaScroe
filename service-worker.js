@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apnascore-shell-v8';
+const CACHE_NAME = 'apnascore-shell-v9';
 
 const APP_SHELL_ASSETS = [
   '/',
@@ -29,6 +29,14 @@ const APP_SHELL_ASSETS = [
   '/css/scoring.css',
   '/css/tournament.css',
   '/css/animations.css',
+  '/js/vendor/gsap.min.js',
+  '/js/vendor/ScrollTrigger.min.js',
+  '/js/vendor/lenis.min.js',
+  '/js/vendor/lottie_light.min.js',
+  '/assets/lottie/six.json',
+  '/assets/lottie/four.json',
+  '/assets/lottie/wicket.json',
+  '/js/animations.js',
   '/js/icons.js',
   '/js/api.js',
   '/js/auth.js',
