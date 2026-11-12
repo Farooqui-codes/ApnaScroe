@@ -76,8 +76,9 @@
       el.id = 'apnaColdStartBanner';
       el.className = 'cold-start-banner';
       el.setAttribute('role', 'status');
-      el.textContent = 'Server jaag raha hai, thoda wait karein...';
+      el.textContent = 'Server is waking up, please wait a moment...';
       document.body.appendChild(el);
+      window.dispatchEvent(new CustomEvent('apna:server-waking'));
     };
     const hideWakeNotice = () => {
       if (wakeTimer) clearTimeout(wakeTimer);

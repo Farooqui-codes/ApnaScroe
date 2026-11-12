@@ -10,8 +10,8 @@
   const STEPS = [
     {
       title: 'Welcome to ApnaScore',
-      subtitle: 'Apne Gaon ka Apna Scorer',
-      body: 'Score any gully, village, or tournament cricket match right from your phone — fast, clear, and works even without internet.',
+      subtitle: 'Your Local Cricket Scorer',
+      body: 'Score any local, club, or tournament cricket match right from your phone — fast, clear, and works even without internet.',
       badge: 'Step 1 of 4'
     },
     {

@@ -117,7 +117,7 @@
             <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore" class="brand-logo-img" />
             <div class="brand-text-wrap">
               <span class="brand-title">ApnaScore</span>
-              <span class="brand-tagline">Apne Gaon ka Apna Scorer</span>
+              <span class="brand-tagline">Your Local Cricket Scorer</span>
             </div>
           </a>
         </div>
@@ -131,7 +131,7 @@
             <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore" class="brand-logo-img" />
             <div class="brand-text-wrap">
               <span class="brand-title">ApnaScore</span>
-              <span class="brand-tagline">Apne Gaon ka Apna Scorer</span>
+              <span class="brand-tagline">Your Local Cricket Scorer</span>
             </div>
           </a>
           <button class="icon-btn" id="closeDrawerBtn" aria-label="Close menu">${root.ApnaIcons.icon('x', 18)}</button>

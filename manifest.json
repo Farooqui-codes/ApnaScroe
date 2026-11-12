@@ -1,7 +1,7 @@
 {
-  "name": "ApnaScore – Apne Gaon ka Apna Scorer",
+  "name": "ApnaScore – Your Local Cricket Scorer",
   "short_name": "ApnaScore",
-  "description": "Complete Cricket Scoring & Tournament Management Platform – Har Gaon Ka Apna Cricket Scoreboard.",
+  "description": "Simple Cricket Scoring & Tournament Management App – Every Match, Every Ball, Scored Live.",
   "start_url": "/dashboard.html",
   "scope": "/",
   "display": "standalone",

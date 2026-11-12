@@ -1,58 +1,90 @@
-/* Lightweight Animations & Celebrations (prefers-reduced-motion aware) */
-@keyframes pulseLive {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.45; transform: scale(1.25); }
+/* ApnaScore Lightweight Animations & Micro-Interactions (GPU transform/opacity only) */
+@keyframes pulseLive { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.45;transform:scale(1.25)} }
+@keyframes skeletonShimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+@keyframes pageEnter { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes floatItem { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes scoreFlipPop { 0%{transform:scale(1)} 40%{transform:scale(1.12)} 100%{transform:scale(1)} }
+@keyframes screenShake {
+  0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)}
 }
-
-@keyframes skeletonShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
 @keyframes popCelebration {
-  0% { opacity: 0; transform: scale(0.75) translateY(16px); }
-  20% { opacity: 1; transform: scale(1.06) translateY(0); }
-  80% { opacity: 1; transform: scale(1) translateY(0); }
-  100% { opacity: 0; transform: scale(0.95) translateY(-12px); }
+  0%{opacity:0;transform:translate(-50%,16px) scale(.8)} 18%{opacity:1;transform:translate(-50%,0) scale(1.06)}
+  82%{opacity:1;transform:translate(-50%,0) scale(1)} 100%{opacity:0;transform:translate(-50%,-10px) scale(.95)}
+}
+@keyframes flyBall {
+  0%{opacity:0;transform:translate(-40px,24px) scale(.7)} 40%{opacity:1} 100%{opacity:0;transform:translate(52px,-38px) scale(1.15)}
+}
+@keyframes toastSlideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes modalPopIn { from{opacity:0;transform:scale(.96) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+@keyframes inputShake {
+  0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 50%{transform:translateX(5px)} 75%{transform:translateX(-3px)}
+}
+@keyframes rippleOut { from{opacity:.45;transform:scale(0)} to{opacity:0;transform:scale(2.4)} }
+
+.live-dot { animation: pulseLive 1.5s infinite ease-in-out; }
+.page-content, .lp-container { animation: pageEnter .24s ease-out; }
+.float-slow { animation: floatItem 3.6s ease-in-out infinite; }
+.score-pop { animation: scoreFlipPop .3s ease-out; }
+.screen-shake { animation: screenShake .36s ease-in-out; }
+.input-shake { animation: inputShake .3s ease-in-out; border-color: var(--danger) !important; }
+.toast { animation: toastSlideIn .2s ease-out; }
+.modal-backdrop.open .modal-dialog { animation: modalPopIn .2s ease-out; }
+
+/* Micro-interactions: buttons & cards */
+.btn, .score-btn, .extra-btn, .ctrl-btn, .choice-pill-btn, .preset-chip {
+  transition: transform .12s ease, background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+.btn:active, .score-btn:active, .extra-btn:active, .ctrl-btn:active { transform: scale(.96); }
+.card, .choice-card, .match-card, .tournament-card { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.choice-card:hover, .match-card:hover, .tournament-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+.btn-ripple { position: relative; overflow: hidden; }
+.ripple-dot {
+  position: absolute; border-radius: 50%; background: rgba(255,255,255,.45);
+  width: 60px; height: 60px; margin: -30px 0 0 -30px; pointer-events: none;
+  animation: rippleOut .5s ease-out forwards;
 }
 
-.live-dot {
-  animation: pulseLive 1.5s infinite ease-in-out;
-}
-
-.celebration-banner {
-  position: fixed;
-  top: 76px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 250;
-  padding: 12px 26px;
-  border-radius: var(--radius-pill);
-  font-weight: 900;
-  font-size: 1.1rem;
-  color: #FFFFFF;
-  background: var(--brand-primary);
-  border: 3px solid var(--brand-lime);
-  box-shadow: var(--shadow-lg);
+/* Scroll Progress Bar & Back to Top */
+.scroll-progress-bar {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 400;
+  background: var(--brand-primary); transform-origin: left center; transform: scaleX(0);
   pointer-events: none;
-  animation: popCelebration 1.9s ease forwards;
 }
-
-.celebration-banner.wicket {
-  background: var(--danger);
-  border-color: #FFCDD2;
+.back-to-top-btn {
+  position: fixed; right: 16px; bottom: 82px; z-index: 150;
+  width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--border-color);
+  background: var(--brand-primary); color: #fff; font-weight: 800; font-size: 1.1rem;
+  box-shadow: var(--shadow-md); cursor: pointer; opacity: 0; transform: translateY(12px);
+  pointer-events: none; transition: opacity .2s ease, transform .2s ease;
 }
+.back-to-top-btn.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
-.celebration-banner.boundary {
-  background: #1565C0;
-  border-color: #90CAF9;
+/* Scroll Reveal */
+.reveal { opacity: 0; transform: translateY(22px); transition: opacity .42s ease, transform .42s ease; }
+.reveal.revealed { opacity: 1; transform: translateY(0); }
+
+/* Scoring Celebrations (<800ms) */
+.celebration-banner {
+  position: fixed; top: 76px; left: 50%; transform: translateX(-50%); z-index: 250;
+  padding: 10px 24px; border-radius: var(--radius-pill); font-weight: 900; font-size: 1.05rem;
+  color: #fff; background: var(--brand-primary); border: 2px solid var(--brand-lime);
+  box-shadow: var(--shadow-lg); pointer-events: none; animation: popCelebration .78s ease forwards;
+}
+.celebration-banner.four { background: #1565C0; border-color: #90CAF9; }
+.celebration-banner.six { background: #197340; border-color: var(--brand-lime); box-shadow: 0 0 24px rgba(154,222,104,.55); }
+.celebration-banner.wicket { background: var(--danger); border-color: #FFCDD2; }
+.celebration-banner.extra { background: #D97706; border-color: #FDE68A; color: #fff; font-size: .92rem; padding: 8px 18px; }
+.six-fly-ball {
+  position: fixed; top: 110px; left: 50%; width: 16px; height: 16px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #fff, #9ADE68); box-shadow: 0 0 12px #9ADE68;
+  z-index: 249; pointer-events: none; animation: flyBall .7s ease-out forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+    animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important; scroll-behavior: auto !important;
   }
+  .reveal { opacity: 1; transform: none; }
 }

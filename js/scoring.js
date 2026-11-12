@@ -179,7 +179,12 @@
 
     document.getElementById('batTeamTitle').textContent = computedState.battingTeamName;
     document.getElementById('bowlTeamSub').textContent = `vs ${computedState.bowlingTeamName} • ${matchDoc.venue}`;
-    document.getElementById('mainScoreDigits').textContent = `${computedState.totalRuns}/${computedState.wickets}`;
+    const scoreEl = document.getElementById('mainScoreDigits');
+    const newScoreStr = `${computedState.totalRuns}/${computedState.wickets}`;
+    if (scoreEl.textContent !== newScoreStr) {
+      scoreEl.textContent = newScoreStr;
+      if (window.ApnaAnimations?.pulseScore) ApnaAnimations.pulseScore('mainScoreDigits');
+    }
     document.getElementById('mainOversDigits').textContent = `(${computedState.oversString} / ${rules.format.oversPerInnings} ov)`;
 
     const statusBadge = document.getElementById('matchStatusBadge');
@@ -353,9 +358,11 @@
     recomputeLocalState();
     renderAll();
 
-    if (eventObj.isWicket) ApnaAnimations.celebrate('WICKET!', 'wicket');
-    else if (eventObj.batRuns === 6) ApnaAnimations.celebrate('SIX! 6', 'boundary');
-    else if (eventObj.batRuns === 4) ApnaAnimations.celebrate('FOUR! 4', 'boundary');
+    if (eventObj.isWicket) ApnaAnimations.celebrate('OUT!', 'wicket');
+    else if (eventObj.batRuns === 6) ApnaAnimations.celebrate('SIX! 6', 'six');
+    else if (eventObj.batRuns === 4) ApnaAnimations.celebrate('FOUR! 4', 'four');
+    else if (eventObj.extraType === 'wide') ApnaAnimations.celebrate('WIDE!', 'extra');
+    else if (eventObj.extraType === 'no_ball') ApnaAnimations.celebrate('NO BALL!', 'extra');
 
     const localKey = matchDoc._id || matchDoc.clientMatchId;
     await ApnaOffline.saveEventLocally(localKey, innNum, eventObj);

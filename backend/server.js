@@ -136,7 +136,7 @@ function createApp() {
       const origin = `${req.protocol}://${req.get('host')}`;
       const imgUrl = `${origin}/assets/images/apnascore-og-preview.jpg`;
       const pageUrl = `${origin}${req.originalUrl}`;
-      let title = 'Live Match Center – ApnaScore | Apne Gaon ka Apna Scorer';
+      let title = 'Live Match Center – ApnaScore | Your Local Cricket Scorer';
       let description = 'Watch live ball-by-ball cricket scores, commentary, batsmen & bowler stats, and full match scorecards in real time on ApnaScore.';
 
       const val = req.query.id ? String(req.query.id) : '';
