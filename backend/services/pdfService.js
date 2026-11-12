@@ -38,7 +38,7 @@ function addPageHeader(doc, title, subtitle) {
   }
 
   doc.fillColor(BRAND.white).font('Helvetica-Bold').fontSize(17).text('ApnaScore', 94, 15, { continued: true });
-  doc.font('Helvetica').fontSize(10).fillColor('#D7F7E3').text('   Apne Gaon ka Apna Scorer', { baseline: 'alphabetic' });
+  doc.font('Helvetica').fontSize(10).fillColor('#D7F7E3').text('   Your Local Cricket Scorer', { baseline: 'alphabetic' });
   doc.fillColor(BRAND.white).font('Helvetica-Bold').fontSize(12).text(truncateText(title, 62), 94, 38);
   if (subtitle) {
     doc.fillColor('#D7F7E3').font('Helvetica').fontSize(9).text(truncateText(subtitle, 80), 94, 53);
@@ -55,7 +55,7 @@ function addPageFooters(doc) {
     doc.save();
     doc.moveTo(36, y - 6).lineTo(doc.page.width - 36, y - 6).strokeColor(BRAND.border).lineWidth(0.7).stroke();
     doc.fillColor(BRAND.mutedText).font('Helvetica').fontSize(8.5);
-    doc.text('ApnaScore – Har Gaon Ka Apna Cricket Scoreboard', 36, y, { align: 'left' });
+    doc.text('ApnaScore – Your Local Cricket Scoreboard', 36, y, { align: 'left' });
     doc.text(`Page ${i + 1} of ${range.count}`, 36, y, { width: doc.page.width - 72, align: 'right' });
     doc.restore();
   }

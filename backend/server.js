@@ -161,7 +161,7 @@ function createApp() {
           const scorePart = curr ? ` (${curr.battingTeamName}: ${curr.totalRuns}/${curr.wickets} in ${curr.oversString} ov)` : '';
           title = `${match.title}${scorePart} – Live on ApnaScore`;
           const statusPart = (match.result && match.result.marginText) || `${match.status.toUpperCase()} • ${match.oversPerInnings} Overs`;
-          description = `${statusPart} at ${match.venue}. Watch live ball-by-ball updates, commentary, and full scorecard on ApnaScore – Apne Gaon ka Apna Scorer!`;
+          description = `${statusPart} at ${match.venue}. Watch live ball-by-ball updates, commentary, and full scorecard on ApnaScore – Your Local Cricket Scorer!`;
         }
       }
       res.type('html').send(injectMeta(html, { title, description, imageUrl: imgUrl, pageUrl }));
@@ -177,7 +177,7 @@ function createApp() {
       const origin = `${req.protocol}://${req.get('host')}`;
       const imgUrl = `${origin}/assets/images/apnascore-og-preview.jpg`;
       const pageUrl = `${origin}${req.originalUrl}`;
-      let title = 'Tournament Hub – ApnaScore | Apne Gaon ka Apna Scorer';
+      let title = 'Tournament Hub – ApnaScore | Your Local Cricket Scorer';
       let description = 'Follow live tournament points tables, Net Run Rate (NRR), match fixtures, and champion leaderboards on ApnaScore.';
 
       const val = req.query.id ? String(req.query.id) : '';

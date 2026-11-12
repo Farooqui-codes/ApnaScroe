@@ -239,12 +239,12 @@
           banner.innerHTML = `
             <div class="flex-between">
               <div>
-                <strong>Apni profile update karein</strong> <span class="badge badge-success">Profile ${pct}% complete</span>
+                <strong>Update your profile</strong> <span class="badge badge-success">Profile ${pct}% complete</span>
                 <div class="text-sm text-muted">Missing: ${escapeHtml(missing)}</div>
               </div>
               <div class="flex-gap">
                 <a href="/profile.html" class="btn btn-primary btn-sm">Update Profile</a>
-                <button type="button" class="btn btn-secondary btn-sm" id="profPromptLaterBtn">Baad me</button>
+                <button type="button" class="btn btn-secondary btn-sm" id="profPromptLaterBtn">Later</button>
               </div>
             </div>
           `;
