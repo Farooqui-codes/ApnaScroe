@@ -38,6 +38,10 @@
       toggleBtn.innerHTML = root.ApnaIcons.icon(t === 'dark' ? 'sun' : 'moon', 18);
       toggleBtn.title = t === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
     }
+    const themeSel = document.getElementById('setTheme');
+    if (themeSel && themeSel.value !== t) {
+      themeSel.value = t;
+    }
   }
 
   function initTheme() {

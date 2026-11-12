@@ -76,6 +76,23 @@
 
       if (setRes.preferences && setRes.preferences.defaultScoring && setRes.preferences.defaultScoring.rules) {
         currentRules = ApnaScoringEngine.validateAndNormalizeRules(setRes.preferences.defaultScoring.rules).rules;
+        const defOvers = Number(currentRules.format.oversPerInnings) || 6;
+        const defPlayers = Number(currentRules.format.playersPerTeam) || 11;
+        document.getElementById('customOversInput').value = defOvers;
+        document.getElementById('playersPerTeamInput').value = defPlayers;
+        if (currentRules.format.ballType) {
+          document.getElementById('ballTypeSelect').value = currentRules.format.ballType;
+        }
+        const chips = Array.from(document.querySelectorAll('#oversPresetsGrid .preset-chip'));
+        chips.forEach((c) => c.classList.remove('selected'));
+        const matchingChip = chips.find((c) => Number(c.dataset.overs) === defOvers);
+        if (matchingChip) {
+          matchingChip.classList.add('selected');
+          document.getElementById('customOversWrap').classList.add('hidden');
+        } else {
+          chips.find((c) => c.dataset.overs === 'custom')?.classList.add('selected');
+          document.getElementById('customOversWrap').classList.remove('hidden');
+        }
       }
 
       savedPresets = [...(setRes.presets || []), ...localRules];

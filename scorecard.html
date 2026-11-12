@@ -30,7 +30,16 @@
     @media print {
       .sidebar, .topbar, .mobile-bottom-nav, .no-print { display: none !important; }
       .main-area { margin-left: 0 !important; }
-      body { background: #FFFFFF !important; }
+      :root, [data-theme="dark"] {
+        --bg-page: #FFFFFF;
+        --bg-surface: #FFFFFF;
+        --bg-surface-alt: #F5F5F5;
+        --text-primary: #000000;
+        --text-secondary: #222222;
+        --text-muted: #444444;
+        --text-brand: #135831;
+      }
+      body { background: #FFFFFF !important; color: #000000 !important; }
     }
   </style>
 </head>

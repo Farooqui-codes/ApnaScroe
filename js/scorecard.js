@@ -44,7 +44,7 @@
             <span class="badge badge-neutral">${ApnaUI.escapeHtml((m.status || 'live').toUpperCase())}</span>
           </div>
           <strong>${ApnaUI.escapeHtml(m.title)}</strong>
-          <div class="text-sm" style="color:var(--brand-primary);font-weight:600;">${ApnaUI.escapeHtml((m.result && m.result.marginText) || 'In progress')}</div>
+          <div class="text-sm" style="color:var(--text-brand);font-weight:600;">${ApnaUI.escapeHtml((m.result && m.result.marginText) || 'In progress')}</div>
           <div class="flex-gap">
             <a href="/scorecard.html?matchId=${m._id}" class="btn btn-primary btn-sm">Open Scorecard</a>
             ${!m.isLocalOnly ? `<a href="/api/scorecards/${m._id}/pdf" target="_blank" class="btn btn-secondary btn-sm">PDF</a>` : ''}
@@ -119,7 +119,7 @@
           <span class="badge badge-success">${ApnaUI.escapeHtml(match.status.toUpperCase())}</span>
         </div>
         ${match.toss && match.toss.winnerTeamName ? `<p class="text-sm mt-1"><strong>Toss:</strong> ${ApnaUI.escapeHtml(match.toss.winnerTeamName)} won and elected to ${ApnaUI.escapeHtml(match.toss.decision)}</p>` : ''}
-        <p style="font-weight:800;color:var(--brand-primary);margin:6px 0 0;">${ApnaUI.escapeHtml((match.result && match.result.marginText) || '')}</p>
+        <p style="font-weight:800;color:var(--text-brand);margin:6px 0 0;">${ApnaUI.escapeHtml((match.result && match.result.marginText) || '')}</p>
         ${match.result && match.result.playerOfMatchName ? `<p class="text-sm mt-1">🏅 <strong>Player of the Match:</strong> ${ApnaUI.escapeHtml(match.result.playerOfMatchName)}</p>` : ''}
       </div>
     `;

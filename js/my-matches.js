@@ -118,7 +118,7 @@
               <span class="match-team-score">${scoreB}</span>
             </div>
           </div>
-          ${m.result?.marginText ? `<div class="text-sm" style="color:var(--brand-primary);font-weight:700;">${ApnaUI.escapeHtml(m.result.marginText)}</div>` : ''}
+          ${m.result?.marginText ? `<div class="text-sm" style="color:var(--text-brand);font-weight:700;">${ApnaUI.escapeHtml(m.result.marginText)}</div>` : ''}
           <div class="flex-gap mt-1">
             <a href="/live-score.html?matchId=${m._id}" class="btn btn-primary btn-sm">${isLive ? 'Score Match' : 'Open Match'}</a>
             <a href="/scorecard.html?matchId=${m._id}" class="btn btn-secondary btn-sm">View Scorecard</a>

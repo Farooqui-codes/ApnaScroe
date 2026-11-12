@@ -41,13 +41,16 @@
   border-radius: 50%;
   object-fit: cover;
   background: var(--brand-soft-mint);
-  color: var(--brand-primary);
+  color: var(--text-brand);
   font-weight: 800;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   border: 2px solid var(--border-color);
+}
+[data-theme="dark"] .avatar-circle {
+  background: #1B3B2A;
 }
 
 .cap-grid {

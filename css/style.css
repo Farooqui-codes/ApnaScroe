@@ -5,6 +5,7 @@
    ========================================================================== */
 
 :root {
+  color-scheme: light;
   --brand-primary: #208B4E;
   --brand-primary-hover: #197340;
   --brand-primary-deep: #135831;
@@ -25,6 +26,7 @@
   --text-primary: #0F3822;
   --text-secondary: #2B593F;
   --text-muted: #4E7861;
+  --text-brand: #208B4E;
   --text-on-primary: #FFFFFF;
 
   /* Semantic Colours */
@@ -52,6 +54,7 @@
 }
 
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg-page: #091810;
   --bg-surface: #11241A;
   --bg-surface-alt: #162E21;
@@ -62,7 +65,8 @@
 
   --text-primary: #E2F1E6;
   --text-secondary: #C3DDC8;
-  --text-muted: #81AA97;
+  --text-muted: #8EB8A2;
+  --text-brand: #9ADE68;
   --text-on-primary: #FFFFFF;
 
   --danger: #EF5350;
@@ -573,10 +577,41 @@ body.sidebar-collapsed .main-area {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.form-control::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.form-control option,
+select option {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+}
+
 .form-control:focus {
   outline: none;
   border-color: var(--brand-primary);
   box-shadow: 0 0 0 3px rgba(32, 139, 78, 0.18);
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  border-color: var(--brand-lime);
+  color: var(--brand-lime);
+}
+
+[data-theme="dark"] .bottom-tab {
+  color: #9EC0AC;
+}
+
+[data-theme="dark"] .modal-dialog,
+[data-theme="dark"] .modal-title,
+[data-theme="dark"] .card,
+[data-theme="dark"] .card-title,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4 {
+  color: var(--text-primary);
 }
 
 .form-grid-2 {

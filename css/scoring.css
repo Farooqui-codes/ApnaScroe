@@ -276,6 +276,19 @@
   color: var(--danger);
 }
 
+.more-actions-btn {
+  min-height: 50px;
+  background: var(--brand-soft-mint);
+  border: 2px solid var(--brand-primary);
+  color: #0F3822;
+  font-weight: 800;
+}
+[data-theme="dark"] .more-actions-btn {
+  background: #1A3C29;
+  border-color: var(--brand-lime);
+  color: var(--brand-lime);
+}
+
 /* ==========================================================================
    Outdoor Sunlight Scoring Mode – Maximum Contrast, Zero Distraction
    ========================================================================== */
@@ -328,6 +341,12 @@ body.outdoor-mode .extra-btn {
   color: #000000;
   border: 3px solid #713F12;
   font-size: 1rem;
+}
+
+body.outdoor-mode .more-actions-btn {
+  background: #E2F1E6;
+  border: 3px solid #0F3822;
+  color: #000000;
 }
 
 body.outdoor-mode * {

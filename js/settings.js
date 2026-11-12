@@ -43,7 +43,15 @@
     }
 
     const user = await ApnaAuth.refreshUser();
-    if (!user) return;
+    if (!user) {
+      document.getElementById('profileSummaryCard').classList.add('hidden');
+      document.getElementById('profileUpdateForm').closest('.card').classList.add('hidden');
+      const gCard = document.getElementById('guestProfileCard');
+      gCard.classList.remove('hidden');
+      document.getElementById('guestSessionMeta').textContent = 'Session expired. Please login again or continue as Guest.';
+      document.getElementById('guestResetBtn').onclick = () => ApnaAuth.exitGuestMode();
+      return;
+    }
 
     // Check if registered user still has un-migrated guest data on device
     if (window.ApnaMigrate) {
@@ -178,6 +186,7 @@
   }
 
   async function loadSettingsData() {
+    let presets = [];
     try {
       const res = await ApnaAPI.get('/api/settings');
       if (res.preferences) {
@@ -194,19 +203,38 @@
           document.getElementById('defBall').value = p.defaultScoring.ballType || 'tennis';
         }
       }
+      presets = res.presets || [];
+    } catch (_) {}
 
+    try {
+      const localRules = window.ApnaOffline ? await ApnaOffline.getLocalRules().catch(() => []) : [];
+      if (!presets.length && window.ApnaScoringEngine) {
+        presets = ApnaScoringEngine.getRulePresets().map((r) => ({
+          presetId: r.presetId,
+          name: r.presetName,
+          isSystemPreset: true,
+          rules: r
+        }));
+      }
+      for (const lr of localRules) {
+        if (!presets.some((p) => (p.clientId && p.clientId === lr.clientId) || p.name === lr.name)) {
+          presets.push(lr);
+        }
+      }
       const presetsEl = document.getElementById('savedPresetsList');
-      const presets = res.presets || [];
-      presetsEl.innerHTML = presets.map((pr) => `
-        <div class="flex-between" style="padding:10px 0;border-bottom:1px solid var(--border-color);">
-          <div>
-            <strong>${ApnaUI.escapeHtml(pr.name)}</strong>
-            <span class="badge ${pr.isSystemPreset ? 'badge-neutral' : 'badge-success'}">${pr.isSystemPreset ? 'Built-in' : 'Custom'}</span>
-            <div class="text-sm text-muted">${pr.rules?.format?.oversPerInnings || 6} Overs • ${pr.rules?.format?.ballType || 'tennis'}</div>
+      if (!presetsEl) return;
+      presetsEl.innerHTML = presets.length
+        ? presets.map((pr) => `
+          <div class="flex-between" style="padding:10px 0;border-bottom:1px solid var(--border-color);">
+            <div>
+              <strong>${ApnaUI.escapeHtml(pr.name)}</strong>
+              <span class="badge ${pr.isSystemPreset ? 'badge-neutral' : 'badge-success'}">${pr.isSystemPreset ? 'Built-in' : 'Custom'}</span>
+              <div class="text-sm text-muted">${pr.rules?.format?.oversPerInnings || 6} Overs • ${pr.rules?.format?.ballType || 'tennis'}</div>
+            </div>
+            ${!pr.isSystemPreset && pr._id ? `<button type="button" class="btn btn-danger btn-sm" onclick="deletePreset('${pr._id}')">Delete</button>` : ''}
           </div>
-          ${!pr.isSystemPreset && pr._id ? `<button type="button" class="btn btn-danger btn-sm" onclick="deletePreset('${pr._id}')">Delete</button>` : ''}
-        </div>
-      `).join('');
+        `).join('')
+        : '<div class="empty-state text-sm">No presets available.</div>';
     } catch (_) {}
   }
 

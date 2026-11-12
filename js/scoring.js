@@ -32,6 +32,12 @@
 
     if (localStorage.getItem('apnascore_outdoor_mode') === '1') {
       document.body.classList.add('outdoor-mode');
+      const ob = document.getElementById('outdoorModeBtn');
+      if (ob) {
+        ob.textContent = '☀ Outdoor: ON';
+        ob.classList.add('btn-lime');
+        ob.classList.remove('btn-secondary');
+      }
     }
 
     bindScoringUI();
@@ -310,6 +316,9 @@
   }
 
   async function dispatchEvent(eventPayload) {
+    if (!matchDoc || !computedState) {
+      return ApnaUI.showToast('Match is still loading. Please wait a moment.', 'warning');
+    }
     if (tapLocked) return;
     tapLocked = true;
     setTimeout(() => { tapLocked = false; }, 220);
@@ -550,9 +559,13 @@
     document.getElementById('selectOpenersBtn').addEventListener('click', () => openPlayersModal('openers'));
     document.getElementById('changeBowlerBtn').addEventListener('click', () => openPlayersModal('change_bowler'));
 
-    document.getElementById('outdoorModeBtn').addEventListener('click', () => {
+    document.getElementById('outdoorModeBtn').addEventListener('click', (e) => {
       document.body.classList.toggle('outdoor-mode');
-      localStorage.setItem('apnascore_outdoor_mode', document.body.classList.contains('outdoor-mode') ? '1' : '0');
+      const isOn = document.body.classList.contains('outdoor-mode');
+      localStorage.setItem('apnascore_outdoor_mode', isOn ? '1' : '0');
+      e.currentTarget.textContent = isOn ? '☀ Outdoor: ON' : '☀ Outdoor Mode';
+      e.currentTarget.classList.toggle('btn-lime', isOn);
+      e.currentTarget.classList.toggle('btn-secondary', !isOn);
     });
 
     // Commentary & Scorecard tabs
@@ -849,16 +862,40 @@
     const localKey = matchDoc._id || matchDoc.clientMatchId;
     if (action === 'complete') {
       const potm = prompt('Enter Player of the Match name (optional):', '');
-      await ApnaAPI.post(`/api/matches/${localKey}/control`, { action: 'complete', playerOfMatchName: potm || '' });
-      await loadMatchState();
-      ApnaUI.showToast('Match completed!');
+      if (potm === null) return;
+      try {
+        if (navigator.onLine && !String(localKey).startsWith('cm_')) {
+          await ApnaAPI.post(`/api/matches/${localKey}/control`, { action: 'complete', playerOfMatchName: potm || '' });
+          await loadMatchState();
+        } else {
+          matchDoc.status = 'completed';
+          matchDoc.result = Object.assign({}, matchDoc.result || {}, { playerOfMatchName: potm || '' });
+          await ApnaOffline.saveMatchLocally({ localId: localKey, match: matchDoc, innings: inningsList, syncStatus: 'pending' });
+          renderAll();
+        }
+        ApnaUI.showToast('Match completed!');
+      } catch (err) {
+        ApnaUI.showToast(err.message, 'error');
+      }
       return;
     }
 
     if (action === 'abandon' && !confirm('Abandon this match?')) return;
-    await ApnaAPI.post(`/api/matches/${localKey}/control`, { action, deviceId: ApnaOffline.getDeviceId() });
-    await loadMatchState();
-    ApnaUI.showToast(`Match action "${action}" applied.`);
+    try {
+      if (navigator.onLine && !String(localKey).startsWith('cm_')) {
+        await ApnaAPI.post(`/api/matches/${localKey}/control`, { action, deviceId: ApnaOffline.getDeviceId() });
+        await loadMatchState();
+      } else {
+        if (action === 'pause') matchDoc.status = 'paused';
+        else if (action === 'resume') matchDoc.status = 'live';
+        else if (action === 'abandon') matchDoc.status = 'abandoned';
+        await ApnaOffline.saveMatchLocally({ localId: localKey, match: matchDoc, innings: inningsList, syncStatus: 'pending' });
+        renderAll();
+      }
+      ApnaUI.showToast(`Match action "${action}" applied.`);
+    } catch (err) {
+      ApnaUI.showToast(err.message, 'error');
+    }
   }
 
   async function startSecondInnings() {
@@ -883,6 +920,7 @@
         activeEvents = [];
         recomputeLocalState();
         renderAll();
+        await ApnaOffline.saveMatchLocally({ localId: localKey, match: matchDoc, innings: inningsList, syncStatus: 'pending' });
         openPlayersModal('openers');
       }
     } catch (err) {

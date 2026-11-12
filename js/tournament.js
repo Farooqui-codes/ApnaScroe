@@ -54,6 +54,15 @@
   }
 
   function goTourStep(step) {
+    if (step > 1) {
+      const name = document.getElementById('ctName').value.trim();
+      const village = document.getElementById('ctVillage').value.trim();
+      const start = document.getElementById('ctStart').value;
+      if (!name || !village || !start) {
+        ApnaUI.showToast('Please enter Tournament Name, Location, and Start Date first.', 'error');
+        step = 1;
+      }
+    }
     document.querySelectorAll('.tw-panel').forEach((p) => {
       p.classList.toggle('hidden', Number(p.dataset.twp) !== step);
     });
@@ -68,6 +77,10 @@
     document.getElementById('openCreateTourBtn').addEventListener('click', openCreateModal);
     document.getElementById('tourSearchInput').addEventListener('input', loadTournaments);
 
+    document.querySelectorAll('#tourWizSteps .wizard-step-pill').forEach((pill) => {
+      pill.addEventListener('click', () => goTourStep(Number(pill.dataset.tw)));
+    });
+
     document.querySelectorAll('#tourListTabs .tab-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('#tourListTabs .tab-btn').forEach((b) => b.classList.remove('active'));
@@ -79,17 +92,29 @@
 
     document.getElementById('createTourForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const name = document.getElementById('ctName').value.trim();
+      const village = document.getElementById('ctVillage').value.trim();
+      const startDate = document.getElementById('ctStart').value;
+      const endDate = document.getElementById('ctEnd').value;
+      if (!name || !village || !startDate) {
+        goTourStep(1);
+        return ApnaUI.showToast('Tournament Name, Location, and Start Date are required.', 'error');
+      }
+      if (!endDate) {
+        goTourStep(2);
+        return ApnaUI.showToast('End Date is required.', 'error');
+      }
       try {
         const selectedTeams = Array.from(document.getElementById('ctTeamsMulti').selectedOptions).map((o) => o.value);
         const presetId = document.getElementById('ctRulePreset').value;
         const baseRules = ApnaScoringEngine.getPresetById(presetId);
         const res = await ApnaAPI.post('/api/tournaments', {
-          name: document.getElementById('ctName').value.trim(),
-          village: document.getElementById('ctVillage').value.trim(),
+          name,
+          village,
           format: document.getElementById('ctFormat').value,
           oversPerMatch: Number(document.getElementById('ctOvers').value || 8),
-          startDate: document.getElementById('ctStart').value,
-          endDate: document.getElementById('ctEnd').value,
+          startDate,
+          endDate,
           entryFee: Number(document.getElementById('ctFee').value || 0),
           prizeMoney: document.getElementById('ctPrize').value.trim(),
           maxTeams: Number(document.getElementById('ctMaxTeams').value || 8),
@@ -143,7 +168,7 @@
               <span class="text-muted">Teams: ${(t.registeredTeams || []).length}/${t.maxTeams}</span>
               <span class="badge badge-success">${ApnaUI.escapeHtml(t.status.toUpperCase())}</span>
             </div>
-            ${t.winnerTeamId ? `<div class="text-sm" style="color:var(--brand-primary);font-weight:700;">🏆 Winner: ${ApnaUI.escapeHtml(t.winnerTeamId.name)}</div>` : ''}
+            ${t.winnerTeamId ? `<div class="text-sm" style="color:var(--text-brand);font-weight:700;">🏆 Winner: ${ApnaUI.escapeHtml(t.winnerTeamId.name)}</div>` : ''}
             <div class="flex-gap mt-1">
               <a href="/tournament.html?id=${t._id}" class="btn btn-primary btn-sm">Open Tournament</a>
               <a href="/api/scorecards/tournament/${t._id}/pdf" target="_blank" class="btn btn-secondary btn-sm">Results PDF</a>
@@ -315,6 +340,11 @@
       }
     };
 
+    if (approvedTeams.length > 1) {
+      const mfB = document.getElementById('mfTeamB');
+      if (mfB && mfB.options.length > 1) mfB.selectedIndex = 1;
+    }
+
     document.getElementById('addManualFixtureBtn').onclick = async () => {
       const a = document.getElementById('mfTeamA').value;
       const b = document.getElementById('mfTeamB').value;
@@ -402,7 +432,9 @@
 
     document.getElementById('announceWinnerBtn').onclick = async () => {
       const winnerTeamId = document.getElementById('awWinnerSel').value;
-      if (!winnerTeamId) return;
+      if (!winnerTeamId) {
+        return ApnaUI.showToast('Approve at least 1 team before declaring a tournament winner.', 'error');
+      }
       try {
         await ApnaAPI.post(`/api/tournaments/${t._id}/winner`, {
           winnerTeamId,

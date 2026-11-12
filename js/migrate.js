@@ -122,7 +122,7 @@
         <h3 class="modal-title">Move Guest Data to Your Account</h3>
         <button type="button" class="icon-btn" id="migCloseBtn">✕</button>
       </div>
-      <p style="margin-top:0;font-weight:700;color:var(--brand-primary);">Your ApnaScore guest data is ready to move to your account.</p>
+      <p style="margin-top:0;font-weight:700;color:var(--text-brand);">Your ApnaScore guest data is ready to move to your account.</p>
       <div class="card" style="background:var(--bg-surface-alt);margin-bottom:14px;">
         <div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--border-color);"><span>Matches</span><strong>${c.matches}</strong></div>
         <div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--border-color);"><span>Teams</span><strong>${c.teams}</strong></div>
@@ -199,7 +199,7 @@
         <div class="modal-header">
           <h3 class="modal-title">Migration Complete</h3>
         </div>
-        <p style="font-weight:700;color:var(--brand-primary);">Your guest data has been successfully transferred to your ApnaScore account.</p>
+        <p style="font-weight:700;color:var(--text-brand);">Your guest data has been successfully transferred to your ApnaScore account.</p>
         <div class="card" style="background:var(--success-bg);margin-bottom:14px;">
           <div>Matches Imported: <strong>${cnt.matches ?? 0}</strong></div>
           <div>Teams Imported: <strong>${cnt.teams ?? 0}</strong></div>

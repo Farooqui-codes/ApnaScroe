@@ -66,7 +66,7 @@
         </div>
         <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore" style="width:90px;height:90px;object-fit:contain;margin:0 auto 12px;border-radius:14px;" />
         <h2 style="margin:0 0 6px;font-size:1.25rem;color:var(--text-primary);">${s.title}</h2>
-        <p style="margin:0 0 8px;font-weight:700;color:var(--brand-primary);font-size:0.92rem;">${s.subtitle}</p>
+        <p style="margin:0 0 8px;font-weight:700;color:var(--text-brand);font-size:0.92rem;">${s.subtitle}</p>
         <p class="text-muted text-sm" style="margin:0 0 18px;">${s.body}</p>
         <div style="display:flex;justify-content:center;gap:8px;margin-bottom:18px;">${dots}</div>
         <div class="flex-between">

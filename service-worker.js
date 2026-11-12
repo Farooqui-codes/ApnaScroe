@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apnascore-shell-v1';
+const CACHE_NAME = 'apnascore-shell-v3';
 
 const APP_SHELL_ASSETS = [
   '/',
@@ -89,18 +89,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first with background refresh for app shell assets
+  // Network-first with cache fallback so updates apply immediately while offline stays supported
   event.respondWith(
-    caches.match(request, { ignoreSearch: true }).then((cached) => {
-      const fetchPromise = fetch(request).then((networkRes) => {
+    fetch(request)
+      .then((networkRes) => {
         if (networkRes && networkRes.status === 200) {
           const clone = networkRes.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return networkRes;
-      }).catch(() => cached);
-
-      return cached || fetchPromise;
-    })
+      })
+      .catch(() => caches.match(request, { ignoreSearch: true }))
   );
 });

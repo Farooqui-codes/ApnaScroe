@@ -72,7 +72,11 @@
     }
 
     if (root.ApnaOffline) {
-      await root.ApnaOffline.saveGuestProfile(profile);
+      try {
+        await root.ApnaOffline.saveGuestProfile(profile);
+      } catch (_) {
+        root.ApnaAPI.setGuestSession(profile);
+      }
     } else {
       root.ApnaAPI.setGuestSession(profile);
     }
