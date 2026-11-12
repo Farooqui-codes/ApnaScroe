@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Tournament Manager Pro Pricing – ApnaScore</title>
+  <meta name="description" content="Compare Free vs Tournament Manager Pro plans on ApnaScore. Unlock unlimited teams, public registration links, fee tracker, sponsor banners, and Pro PDFs." />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <div class="card mb-2" style="text-align:center;">
+        <span class="badge badge-success">Transparent Indian Pricing • UPI / Cards / Netbanking</span>
+        <h1 style="margin:8px 0 6px;font-size:1.65rem;">Tournament Manager Pro</h1>
+        <p class="text-muted text-sm" style="margin:0;">Simple Match scoring is always 100% free. Upgrade only when you run bigger tournaments.</p>
+      </div>
+
+      <div class="form-grid-3 mb-2" id="pricingCardsGrid">
+        <div class="card">
+          <span class="badge badge-neutral">FREE</span>
+          <h2 style="margin:8px 0 4px;">INR 0</h2>
+          <p class="text-sm text-muted">Great for quick matches and small 4-team cups.</p>
+          <ul class="text-sm" style="padding-left:18px;">
+            <li>Unlimited Simple Matches & Offline Scoring</li>
+            <li>1 Free Tournament (up to 4 teams)</li>
+            <li>Basic Knockout / League & Points Table</li>
+          </ul>
+          <a href="/tournament.html" class="btn btn-secondary" style="width:100%;">Start Free</a>
+        </div>
+
+        <div class="card" style="border:2px solid var(--brand-primary);">
+          <span class="badge badge-success">POPULAR • PER TOURNAMENT</span>
+          <h2 style="margin:8px 0 4px;" id="priceTourPass">INR 199</h2>
+          <p class="text-sm text-muted">One-time fee to unlock all Pro features for 1 tournament.</p>
+          <ul class="text-sm" style="padding-left:18px;">
+            <li>Up to 64 Teams & Group + Knockout Formats</li>
+            <li>Public Team Registration Form + Approve/Reject</li>
+            <li>Entry Fee Tracker, Custom Schedule & Pro PDF</li>
+            <li>Sponsor Banner & WhatsApp Share Cards</li>
+          </ul>
+          <button type="button" class="btn btn-primary btn-ripple" id="buyTourPassBtn" style="width:100%;">Upgrade a Tournament</button>
+        </div>
+
+        <div class="card">
+          <span class="badge badge-info">ORGANIZER MONTHLY</span>
+          <h2 style="margin:8px 0 4px;" id="priceMonthly">INR 499/mo</h2>
+          <p class="text-sm text-muted">Unlimited Pro tournaments for 30 days.</p>
+          <ul class="text-sm" style="padding-left:18px;">
+            <li>Unlimited Tournaments & Teams</li>
+            <li>All Pro Features Unlocked Automatically</li>
+            <li>GST-ready Payment Receipts</li>
+          </ul>
+          <button type="button" class="btn btn-lime" id="buyMonthlyBtn" style="width:100%;">Get Monthly Pro</button>
+        </div>
+      </div>
+
+      <div class="card mb-2" id="myBillingSection">
+        <div class="card-header"><h2 class="card-title">My Payment History & Receipts</h2></div>
+        <div id="myPaymentsList"><div class="empty-state text-sm">Sign in to view your receipts.</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Frequently Asked Questions</h2></div>
+        <details class="mb-2"><summary><strong>Are normal cricket matches and scoring free?</strong></summary><p class="text-sm text-muted">Yes! Simple Match scoring, offline IndexedDB scoring, and basic scorecards are 100% free forever.</p></details>
+        <details class="mb-2"><summary><strong>Which payment methods are supported?</strong></summary><p class="text-sm text-muted">UPI (GPay, PhonePe, Paytm), Debit/Credit Cards, and Netbanking via Razorpay.</p></details>
+        <details><summary><strong>What if a payment fails or money is deducted?</strong></summary><p class="text-sm text-muted">Razorpay webhooks automatically reconcile pending captures, or you can review our <a href="/policies.html">Refund Policy</a>.</p></details>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/migrate.js"></script>
+  <script src="/js/pro-upgrade.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      ApnaUI.initShell({ activePage: 'pricing', pageTitle: 'Pro Pricing' });
+      try {
+        const p = await ApnaPro.loadPlans();
+        document.getElementById('priceTourPass').textContent = `INR ${p.plans.per_tournament.amountInr}`;
+        document.getElementById('priceMonthly').textContent = `INR ${p.plans.monthly.amountInr}/mo`;
+      } catch (_) {}
+
+      document.getElementById('buyTourPassBtn').onclick = () => {
+        window.location.href = '/tournament.html?upgrade=1';
+      };
+      document.getElementById('buyMonthlyBtn').onclick = () => {
+        ApnaPro.showUpgradeModal({ feature: 'Organizer Monthly Pro' });
+      };
+
+      if (ApnaAuth.isLoggedIn()) {
+        try {
+          const res = await ApnaAPI.get('/api/payments/my');
+          const rows = res.payments || [];
+          document.getElementById('myPaymentsList').innerHTML = rows.length
+            ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>Receipt</th><th>Tournament</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows.map((r) => `
+              <tr>
+                <td>${ApnaUI.escapeHtml(r.receiptNumber)}</td>
+                <td>${ApnaUI.escapeHtml(r.tournamentId?.name || 'Monthly Pro')}</td>
+                <td>INR ${r.amountInr}</td>
+                <td><span class="badge ${r.status === 'paid' ? 'badge-success' : 'badge-warning'}">${r.status.toUpperCase()}</span></td>
+                <td>${r.status === 'paid' ? `<button type="button" class="btn btn-secondary btn-sm" onclick="ApnaPro.downloadInvoicePdf('${r._id}','${r.receiptNumber}')">Receipt PDF</button>` : '-'}</td>
+              </tr>`).join('')}</tbody></table></div>`
+            : '<div class="empty-state text-sm">No payments recorded yet.</div>';
+        } catch (_) {}
+      }
+    });
+  </script>
+</body>
+</html>

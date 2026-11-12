@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>Admin Pro & Billing Panel – ApnaScore</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <div class="card mb-2">
+        <div class="card-header"><h1 class="card-title">Admin Panel — Revenue & Pro Access</h1></div>
+        <div class="kpi-grid" id="adminKpis"></div>
+      </div>
+
+      <div class="card mb-2">
+        <div class="card-header"><h2 class="card-title">Tournaments (Grant / Revoke Pro)</h2></div>
+        <div id="adminToursTable"><div class="empty-state">Loading...</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">All Payments</h2></div>
+        <div id="adminPaymentsTable"><div class="empty-state">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!ApnaUI.initShell({ activePage: 'admin-pro', pageTitle: 'Admin Billing', requireAuth: true })) return;
+      async function loadAdmin() {
+        try {
+          const res = await ApnaAPI.get('/api/payments/admin/overview');
+          const s = res.summary || {};
+          document.getElementById('adminKpis').innerHTML = `
+            <div class="kpi-card"><span class="kpi-label">Total Revenue</span><span class="kpi-value">INR ${s.totalRevenueInr || 0}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Paid Orders</span><span class="kpi-value">${s.paidCount || 0}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Failed Orders</span><span class="kpi-value">${s.failedCount || 0}</span></div>
+            <div class="kpi-card"><span class="kpi-label">Pro Tournaments</span><span class="kpi-value">${s.proTournamentsCount || 0}</span></div>
+          `;
+          document.getElementById('adminToursTable').innerHTML = `<div class="table-wrap"><table class="data-table"><thead><tr><th>Tournament</th><th>Organizer</th><th>Plan</th><th>Action</th></tr></thead><tbody>${(res.tournaments || []).map((t) => `
+            <tr>
+              <td>${ApnaUI.escapeHtml(t.name)} (${ApnaUI.escapeHtml(t.village)})</td>
+              <td>${ApnaUI.escapeHtml(t.organizerId?.name || '-')}</td>
+              <td><span class="badge ${t.plan === 'pro' ? 'badge-success' : 'badge-neutral'}">${(t.plan || 'free').toUpperCase()}</span></td>
+              <td><button type="button" class="btn btn-sm ${t.plan === 'pro' ? 'btn-danger' : 'btn-primary'}" onclick="togglePro('${t._id}', ${t.plan !== 'pro'})">${t.plan === 'pro' ? 'Revoke Pro' : 'Grant Pro'}</button></td>
+            </tr>`).join('')}</tbody></table></div>`;
+
+          document.getElementById('adminPaymentsTable').innerHTML = `<div class="table-wrap"><table class="data-table"><thead><tr><th>Receipt</th><th>User</th><th>Gateway</th><th>Amount</th><th>Status</th></tr></thead><tbody>${(res.payments || []).map((p) => `
+            <tr>
+              <td>${ApnaUI.escapeHtml(p.receiptNumber)}</td>
+              <td>${ApnaUI.escapeHtml(p.userId?.email || '-')}</td>
+              <td>${ApnaUI.escapeHtml(p.gateway)}</td>
+              <td>INR ${p.amountInr}</td>
+              <td><span class="badge ${p.status === 'paid' ? 'badge-success' : 'badge-warning'}">${p.status.toUpperCase()}</span></td>
+            </tr>`).join('')}</tbody></table></div>`;
+        } catch (err) {
+          document.getElementById('adminToursTable').innerHTML = `<div class="empty-state">${ApnaUI.escapeHtml(err.message)}</div>`;
+        }
+      }
+      window.togglePro = async (tournamentId, grant) => {
+        await ApnaAPI.post('/api/payments/admin/grant-pro', { tournamentId, grant, note: 'Admin console update' });
+        ApnaUI.showToast(grant ? 'Pro access granted.' : 'Pro access revoked.');
+        loadAdmin();
+      };
+      await loadAdmin();
+    });
+  </script>
+</body>
+</html>

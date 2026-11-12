@@ -26,6 +26,7 @@ const settingsRoutes = require('./routes/settingsRoutes');
 const syncRoutes = require('./routes/syncRoutes');
 const publicRoutes = require('./routes/publicRoutes');
 const guestRoutes = require('./routes/guestRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 function createApp() {
   const app = express();
@@ -39,11 +40,12 @@ function createApp() {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", 'https://checkout.razorpay.com'],
           scriptSrcAttr: ["'unsafe-inline'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
-          imgSrc: ["'self'", 'data:', 'blob:'],
-          connectSrc: ["'self'", 'ws:', 'wss:'],
+          imgSrc: ["'self'", 'data:', 'blob:', 'https://*.razorpay.com'],
+          frameSrc: ["'self'", 'https://api.razorpay.com', 'https://checkout.razorpay.com'],
+          connectSrc: ["'self'", 'ws:', 'wss:', 'https://api.razorpay.com', 'https://lumberjack.razorpay.com'],
           fontSrc: ["'self'", 'data:']
         }
       },
@@ -58,7 +60,14 @@ function createApp() {
     })
   );
 
-  app.use(express.json({ limit: '5mb' }));
+  app.use(express.json({
+    limit: '5mb',
+    verify: (req, _res, buf) => {
+      if (req.originalUrl && req.originalUrl.startsWith('/api/payments/webhook')) {
+        req.rawBody = buf;
+      }
+    }
+  }));
   app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
   // Lightweight NoSQL key sanitizer (strips keys starting with $ or containing .)
@@ -109,6 +118,7 @@ function createApp() {
   app.use('/api/sync', syncRoutes);
   app.use('/api/public', publicRoutes);
   app.use('/api/guest', guestRoutes);
+  app.use('/api/payments', paymentRoutes);
 
   // Block direct access to backend source or env files
   app.use('/backend', (_req, res) => res.status(403).json({ success: false, message: 'Forbidden' }));

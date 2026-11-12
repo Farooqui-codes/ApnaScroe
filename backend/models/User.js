@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema(
     },
     avatarUrl: { type: String, default: '' },
     isActive: { type: Boolean, default: true },
+    proExpiresAt: { type: Date, default: null },
     preferences: {
       language: { type: String, enum: ['en', 'hi'], default: 'en' },
       theme: { type: String, enum: ['light', 'dark'], default: 'light' },

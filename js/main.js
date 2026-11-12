@@ -17,6 +17,7 @@
     { id: 'scorecards', label: 'Scorecards', href: '/scorecard.html', icon: 'fileText', section: 'Records' },
     { id: 'statistics', label: 'Statistics', href: '/statistics.html', icon: 'barChart', section: 'Records' },
     { id: 'leaderboards', label: 'Leaderboards', href: '/leaderboards.html', icon: 'award', section: 'Records' },
+    { id: 'pricing', label: 'Pro Pricing', href: '/pricing.html', icon: 'award', section: 'Account' },
     { id: 'settings', label: 'Settings', href: '/settings.html', icon: 'settings', section: 'Account' },
     { id: 'profile', label: 'Profile', href: '/profile.html', icon: 'user', section: 'Account' }
   ];

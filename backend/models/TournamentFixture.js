@@ -12,6 +12,7 @@ const tournamentFixtureSchema = new mongoose.Schema(
     teamBId: { type: mongoose.Schema.Types.ObjectId, ref: 'Team', default: null },
     teamBName: { type: String, default: 'TBD' },
     scheduledDate: { type: Date, default: null },
+    scheduledTime: { type: String, default: '' },
     venue: { type: String, default: '' },
     matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', default: null },
     status: {

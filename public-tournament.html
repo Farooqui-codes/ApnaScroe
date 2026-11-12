@@ -17,9 +17,6 @@
   <meta property="og:image:alt" content="ApnaScore – Your Local Cricket Scorer" />
   <meta property="og:url" content="/public-tournament.html" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Tournament Hub – Live Standings, NRR & Fixtures | ApnaScore" />
-  <meta name="twitter:description" content="Follow live cricket tournament points tables, Net Run Rate (NRR), fixtures, and match results in real time on ApnaScore." />
-  <meta name="twitter:image" content="/assets/images/apnascore-og-preview.jpg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/responsive.css" />
@@ -28,7 +25,7 @@
 <body>
   <header class="topbar">
     <div class="topbar-left">
-      <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore" style="width:40px;height:40px;object-fit:contain;border-radius:8px;" />
+      <img src="/assets/icons/apnascore-icon.png" alt="ApnaScore" style="width:36px;height:36px;object-fit:contain;border-radius:8px;" />
       <div>
         <div class="topbar-page-title" id="ptTitle">ApnaScore Tournament</div>
         <div class="text-sm text-muted" id="ptSub">Public Tournament Hub</div>
@@ -40,8 +37,33 @@
   </header>
 
   <main class="page-content" style="max-width:1024px;margin:0 auto;">
+    <div id="ptSponsorBox" class="card mb-2 hidden" style="text-align:center;"></div>
+    <div id="ptLiveBox" class="card mb-2 hidden"></div>
     <div class="card mb-2" id="ptPointsCard"></div>
-    <div class="card" id="ptFixturesCard"></div>
+    <div class="card mb-2" id="ptFixturesCard"></div>
+
+    <!-- Public Team Registration Form (Pro Tournaments Only) -->
+    <div class="card hidden" id="ptRegisterCard">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">Register Your Team</h2>
+          <span class="text-sm text-muted">Submit your squad details for organizer approval</span>
+        </div>
+      </div>
+      <form id="ptRegisterForm">
+        <div class="form-grid-3">
+          <div class="form-group"><label class="form-label" for="ptRegTeam">Team Name</label><input class="form-control" id="ptRegTeam" required placeholder="e.g. Azad XI" /></div>
+          <div class="form-group"><label class="form-label" for="ptRegCap">Captain Name</label><input class="form-control" id="ptRegCap" required placeholder="e.g. Rahul" /></div>
+          <div class="form-group"><label class="form-label" for="ptRegPhone">Captain Phone</label><input class="form-control" id="ptRegPhone" type="tel" required placeholder="9876543210" /></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="ptRegPlayers">Player Names (comma separated, optional)</label>
+          <input class="form-control" id="ptRegPlayers" placeholder="Aman, Rohit, Karan, Bilal..." />
+        </div>
+        <div id="ptRegStatus" class="text-sm hidden mb-2"></div>
+        <button type="submit" class="btn btn-primary" id="ptRegSubmitBtn">Submit Team Registration</button>
+      </form>
+    </div>
   </main>
 
   <script src="/js/api.js"></script>
@@ -57,6 +79,25 @@
         document.getElementById('ptTitle').textContent = t.name;
         document.getElementById('ptSub').textContent = `${t.village} • ${t.oversPerMatch} Overs • ${t.status.toUpperCase()}`;
 
+        if (t.sponsorBannerUrl || t.sponsorName) {
+          const sb = document.getElementById('ptSponsorBox');
+          sb.classList.remove('hidden');
+          sb.innerHTML = `
+            ${t.sponsorName ? `<div class="text-sm text-muted mb-1">Sponsored by <strong>${ApnaUI.escapeHtml(t.sponsorName)}</strong></div>` : ''}
+            ${t.sponsorBannerUrl ? `<img src="${ApnaUI.escapeHtml(t.sponsorBannerUrl)}" alt="Tournament Sponsor" style="max-height:140px;margin:0 auto;border-radius:10px;" />` : ''}
+          `;
+        }
+
+        const live = data.liveMatches || [];
+        if (live.length) {
+          const lb = document.getElementById('ptLiveBox');
+          lb.classList.remove('hidden');
+          lb.innerHTML = `<div class="card-header"><h2 class="card-title">Live Matches</h2></div>` + live.map((m) => {
+            const inn = (m.inningsSummary || []).slice(-1)[0];
+            return `<div class="fixture-card"><div><strong>${ApnaUI.escapeHtml(m.title)}</strong><div class="text-sm text-muted">${inn ? `${ApnaUI.escapeHtml(inn.battingTeamName)}: ${inn.totalRuns}/${inn.wickets} (${inn.oversString} ov)` : 'Live'}</div></div><a href="/public-match.html?id=${m._id}" class="btn btn-primary btn-sm">Watch Live</a></div>`;
+          }).join('');
+        }
+
         const rows = data.pointsTable || [];
         document.getElementById('ptPointsCard').innerHTML = `
           <div class="card-header"><h3 class="card-title">Points Table</h3></div>
@@ -68,7 +109,39 @@
         const fx = data.fixtures || [];
         document.getElementById('ptFixturesCard').innerHTML = `
           <div class="card-header"><h3 class="card-title">Fixtures</h3></div>
-          ${fx.map((f) => `<div class="fixture-card"><div><strong>${ApnaUI.escapeHtml(f.teamAName)} vs ${ApnaUI.escapeHtml(f.teamBName)}</strong><div class="text-sm text-muted">${ApnaUI.escapeHtml(f.roundName)} • ${ApnaUI.escapeHtml(f.resultText || f.status)}</div></div>${f.matchId ? `<a href="/public-match.html?id=${f.matchId}" class="btn btn-secondary btn-sm">Live</a>` : ''}</div>`).join('') || '<div class="empty-state">No fixtures yet.</div>'}`;
+          ${fx.map((f) => {
+            const dt = f.scheduledDate ? new Date(f.scheduledDate).toLocaleDateString('en-IN') : '';
+            return `<div class="fixture-card"><div><strong>${ApnaUI.escapeHtml(f.teamAName)} vs ${ApnaUI.escapeHtml(f.teamBName)}</strong><div class="text-sm text-muted">${ApnaUI.escapeHtml(f.roundName)} ${dt ? `• ${dt}` : ''} ${f.scheduledTime ? `• ${ApnaUI.escapeHtml(f.scheduledTime)}` : ''} ${f.venue ? `• ${ApnaUI.escapeHtml(f.venue)}` : ''} • ${ApnaUI.escapeHtml(f.resultText || f.status)}</div></div>${f.matchId ? `<a href="/public-match.html?id=${f.matchId}" class="btn btn-secondary btn-sm">Live</a>` : ''}</div>`;
+          }).join('') || '<div class="empty-state">No fixtures yet.</div>'}`;
+
+        if (t.plan === 'pro' && t.publicRegistrationEnabled) {
+          document.getElementById('ptRegisterCard').classList.remove('hidden');
+          document.getElementById('ptRegisterForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('ptRegSubmitBtn');
+            const st = document.getElementById('ptRegStatus');
+            btn.disabled = true;
+            st.classList.add('hidden');
+            try {
+              const res = await ApnaAPI.post(`/api/public/tournaments/${encodeURIComponent(id)}/register`, {
+                teamName: document.getElementById('ptRegTeam').value.trim(),
+                captainName: document.getElementById('ptRegCap').value.trim(),
+                captainPhone: document.getElementById('ptRegPhone').value.trim(),
+                playerNames: document.getElementById('ptRegPlayers').value
+              });
+              st.classList.remove('hidden');
+              st.style.color = 'var(--text-brand)';
+              st.textContent = res.message || 'Registration submitted!';
+              e.target.reset();
+            } catch (err) {
+              st.classList.remove('hidden');
+              st.style.color = 'var(--danger)';
+              st.textContent = err.message;
+            } finally {
+              btn.disabled = false;
+            }
+          };
+        }
       } catch (err) {
         document.getElementById('ptPointsCard').innerHTML = `<div class="empty-state">${ApnaUI.escapeHtml(err.message)}</div>`;
       }

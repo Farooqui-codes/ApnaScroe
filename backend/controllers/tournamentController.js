@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const PDFDocument = require('pdfkit');
 const Tournament = require('../models/Tournament');
 const TournamentFixture = require('../models/TournamentFixture');
 const PointsTable = require('../models/PointsTable');
@@ -8,6 +9,7 @@ const Match = require('../models/Match');
 const engine = require('../services/scoringEngine');
 const tournamentService = require('../services/tournamentService');
 const statsService = require('../services/statsService');
+const { FREE_LIMITS, hasProAccess } = require('../config/plans');
 const { logAudit } = require('../utils/logger');
 
 async function listTournaments(req, res, next) {
@@ -94,6 +96,38 @@ async function createTournament(req, res, next) {
       });
     }
 
+    const userHasMonthlyPro = hasProAccess(null, req.user);
+    const requestedMaxTeams = Number(maxTeams || 4);
+    const requestedFormat = format || 'knockout';
+
+    if (!userHasMonthlyPro) {
+      const existingCount = await Tournament.countDocuments({ organizerId: req.user._id });
+      if (existingCount >= FREE_LIMITS.maxTournaments) {
+        return res.status(403).json({
+          success: false,
+          requiresPro: true,
+          feature: 'Multiple Tournaments',
+          message: `Free tier allows ${FREE_LIMITS.maxTournaments} tournament. Upgrade to Tournament Manager Pro for unlimited tournaments.`
+        });
+      }
+      if (requestedMaxTeams > FREE_LIMITS.maxTeamsPerTournament) {
+        return res.status(403).json({
+          success: false,
+          requiresPro: true,
+          feature: 'More Than 4 Teams',
+          message: `Free tier allows up to ${FREE_LIMITS.maxTeamsPerTournament} teams per tournament. Upgrade to Pro for up to 64 teams.`
+        });
+      }
+      if (!FREE_LIMITS.allowedFormats.includes(requestedFormat)) {
+        return res.status(403).json({
+          success: false,
+          requiresPro: true,
+          feature: 'Group + Knockout Format',
+          message: 'Group Stage & League + Knockout formats require Tournament Manager Pro.'
+        });
+      }
+    }
+
     const { rules: validatedRules } = engine.validateAndNormalizeRules(
       Object.assign({}, rules || {}, {
         format: Object.assign({}, (rules && rules.format) || {}, {
@@ -104,9 +138,9 @@ async function createTournament(req, res, next) {
     );
 
     const registeredTeams = Array.isArray(teamIds)
-      ? teamIds.map((id, idx) => ({
+      ? teamIds.slice(0, userHasMonthlyPro ? 64 : FREE_LIMITS.maxTeamsPerTournament).map((id, idx) => ({
           teamId: id,
-          groupName: format === 'group_stage' ? (idx % 2 === 0 ? 'Group A' : 'Group B') : 'Group A',
+          groupName: requestedFormat === 'group_stage' ? (idx % 2 === 0 ? 'Group A' : 'Group B') : 'Group A',
           status: 'approved'
         }))
       : [];
@@ -117,15 +151,16 @@ async function createTournament(req, res, next) {
       village: String(village).trim(),
       organizerName: organizerName || req.user.name,
       organizerId: req.user._id,
+      plan: userHasMonthlyPro ? 'pro' : 'free',
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
       entryFee: Number(entryFee || 0),
       prizeMoney: prizeMoney ? String(prizeMoney).trim() : '',
-      maxTeams: Number(maxTeams || 8),
+      maxTeams: requestedMaxTeams,
       oversPerMatch: Number(oversPerMatch || 8),
       ballType: ballType || 'tennis',
-      format: format || 'league_knockout',
+      format: requestedFormat,
       isPublic: isPublic !== false,
       status: 'ongoing',
       rulesSnapshot: validatedRules,
@@ -152,7 +187,7 @@ async function updateTournament(req, res, next) {
       'name', 'season', 'village', 'organizerName', 'startDate', 'endDate',
       'registrationDeadline', 'entryFee', 'prizeMoney', 'maxTeams', 'oversPerMatch',
       'ballType', 'format', 'isPublic', 'status', 'pointsConfig', 'winnerTeamId',
-      'runnerUpTeamId', 'playerOfTournamentId'
+      'runnerUpTeamId', 'playerOfTournamentId', 'sponsorName', 'publicRegistrationEnabled'
     ];
     for (const k of allowed) {
       if (req.body[k] !== undefined) {
@@ -183,11 +218,23 @@ async function registerTeam(req, res, next) {
       return res.status(409).json({ success: false, message: 'Team is already registered in this tournament.' });
     }
 
+    const activeCount = tournament.registeredTeams.filter((r) => r.status !== 'rejected').length;
+    if (!hasProAccess(tournament, req.user) && activeCount >= FREE_LIMITS.maxTeamsPerTournament) {
+      return res.status(403).json({
+        success: false,
+        requiresPro: true,
+        feature: 'More Than 4 Teams',
+        tournamentId: tournament._id,
+        message: `Free tier allows up to ${FREE_LIMITS.maxTeamsPerTournament} teams per tournament. Upgrade to Pro to add more teams.`
+      });
+    }
+
     const isOrganizer = req.user.role === 'super_admin' || String(tournament.organizerId) === String(req.user._id);
     tournament.registeredTeams.push({
       teamId,
       groupName: groupName || 'Group A',
-      status: isOrganizer ? 'approved' : 'pending'
+      status: isOrganizer ? 'approved' : 'pending',
+      feeStatus: tournament.entryFee > 0 ? 'pending' : 'waived'
     });
     await tournament.save();
     await tournamentService.rebuildPointsTable(tournament._id);
@@ -287,10 +334,146 @@ async function announceWinner(req, res, next) {
 async function uploadTournamentMedia(req, res, next) {
   try {
     if (!req.file) return res.status(400).json({ success: false, message: 'No image file uploaded.' });
-    const field = req.body.type === 'poster' ? 'posterUrl' : 'logoUrl';
+    const kind = req.body.type;
+    if (kind === 'sponsor' && !hasProAccess(req.tournament, req.user)) {
+      return res.status(403).json({
+        success: false,
+        requiresPro: true,
+        feature: 'Sponsor Banner Branding',
+        tournamentId: req.tournament._id,
+        message: 'Sponsor banner branding is a Tournament Manager Pro feature.'
+      });
+    }
+    const field = kind === 'sponsor' ? 'sponsorBannerUrl' : (kind === 'poster' ? 'posterUrl' : 'logoUrl');
     req.tournament[field] = `/assets/uploads/${req.file.filename}`;
     await req.tournament.save();
     res.json({ success: true, [field]: req.tournament[field], tournament: req.tournament });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateEntryFee(req, res, next) {
+  try {
+    const tournament = req.tournament;
+    const entry = tournament.registeredTeams.find((r) => String(r.teamId) === String(req.params.teamId));
+    if (!entry) return res.status(404).json({ success: false, message: 'Team not registered in this tournament.' });
+
+    const { feeStatus, feeAmountPaid, paymentMode } = req.body || {};
+    if (feeStatus && ['pending', 'paid', 'waived'].includes(feeStatus)) entry.feeStatus = feeStatus;
+    if (feeAmountPaid !== undefined) entry.feeAmountPaid = Math.max(0, Number(feeAmountPaid) || 0);
+    if (paymentMode !== undefined) entry.paymentMode = String(paymentMode);
+    entry.feeUpdatedAt = new Date();
+    await tournament.save();
+
+    const approved = tournament.registeredTeams.filter((r) => r.status !== 'rejected');
+    const totalExpected = approved.filter((r) => r.feeStatus !== 'waived').length * (tournament.entryFee || 0);
+    const totalCollected = approved.reduce((s, r) => s + (r.feeStatus === 'paid' ? (r.feeAmountPaid || tournament.entryFee || 0) : 0), 0);
+
+    res.json({
+      success: true,
+      tournament,
+      feeSummary: {
+        totalExpected,
+        totalCollected,
+        totalPending: Math.max(0, totalExpected - totalCollected)
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function updateFixture(req, res, next) {
+  try {
+    const fixture = await TournamentFixture.findOne({ _id: req.params.fixtureId, tournamentId: req.tournament._id });
+    if (!fixture) return res.status(404).json({ success: false, message: 'Fixture not found.' });
+
+    const { scheduledDate, scheduledTime, venue, roundName, teamAId, teamBId } = req.body || {};
+    if (scheduledDate) fixture.scheduledDate = new Date(scheduledDate);
+    if (scheduledTime !== undefined) fixture.scheduledTime = String(scheduledTime).trim();
+    if (venue !== undefined) fixture.venue = String(venue).trim();
+    if (roundName !== undefined) fixture.roundName = String(roundName).trim();
+    if (teamAId) {
+      const tA = await Team.findById(teamAId).select('name');
+      if (tA) { fixture.teamAId = tA._id; fixture.teamAName = tA.name; }
+    }
+    if (teamBId) {
+      const tB = await Team.findById(teamBId).select('name');
+      if (tB) { fixture.teamBId = tB._id; fixture.teamBName = tB.name; }
+    }
+    await fixture.save();
+    res.json({ success: true, fixture });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function downloadProPDF(req, res, next) {
+  try {
+    const tournament = await Tournament.findById(req.params.id)
+      .populate('registeredTeams.teamId', 'name village')
+      .populate('winnerTeamId', 'name')
+      .lean();
+    if (!tournament) return res.status(404).json({ success: false, message: 'Tournament not found.' });
+
+    const [fixtures, pointsTable, leaderboards] = await Promise.all([
+      TournamentFixture.find({ tournamentId: tournament._id }).sort({ roundOrder: 1, matchNumber: 1 }).lean(),
+      PointsTable.find({ tournamentId: tournament._id }).sort({ points: -1, netRunRate: -1 }).lean(),
+      statsService.getFilteredLeaderboards({ tournamentId: tournament._id })
+    ]);
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const chunks = [];
+    doc.on('data', (c) => chunks.push(c));
+    doc.on('end', () => {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="ApnaScore_Pro_${tournament.shareCode || tournament._id}.pdf"`);
+      res.send(Buffer.concat(chunks));
+    });
+
+    doc.rect(0, 0, doc.page.width, 72).fill('#208B4E');
+    doc.fillColor('#FFFFFF').fontSize(18).font('Helvetica-Bold').text(`${tournament.name} (PRO REPORT)`, 40, 20);
+    doc.fontSize(10).font('Helvetica').text(`${tournament.village} • ${tournament.oversPerMatch} Overs • ${tournament.format.toUpperCase()}`, 40, 44);
+
+    let y = 90;
+    doc.fillColor('#0F3822').fontSize(12).font('Helvetica-Bold').text('1. Registered Teams', 40, y);
+    y += 18;
+    doc.fontSize(9.5).font('Helvetica');
+    (tournament.registeredTeams || []).forEach((r, idx) => {
+      doc.text(`${idx + 1}. ${r.teamId?.name || 'Team'} (${r.status}) — Captain: ${r.captainName || '-'} • Fee: ${r.feeStatus || 'pending'}`, 45, y);
+      y += 14;
+    });
+
+    y += 10;
+    doc.fontSize(12).font('Helvetica-Bold').text('2. Points Table & NRR', 40, y);
+    y += 18;
+    doc.fontSize(9.5).font('Helvetica');
+    pointsTable.forEach((p, idx) => {
+      doc.text(`${idx + 1}. ${p.teamName}  |  P:${p.played}  W:${p.won}  L:${p.lost}  Pts:${p.points}  NRR:${Number(p.netRunRate || 0).toFixed(3)}`, 45, y);
+      y += 14;
+    });
+
+    y += 10;
+    doc.fontSize(12).font('Helvetica-Bold').text('3. Match Schedule & Results', 40, y);
+    y += 18;
+    doc.fontSize(9.5).font('Helvetica');
+    fixtures.forEach((f) => {
+      if (y > 760) { doc.addPage(); y = 45; }
+      const d = f.scheduledDate ? new Date(f.scheduledDate).toLocaleDateString('en-IN') : 'TBD';
+      doc.text(`#${f.matchNumber} [${f.roundName}] ${f.teamAName} vs ${f.teamBName} • ${d} ${f.scheduledTime || ''} • ${f.venue || ''} • ${f.resultText || f.status}`, 45, y);
+      y += 14;
+    });
+
+    y += 10;
+    doc.fontSize(12).font('Helvetica-Bold').text('4. Awards & Top Performers', 40, y);
+    y += 16;
+    doc.fontSize(9.5).font('Helvetica');
+    doc.text(`Champion: ${tournament.winnerTeamId?.name || 'TBD'}`, 45, y); y += 14;
+    doc.text(`Orange Cap: ${leaderboards.orangeCap ? `${leaderboards.orangeCap.name} (${leaderboards.orangeCap.runs} runs)` : '-'}`, 45, y); y += 14;
+    doc.text(`Purple Cap: ${leaderboards.purpleCap ? `${leaderboards.purpleCap.name} (${leaderboards.purpleCap.wickets} wkts)` : '-'}`, 45, y);
+
+    doc.end();
   } catch (err) {
     next(err);
   }
@@ -303,8 +486,11 @@ module.exports = {
   updateTournament,
   registerTeam,
   approveTeam,
+  updateEntryFee,
   generateFixtures,
   addManualFixture,
+  updateFixture,
   announceWinner,
-  uploadTournamentMedia
+  uploadTournamentMedia,
+  downloadProPDF
 };
