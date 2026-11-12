@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://apnascore.onrender.com/</loc><priority>1.0</priority></url>
+  <url><loc>https://apnascore.onrender.com/dashboard.html</loc><priority>0.9</priority></url>
+  <url><loc>https://apnascore.onrender.com/match-create.html</loc><priority>0.9</priority></url>
+  <url><loc>https://apnascore.onrender.com/live-score.html</loc><priority>0.8</priority></url>
+  <url><loc>https://apnascore.onrender.com/tournament.html</loc><priority>0.8</priority></url>
+  <url><loc>https://apnascore.onrender.com/leaderboards.html</loc><priority>0.7</priority></url>
+  <url><loc>https://apnascore.onrender.com/login.html</loc><priority>0.5</priority></url>
+  <url><loc>https://apnascore.onrender.com/register.html</loc><priority>0.5</priority></url>
+</urlset>

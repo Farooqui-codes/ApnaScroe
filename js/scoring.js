@@ -722,6 +722,9 @@
     const slotSel = document.getElementById('retireSlotSelect');
     const sStat = computedState.strikerId && computedState.battingStats[computedState.strikerId];
     const nsStat = computedState.nonStrikerId && computedState.battingStats[computedState.nonStrikerId];
+    if (!sStat && !nsStat) {
+      return ApnaUI.showToast('Select active batsmen before retiring.', 'warning');
+    }
     slotSel.innerHTML = `
       ${sStat ? `<option value="striker">Striker: ${ApnaUI.escapeHtml(sStat.name)}</option>` : ''}
       ${nsStat ? `<option value="non_striker">Non-Striker: ${ApnaUI.escapeHtml(nsStat.name)}</option>` : ''}
@@ -950,7 +953,16 @@
     document.getElementById('whatsappShareBtn').href = `https://wa.me/?text=${encodeURIComponent(`Watch Live Score: ${matchDoc.title} on ApnaScore! ${url}`)}`;
     document.getElementById('openScorecardPdfBtn').href = `/scorecard.html?matchId=${matchDoc._id}`;
     document.getElementById('copyShareLinkBtn').onclick = () => {
-      navigator.clipboard?.writeText(url);
+      const inp = document.getElementById('sharePublicUrlInput');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).catch(() => {
+          inp.select();
+          try { document.execCommand('copy'); } catch (_) {}
+        });
+      } else {
+        inp.select();
+        try { document.execCommand('copy'); } catch (_) {}
+      }
       ApnaUI.showToast('Live match link copied!');
     };
     try {

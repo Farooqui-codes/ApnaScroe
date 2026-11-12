@@ -9,7 +9,15 @@
   async function downloadMatchPDF(matchId, matchBundle) {
     try {
       if (navigator.onLine && !String(matchId).startsWith('cm_')) {
-        const res = await fetch(`/api/scorecards/${encodeURIComponent(matchId)}/pdf`);
+        const headers = {};
+        const token = root.ApnaAPI ? root.ApnaAPI.getToken() : '';
+        const guest = root.ApnaAPI ? root.ApnaAPI.getGuestSession() : null;
+        if (token) headers.Authorization = `Bearer ${token}`;
+        else if (guest && guest.guestId && guest.guestToken) {
+          headers['X-Guest-Id'] = guest.guestId;
+          headers['X-Guest-Token'] = guest.guestToken;
+        }
+        const res = await fetch(`/api/scorecards/${encodeURIComponent(matchId)}/pdf`, { headers });
         if (res.ok) {
           const blob = await res.blob();
           triggerDownload(blob, `ApnaScore_Scorecard_${matchId}.pdf`);

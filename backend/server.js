@@ -40,6 +40,7 @@ function createApp() {
         directives: {
           defaultSrc: ["'self'"],
           scriptSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrcAttr: ["'unsafe-inline'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           imgSrc: ["'self'", 'data:', 'blob:'],
           connectSrc: ["'self'", 'ws:', 'wss:'],
@@ -60,6 +61,25 @@ function createApp() {
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
+  // Lightweight NoSQL key sanitizer (strips keys starting with $ or containing .)
+  const sanitizeObj = (obj) => {
+    if (!obj || typeof obj !== 'object') return obj;
+    if (Array.isArray(obj)) return obj.map(sanitizeObj);
+    for (const key of Object.keys(obj)) {
+      if (key.startsWith('$') || key.includes('.')) {
+        delete obj[key];
+      } else if (typeof obj[key] === 'object') {
+        sanitizeObj(obj[key]);
+      }
+    }
+    return obj;
+  };
+  app.use((req, _res, next) => {
+    if (req.body) sanitizeObj(req.body);
+    if (req.query) sanitizeObj(req.query);
+    next();
+  });
+
   const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 600,
@@ -68,10 +88,12 @@ function createApp() {
   });
   app.use('/api/', apiLimiter);
 
-  // Health check
-  app.get('/api/health', (_req, res) => {
+  // Health check endpoints (for Render & UptimeRobot)
+  const healthHandler = (_req, res) => {
     res.json({ success: true, app: 'ApnaScore', status: 'ok', timestamp: new Date().toISOString() });
-  });
+  };
+  app.get('/health', healthHandler);
+  app.get('/api/health', healthHandler);
 
   // API Routes
   app.use('/api/auth', authRoutes);
@@ -164,8 +186,19 @@ function createApp() {
     }
   });
 
-  // Serve static frontend files
-  app.use(express.static(rootDir, { extensions: ['html'] }));
+  // Serve static frontend files with smart caching headers for slow 3G/4G networks
+  app.use(express.static(rootDir, {
+    extensions: ['html'],
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html') || filePath.endsWith('service-worker.js')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      } else if (filePath.includes(`${path.sep}assets${path.sep}`) || filePath.includes(`${path.sep}vendor${path.sep}`)) {
+        res.setHeader('Cache-Control', 'public, max-age=604800');
+      } else if (filePath.endsWith('.css') || filePath.endsWith('.js')) {
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+      }
+    }
+  }));
 
   app.use('/api/*', (_req, res) => {
     res.status(404).json({ success: false, message: 'API endpoint not found.' });

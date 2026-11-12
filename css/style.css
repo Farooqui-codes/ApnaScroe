@@ -885,6 +885,30 @@ table.data-table td.num {
 }
 
 .hidden { display: none !important; }
+
+/* Keyboard Focus Accessibility */
+:focus-visible {
+  outline: 3px solid var(--brand-lime);
+  outline-offset: 2px;
+}
+
+/* Render Cold-Start Friendly Banner */
+.cold-start-banner {
+  position: fixed;
+  bottom: 78px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 350;
+  background: var(--brand-primary-deep);
+  color: #FFFFFF;
+  border: 2px solid var(--brand-lime);
+  padding: 10px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.86rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-lg);
+  white-space: nowrap;
+}
 .mt-1 { margin-top: 8px; }
 .mt-2 { margin-top: 16px; }
 .mt-3 { margin-top: 24px; }

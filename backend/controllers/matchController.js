@@ -544,9 +544,11 @@ async function updateMatchControl(req, res, next) {
       } else {
         match.status = 'completed';
       }
-      if (playerOfMatchId) {
-        match.result.playerOfMatchId = playerOfMatchId;
+      if (playerOfMatchName || playerOfMatchId) {
+        match.result.playerOfMatchId = playerOfMatchId || null;
         match.result.playerOfMatchName = playerOfMatchName || '';
+      }
+      if (playerOfMatchId) {
         await Award.create({
           awardType: 'player_of_match',
           title: 'Player of the Match',

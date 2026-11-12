@@ -69,14 +69,33 @@
       options.body = JSON.stringify(options.body);
     }
 
+    let wakeTimer = null;
+    const showWakeNotice = () => {
+      if (typeof document === 'undefined' || document.getElementById('apnaColdStartBanner')) return;
+      const el = document.createElement('div');
+      el.id = 'apnaColdStartBanner';
+      el.className = 'cold-start-banner';
+      el.setAttribute('role', 'status');
+      el.textContent = 'Server jaag raha hai, thoda wait karein...';
+      document.body.appendChild(el);
+    };
+    const hideWakeNotice = () => {
+      if (wakeTimer) clearTimeout(wakeTimer);
+      const el = typeof document !== 'undefined' ? document.getElementById('apnaColdStartBanner') : null;
+      if (el) el.remove();
+    };
+
     let response;
     try {
+      wakeTimer = setTimeout(showWakeNotice, 2400);
       response = await fetch(path, Object.assign({}, options, { headers }));
     } catch (networkErr) {
+      hideWakeNotice();
       const err = new Error('Network unavailable. Working in offline mode.');
       err.isOffline = true;
       throw err;
     }
+    hideWakeNotice();
 
     const contentType = response.headers.get('content-type') || '';
     if (contentType.includes('application/pdf')) {

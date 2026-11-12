@@ -78,7 +78,12 @@
     const id = new URLSearchParams(window.location.search).get('id');
     const shareUrl = window.location.href;
     document.getElementById('pubWaBtn').href = `https://wa.me/?text=${encodeURIComponent('Watch Live Cricket Score on ApnaScore: ' + shareUrl)}`;
-    document.getElementById('pubCopyBtn').onclick = () => { navigator.clipboard?.writeText(shareUrl); ApnaUI.showToast('Link copied!'); };
+    document.getElementById('pubCopyBtn').onclick = () => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).catch(() => {});
+      }
+      ApnaUI.showToast('Link copied!');
+    };
 
     async function loadPublic() {
       if (!id) return;

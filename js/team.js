@@ -167,7 +167,7 @@
 
       document.getElementById('addExistingPlayerBtn').onclick = async () => {
         const pid = document.getElementById('addPlayerToTeamSel').value;
-        if (!pid) return;
+        if (!pid) return ApnaUI.showToast('No available players to add. Create a player first.', 'warning');
         try {
           await ApnaAPI.post(`/api/teams/${t._id}/players`, { playerId: pid });
           ApnaUI.showToast('Player added to team.');

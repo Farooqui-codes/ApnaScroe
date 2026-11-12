@@ -4,12 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#208B4E" />
-  <title>ApnaScore – Apne Gaon ka Apna Scorer</title>
+  <title>ApnaScore – Apne Gaon ka Apna Scorer | Live Village & Gully Cricket Scoring</title>
   <meta name="description" content="Score village, gully & tennis-ball cricket live — even 100% offline! Custom local rules, instant ball-by-ball scorecards, tournament points tables & NRR, player stats, and pro PDF exports. Start scoring free without sign-up!" />
+  <link rel="canonical" href="https://apnascore.onrender.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="ApnaScore" />
   <meta property="og:title" content="ApnaScore – Apne Gaon ka Apna Scorer | Live Cricket Scoring & Tournaments" />
-  <meta property="og:description" content="Score village, gully & tennis-ball cricket live — even 100% offline! Custom local rules, instant ball-by-ball scorecards, tournament points tables & NRR, player stats, and pro PDF exports. Start scoring free without sign-up!" />
+  <meta property="og:description" content="Score village, gully & tennis-ball cricket live — even 100% offline! Custom local rules, instant ball-by-ball scorecards, tournament points tables & NRR, player stats, and pro PDF exports." />
   <meta property="og:image" content="/assets/images/apnascore-og-preview.jpg" />
   <meta property="og:image:type" content="image/jpeg" />
   <meta property="og:image:width" content="1200" />
@@ -18,7 +19,7 @@
   <meta property="og:url" content="/" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="ApnaScore – Apne Gaon ka Apna Scorer | Live Cricket Scoring & Tournaments" />
-  <meta name="twitter:description" content="Score village, gully & tennis-ball cricket live — even 100% offline! Custom local rules, instant ball-by-ball scorecards, tournament points tables & NRR, player stats, and pro PDF exports. Start scoring free without sign-up!" />
+  <meta name="twitter:description" content="Score village, gully & tennis-ball cricket live — even 100% offline! Start scoring free without sign-up." />
   <meta name="twitter:image" content="/assets/images/apnascore-og-preview.jpg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
   <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
@@ -26,74 +27,353 @@
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/responsive.css" />
   <link rel="stylesheet" href="/css/animations.css" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "ApnaScore",
+    "applicationCategory": "SportsApplication",
+    "operatingSystem": "Web, Android, iOS",
+    "description": "Free offline-first village, gully and tennis-ball cricket scoring app with custom rules, tournaments, NRR points tables, and PDF scorecards.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" }
+  }
+  </script>
   <style>
-    .splash-wrap {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
-      text-align: center;
+    .lp-nav {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      padding: 10px 18px;
     }
-    .splash-card {
-      max-width: 540px;
-      width: 100%;
+    .lp-nav-inner {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .lp-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 900;
+      font-size: 1.12rem;
+      color: var(--text-primary);
+    }
+    .lp-brand img {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      object-fit: contain;
+    }
+    .lp-nav-links {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .lp-container {
+      max-width: 1140px;
+      margin: 0 auto;
+      padding: 28px 16px;
+    }
+    .lp-hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 24px;
+      align-items: center;
       background: var(--bg-surface);
       border: 2px solid var(--border-color);
-      border-radius: 22px;
-      padding: 28px 22px;
-      box-shadow: var(--shadow-lg);
+      border-radius: 20px;
+      padding: 28px 24px;
+      box-shadow: var(--shadow-md);
     }
-    .splash-logo {
-      width: 180px;
-      height: 180px;
-      object-fit: contain;
-      margin: 0 auto 14px;
-      border-radius: 18px;
+    .lp-hero h1 {
+      margin: 8px 0 10px;
+      font-size: clamp(1.65rem, 3.6vw, 2.45rem);
+      font-weight: 900;
+      line-height: 1.15;
+      color: var(--text-primary);
     }
-    .feature-pills {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px;
-      margin: 16px 0 22px;
+    .lp-section {
+      margin-top: 34px;
     }
-    .splash-actions {
+    .lp-section-head {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .lp-section-head h2 {
+      margin: 0 0 4px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .lp-grid-3 {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .lp-feature-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--brand-soft-mint);
+      color: var(--brand-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    [data-theme="dark"] .lp-feature-icon {
+      background: #1B3B2A;
+      color: var(--brand-lime);
+    }
+    .lp-step-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--brand-primary);
+      color: #FFFFFF;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .lp-demo-bar {
+      background: var(--brand-primary-deep);
+      color: #FFFFFF;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .lp-footer {
+      margin-top: 40px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      padding: 24px 16px;
+    }
+    .lp-footer-inner {
+      max-width: 1140px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    @media (max-width: 860px) {
+      .lp-hero { grid-template-columns: 1fr; text-align: center; }
+      .lp-grid-3 { grid-template-columns: 1fr; }
     }
     @media (max-width: 480px) {
-      .splash-actions { grid-template-columns: 1fr; }
+      .lp-nav { padding: 8px 12px; }
+      .lp-hero { padding: 20px 16px; }
     }
   </style>
 </head>
 <body>
-  <main class="splash-wrap">
-    <div class="splash-card">
-      <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore Logo" class="splash-logo" />
-      <h1 style="margin:0;font-size:1.75rem;font-weight:900;color:var(--text-primary);">ApnaScore</h1>
-      <p style="margin:4px 0 2px;font-weight:700;color:var(--text-brand);">Apne Gaon ka Apna Scorer</p>
-      <p class="text-muted text-sm" style="margin:0;">Har Gaon Ka Apna Cricket Scoreboard.</p>
+  <header class="lp-nav">
+    <div class="lp-nav-inner">
+      <a href="/" class="lp-brand" aria-label="ApnaScore Home">
+        <img src="/assets/icons/apnascore-icon.png" alt="ApnaScore Logo" width="38" height="38" />
+        <span>ApnaScore</span>
+      </a>
+      <nav class="lp-nav-links" aria-label="Primary Navigation">
+        <a href="/dashboard.html" class="btn btn-ghost btn-sm">Dashboard</a>
+        <a href="/live-score.html" class="btn btn-ghost btn-sm">Live Matches</a>
+        <a href="/login.html" class="btn btn-secondary btn-sm">Login</a>
+        <a href="/register.html" class="btn btn-lime btn-sm">Create Account</a>
+        <button type="button" class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark mode"></button>
+      </nav>
+    </div>
+  </header>
 
-      <div class="feature-pills">
-        <span class="badge badge-success">Offline Ball-by-Ball Scoring</span>
-        <span class="badge badge-success">Custom Village Rules</span>
-        <span class="badge badge-success">Tournaments & NRR</span>
-        <span class="badge badge-success">PDF Scorecards</span>
+  <main class="lp-container">
+    <!-- Hero Section -->
+    <section class="lp-hero">
+      <div>
+        <span class="badge badge-success">100% Free • Works Offline on Ground</span>
+        <h1>Har Gaon Ka Apna Cricket Scoreboard</h1>
+        <p style="margin:0 0 8px;font-weight:700;color:var(--text-brand);">Apne Gaon ka Apna Scorer</p>
+        <p class="text-muted" style="margin:0 0 18px;">
+          Gully, village aur tennis-ball cricket match 15 second me shuru karein — bina sign-up, bina internet tension ke!
+        </p>
+        <button type="button" id="continueGuestBtn" class="btn btn-primary btn-lg" style="min-width:240px;">
+          Start Scoring (Free Guest Mode)
+        </button>
+        <p class="text-sm text-muted mt-1" style="margin-bottom:0;">
+          No account needed • Data aapke phone par safe rehta hai
+        </p>
       </div>
 
-      <button type="button" id="continueGuestBtn" class="btn btn-primary btn-lg" style="width:100%;margin-bottom:10px;">Continue as Guest (Start Scoring Instantly)</button>
+      <div class="card" style="background:var(--bg-surface-alt);">
+        <div class="lp-demo-bar">
+          <div class="flex-between">
+            <span class="badge badge-live"><span class="live-dot"></span>LIVE DEMO</span>
+            <span style="font-size:0.8rem;color:#C3DDC8;">6 Overs • Tennis Ball</span>
+          </div>
+          <div style="margin-top:10px;font-size:1.45rem;font-weight:900;">Rampur Lions: 58/2 <span style="color:var(--brand-lime);font-size:0.95rem;">(4.3 ov)</span></div>
+          <div style="font-size:0.84rem;color:#E2F1E6;margin-top:4px;">Aman* 28 (14) • Bowler: Suresh 2-18</div>
+        </div>
+        <div class="flex-between text-sm">
+          <span>Offline IndexedDB Sync</span>
+          <strong style="color:var(--text-brand);">Ready</strong>
+        </div>
+      </div>
+    </section>
 
-      <div class="splash-actions">
-        <a href="/dashboard.html" class="btn btn-secondary">Open Dashboard</a>
-        <a href="/live-score.html" class="btn btn-secondary">Live Matches</a>
-        <a href="/login.html" class="btn btn-secondary">Scorer Login</a>
-        <a href="/register.html" class="btn btn-lime">Create Account</a>
+    <!-- Features Section -->
+    <section class="lp-section" aria-labelledby="featuresHeading">
+      <div class="lp-section-head">
+        <h2 id="featuresHeading">Har Match Ke Liye Complete Features</h2>
+        <p class="text-muted text-sm">Simple upar se, powerful andar se — village scorers ke liye banaya gaya.</p>
+      </div>
+      <div class="lp-grid-3">
+        <article class="card">
+          <span class="lp-feature-icon" data-lp-icon="wifiOff"></span>
+          <h3 class="card-title">Offline Scoring</h3>
+          <p class="text-sm text-muted" style="margin:6px 0 0;">Ground par network na ho tab bhi score karein; net aate hi auto-sync.</p>
+        </article>
+        <article class="card">
+          <span class="lp-feature-icon" data-lp-icon="settings"></span>
+          <h3 class="card-title">Custom Village Rules</h3>
+          <p class="text-sm text-muted" style="margin:6px 0 0;">One-tip catch, last-man batting, wide/no-ball aur gully rules preset karein.</p>
+        </article>
+        <article class="card">
+          <span class="lp-feature-icon" data-lp-icon="trophy"></span>
+          <h3 class="card-title">Tournaments & NRR</h3>
+          <p class="text-sm text-muted" style="margin:6px 0 0;">Knockout, League fixtures, aur automatic Net Run Rate points table.</p>
+        </article>
+        <article class="card">
+          <span class="lp-feature-icon" data-lp-icon="barChart"></span>
+          <h3 class="card-title">Player Stats</h3>
+          <p class="text-sm text-muted" style="margin:6px 0 0;">Har player ke runs, wickets, strike rate, economy aur Orange/Purple cap.</p>
+        </article>
+        <article class="card">
+          <span class="lp-feature-icon" data-lp-icon="fileText"></span>
+          <h3 class="card-title">PDF Scorecards</h3>
+          <p class="text-sm text-muted" style="margin:6px 0 0;">Match khatam hote hi clean batting, bowling aur FOW PDF download karein.</p>
+        </article>
+        <article class="card">
+          <span class="lp-feature-icon" data-lp-icon="share"></span>
+          <h3 class="card-title">Live Sharing</h3>
+          <p class="text-sm text-muted" style="margin:6px 0 0;">WhatsApp link aur QR code se gaon ke sabhi logon ko live score dikhayein.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="lp-section" aria-labelledby="howItWorksHeading">
+      <div class="lp-section-head">
+        <h2 id="howItWorksHeading">Kaise Kaam Karta Hai? (3 Simple Steps)</h2>
+      </div>
+      <div class="lp-grid-3">
+        <div class="card">
+          <span class="lp-step-num">1</span>
+          <h3 class="card-title">Match Setup Karein</h3>
+          <p class="text-sm text-muted" style="margin:6px 0 0;">Sirf Team A, Team B, Overs (2/4/6/8/10) aur Toss select karein.</p>
+        </div>
+        <div class="card">
+          <span class="lp-step-num">2</span>
+          <h3 class="card-title">Ball-by-Ball Score Karein</h3>
+          <p class="text-sm text-muted" style="margin:6px 0 0;">Bade touch buttons (0–6, Wide, No Ball, Out, Undo) se ek haath se score karein.</p>
+        </div>
+        <div class="card">
+          <span class="lp-step-num">3</span>
+          <h3 class="card-title">Scorecard & Share</h3>
+          <p class="text-sm text-muted" style="margin:6px 0 0;">Full scorecard PDF download karein aur WhatsApp par turant share karein.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- App Preview / Demo -->
+    <section class="lp-section" aria-labelledby="demoHeading">
+      <div class="lp-section-head">
+        <h2 id="demoHeading">Field-Ready Screens</h2>
+        <p class="text-muted text-sm">Dhoop me bhi saaf dikhne wala Outdoor Mode aur clean scorecards.</p>
+      </div>
+      <div class="lp-grid-3">
+        <div class="card">
+          <img src="/assets/images/apnascore-og-preview.jpg" alt="ApnaScore Live Scoring Preview" loading="lazy" style="border-radius:10px;margin-bottom:10px;aspect-ratio:16/9;object-fit:cover;" />
+          <strong>Outdoor Sunlight Scorer</strong>
+          <p class="text-sm text-muted" style="margin:4px 0 0;">High-contrast keypad jo tez dhoop me bhi bilkul clear dikhta hai.</p>
+        </div>
+        <div class="card">
+          <div style="border-radius:10px;background:var(--bg-surface-alt);border:1px solid var(--border-color);padding:14px;margin-bottom:10px;">
+            <div class="flex-between text-sm"><strong>Points Table (NRR)</strong><span class="badge badge-success">LIVE</span></div>
+            <div class="text-sm mt-1">1. Rampur Lions — 6 Pts (+1.840)</div>
+            <div class="text-sm">2. Bazaar Tigers — 4 Pts (+0.620)</div>
+            <div class="text-sm">3. Gaon Strikers — 2 Pts (-0.410)</div>
+          </div>
+          <strong>Automatic Points Table</strong>
+          <p class="text-sm text-muted" style="margin:4px 0 0;">Har match complete hote hi NRR aur standings apne aap update.</p>
+        </div>
+        <div class="card">
+          <div style="border-radius:10px;background:var(--bg-surface-alt);border:1px solid var(--border-color);padding:14px;margin-bottom:10px;">
+            <div class="flex-between text-sm"><strong>Official PDF Export</strong><span class="badge badge-neutral">A4 PDF</span></div>
+            <div class="text-sm mt-1">• Batting & Bowling Figures</div>
+            <div class="text-sm">• Extras & Fall of Wickets</div>
+            <div class="text-sm">• WhatsApp Direct Share</div>
+          </div>
+          <strong>Instant Scorecard PDF</strong>
+          <p class="text-sm text-muted" style="margin:4px 0 0;">Har innings ka poora hisab ek tap me PDF aur WhatsApp par.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials -->
+    <section class="lp-section" aria-labelledby="testimonialsHeading">
+      <div class="lp-section-head">
+        <h2 id="testimonialsHeading">Village Scorers Kya Kehte Hain</h2>
+      </div>
+      <div class="lp-grid-3">
+        <blockquote class="card" style="margin:0;">
+          <p class="text-sm" style="margin:0 0 8px;">"Gaon me network slow rehta hai, par ApnaScore bina net ke bhi perfectly chalta hai aur baad me sync ho jata hai."</p>
+          <footer class="text-sm text-muted"><strong>— Imran Khan</strong>, Rampur Cup Organizer</footer>
+        </blockquote>
+        <blockquote class="card" style="margin:0;">
+          <p class="text-sm" style="margin:0 0 8px;">"One-tip catch aur last-man batting jaise local rules mil gaye. Ab copy-pen ki zaroorat hi nahi padti."</p>
+          <footer class="text-sm text-muted"><strong>— Vikas Yadav</strong>, Gully Cricket Captain</footer>
+        </blockquote>
+        <blockquote class="card" style="margin:0;">
+          <p class="text-sm" style="margin:0 0 8px;">"Match khatam hote hi WhatsApp group me PDF scorecard share kar dete hain — sab players khush rehte hain."</p>
+          <footer class="text-sm text-muted"><strong>— Arjun Verma</strong>, Local League Scorer</footer>
+        </blockquote>
+      </div>
+    </section>
+  </main>
+
+  <footer class="lp-footer">
+    <div class="lp-footer-inner">
+      <div>
+        <strong>ApnaScore</strong> — Apne Gaon ka Apna Scorer
+        <div class="text-sm text-muted mt-1">Built for village, gully, school & tennis-ball cricket across India.</div>
+      </div>
+      <div class="flex-gap text-sm">
+        <a href="#featuresHeading">About</a>
+        <a href="https://wa.me/?text=Hi%20ApnaScore%20Team!" target="_blank" rel="noopener">WhatsApp Support</a>
+        <a href="mailto:support@apnascore.in">support@apnascore.in</a>
+        <button type="button" class="btn btn-ghost btn-sm" id="openPrivacyBtn">Privacy Policy</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="openTermsBtn">Terms</button>
       </div>
     </div>
-  </main>
+  </footer>
+
+  <!-- Legal Info Modal -->
+  <div class="modal-backdrop" id="legalModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="legalModalTitle">Privacy Policy</h3>
+        <button type="button" class="icon-btn" id="closeLegalModalBtn" aria-label="Close">✕</button>
+      </div>
+      <div id="legalModalBody" class="text-sm"></div>
+    </div>
+  </div>
+
   <script src="/js/icons.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/offline-sync.js"></script>
@@ -101,11 +381,32 @@
   <script src="/js/main.js"></script>
   <script>
     ApnaUI.applyTheme(localStorage.getItem('apnascore_theme') || 'light');
+    document.getElementById('themeToggleBtn')?.addEventListener('click', ApnaUI.toggleTheme);
+    document.querySelectorAll('[data-lp-icon]').forEach((el) => {
+      if (window.ApnaIcons) el.innerHTML = ApnaIcons.icon(el.getAttribute('data-lp-icon'), 22);
+    });
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+
     document.getElementById('continueGuestBtn').addEventListener('click', async (e) => {
-      e.target.disabled = true;
-      e.target.textContent = 'Opening Guest Mode...';
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = 'Opening Guest Mode...';
       await ApnaAuth.continueAsGuest('/dashboard.html');
+    });
+
+    const openLegal = (title, text) => {
+      document.getElementById('legalModalTitle').textContent = title;
+      document.getElementById('legalModalBody').textContent = text;
+      document.getElementById('legalModal').classList.add('open');
+    };
+    document.getElementById('openPrivacyBtn').addEventListener('click', () => {
+      openLegal('Privacy Policy', 'ApnaScore stores your match, team, and player data locally on your device in Guest Mode and securely on our database only when you choose to create an account. We never sell your personal data.');
+    });
+    document.getElementById('openTermsBtn').addEventListener('click', () => {
+      openLegal('Terms of Use', 'ApnaScore is provided free for local cricket scoring and tournament organization. Organizers are responsible for the accuracy of match and tournament records they publish.');
+    });
+    document.getElementById('closeLegalModalBtn').addEventListener('click', () => {
+      document.getElementById('legalModal').classList.remove('open');
     });
   </script>
 </body>

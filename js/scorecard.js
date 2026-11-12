@@ -99,6 +99,15 @@
       document.getElementById('downloadPdfBtn').onclick = () => ApnaPDF.downloadMatchPDF(matchId, currentBundle);
       document.getElementById('printScorecardBtn').onclick = () => window.print();
       document.getElementById('sharePdfBtn').onclick = () => ApnaPDF.shareMatchPDF(matchId, currentBundle);
+      const waBtn = document.getElementById('shareWaCardBtn');
+      if (waBtn) {
+        const innSummary = innings.map((i) => `${i.battingTeamName}: ${i.totalRuns}/${i.wickets} (${i.oversString} ov)`).join(' vs ');
+        const resTxt = (match.result && match.result.marginText) || match.status.toUpperCase();
+        const shareUrl = match.isPublic && match.matchCode
+          ? `${window.location.origin}/public-match.html?id=${encodeURIComponent(match.matchCode)}`
+          : window.location.href;
+        waBtn.href = `https://wa.me/?text=${encodeURIComponent(`🏏 ${match.title}\n${innSummary}\n${resTxt}\nScorecard: ${shareUrl}`)}`;
+      }
     } catch (err) {
       document.getElementById('scorecardRenderRoot').innerHTML = `<div class="card empty-state">${ApnaUI.escapeHtml(err.message)}</div>`;
     }

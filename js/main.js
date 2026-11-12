@@ -150,6 +150,7 @@
             <span class="topbar-page-title">${pageTitle}</span>
           </div>
           <div class="topbar-actions">
+            <button type="button" class="btn btn-lime btn-sm hidden" id="pwaInstallBtn" aria-label="Install ApnaScore App">Install App</button>
             <button class="sync-pill online" id="globalSyncPill" title="Click to sync pending offline matches">
               <span class="sync-icon">${root.ApnaIcons.icon('wifi', 15)}</span>
               <span class="sync-label-text">Online</span>
@@ -216,12 +217,35 @@
       });
     }
 
-    // Register PWA Service Worker
+    // Register PWA Service Worker & Install Prompt ("Add to Home Screen")
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js').catch(() => {});
     }
 
+    const installBtn = document.getElementById('pwaInstallBtn');
+    if (installBtn && root.__apnaInstallPrompt) {
+      installBtn.classList.remove('hidden');
+    }
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        const promptEvt = root.__apnaInstallPrompt;
+        if (!promptEvt) return;
+        promptEvt.prompt();
+        await promptEvt.userChoice.catch(() => {});
+        root.__apnaInstallPrompt = null;
+        installBtn.classList.add('hidden');
+      });
+    }
+
     return true;
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      root.__apnaInstallPrompt = e;
+      document.getElementById('pwaInstallBtn')?.classList.remove('hidden');
+    });
   }
 
   function escapeHtml(str) {
