@@ -24,13 +24,26 @@ async function listTournaments(req, res, next) {
     if (village) query.village = new RegExp(String(village), 'i');
     if (search) query.name = new RegExp(String(search), 'i');
 
-    const tournaments = await Tournament.find(query)
-      .populate('winnerTeamId', 'name shortName logoUrl')
-      .populate('registeredTeams.teamId', 'name shortName village logoUrl')
-      .sort({ startDate: -1, createdAt: -1 })
-      .lean();
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 30));
 
-    res.json({ success: true, tournaments });
+    const [total, tournaments] = await Promise.all([
+      Tournament.countDocuments(query),
+      Tournament.find(query)
+        .populate('winnerTeamId', 'name shortName logoUrl')
+        .populate('registeredTeams.teamId', 'name shortName village logoUrl')
+        .sort({ startDate: -1, createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    res.json({
+      success: true,
+      tournaments,
+      pagination: { page, limit, total, totalPages, hasMore: page < totalPages }
+    });
   } catch (err) {
     next(err);
   }

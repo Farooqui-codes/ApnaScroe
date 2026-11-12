@@ -16,6 +16,8 @@ const matchSchema = new mongoose.Schema(
     ownerType: { type: String, enum: ['guest', 'user'], default: 'user', index: true },
     guestId: { type: String, default: null, index: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
+    ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
+    version: { type: Number, default: 1 },
     sourceGuestId: { type: String, default: null },
     migratedAt: { type: Date, default: null },
 
@@ -98,6 +100,15 @@ const matchSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+matchSchema.pre('save', function (next) {
+  if (this.userId && !this.ownerId) {
+    this.ownerId = this.userId;
+  }
+  next();
+});
+
 matchSchema.index({ sourceGuestId: 1, clientMatchId: 1 }, { sparse: true });
+matchSchema.index({ userId: 1, status: 1, matchDate: -1 });
+matchSchema.index({ tournamentId: 1, status: 1 });
 
 module.exports = mongoose.model('Match', matchSchema, 'matches');

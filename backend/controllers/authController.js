@@ -314,18 +314,27 @@ async function linkPlayer(req, res, next) {
 
 async function exportMyData(req, res, next) {
   try {
-    const [matches, teams, players] = await Promise.all([
+    const Tournament = require('../models/Tournament');
+    const Delivery = require('../models/Delivery');
+    const [matches, teams, players, tournaments] = await Promise.all([
       Match.find({ userId: req.user._id }).lean(),
       Team.find({ userId: req.user._id }).lean(),
-      Player.find({ userId: req.user._id }).lean()
+      Player.find({ userId: req.user._id }).lean(),
+      Tournament.find({ organizerId: req.user._id }).lean()
     ]);
+    const matchIds = matches.map((m) => m._id);
+    const deliveries = matchIds.length
+      ? await Delivery.find({ matchId: { $in: matchIds } }).sort({ matchId: 1, inningsNumber: 1, sequence: 1 }).lean()
+      : [];
     res.setHeader('Content-Disposition', 'attachment; filename="apnascore_my_data.json"');
     res.json({
       exportedAt: new Date().toISOString(),
       profile: req.user.toSafeJSON(),
       matches,
+      deliveries,
       teams,
-      players
+      players,
+      tournaments
     });
   } catch (err) {
     next(err);

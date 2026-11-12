@@ -5,7 +5,10 @@ const deliverySchema = new mongoose.Schema(
     matchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Match', required: true, index: true },
     inningsId: { type: mongoose.Schema.Types.ObjectId, ref: 'Innings', required: true, index: true },
     inningsNumber: { type: Number, required: true },
+    over: { type: Number, default: 0, min: 0 },
+    ball: { type: Number, default: 0, min: 0 },
     eventId: { type: String, required: true },
+    clientActionId: { type: String, trim: true, default: undefined },
     sequence: { type: Number, required: true },
     eventType: {
       type: String,
@@ -67,6 +70,14 @@ const deliverySchema = new mongoose.Schema(
 
 // Idempotency & sequence guarantees for online + offline sync
 deliverySchema.index({ matchId: 1, eventId: 1 }, { unique: true });
+deliverySchema.index({ clientActionId: 1 }, { unique: true, sparse: true });
 deliverySchema.index({ matchId: 1, inningsNumber: 1, sequence: 1 });
+
+deliverySchema.pre('validate', function (next) {
+  if (!this.clientActionId && this.eventId && this.matchId) {
+    this.clientActionId = `${this.matchId}:${this.eventId}`;
+  }
+  next();
+});
 
 module.exports = mongoose.model('Delivery', deliverySchema, 'deliveries');

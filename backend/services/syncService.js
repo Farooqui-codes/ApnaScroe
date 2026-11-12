@@ -56,23 +56,30 @@ async function recomputeAndPersistInnings(match, inningsNumber) {
   innings.lastSequence = events.length > 0 ? events[events.length - 1].sequence : 0;
   await innings.save();
 
-  // Handle match progression & result
+  // Handle match progression & result atomically (incrementing version)
   if (inningsNumber === 1 && state.status === 'completed' && match.status === 'live') {
     match.status = 'innings_break';
-    await match.save();
+    await Match.findOneAndUpdate(
+      { _id: match._id },
+      { $set: { status: 'innings_break' }, $inc: { version: 1 } }
+    );
   } else if (inningsNumber === 2 && state.status === 'completed') {
     const inn1 = await Innings.findOne({ matchId: match._id, inningsNumber: 1 });
     if (inn1) {
       const res = engine.evaluateMatchResult(inn1.computedState || inn1, state, match.rulesSnapshot);
       if (res) {
-        match.status = res.status;
-        match.result = Object.assign({}, match.result || {}, {
+        const nextResult = Object.assign({}, match.result || {}, {
           winnerTeamId: res.winnerTeamId,
           winnerTeamName: res.winnerTeamName,
           isTie: res.isTie,
           marginText: res.marginText
         });
-        await match.save();
+        match.status = res.status;
+        match.result = nextResult;
+        await Match.findOneAndUpdate(
+          { _id: match._id },
+          { $set: { status: res.status, result: nextResult }, $inc: { version: 1 } }
+        );
 
         // Update linked tournament fixture & points table
         if (match.fixtureId) {
@@ -169,9 +176,13 @@ async function syncOfflineEvents({ match, inningsNumber, events, deviceId, userI
     return { ok: false, conflict: false, message: `Innings ${inningsNumber} not initialized.` };
   }
 
-  // Acquire/refresh scorer lock for this device
-  match.scorerLock = { deviceId: deviceId || 'web', userId: userId || null, guestId: guestId || null, lockedAt: new Date() };
-  await match.save();
+  // Acquire/refresh scorer lock atomically
+  const nextLock = { deviceId: deviceId || 'web', userId: userId || null, guestId: guestId || null, lockedAt: new Date() };
+  match.scorerLock = nextLock;
+  await Match.findOneAndUpdate(
+    { _id: match._id },
+    { $set: { scorerLock: nextLock }, $inc: { version: 1 } }
+  );
 
   let syncedCount = 0;
   let duplicateCount = 0;
@@ -209,7 +220,10 @@ async function syncOfflineEvents({ match, inningsNumber, events, deviceId, userI
       matchId: match._id,
       inningsId: innings._id,
       inningsNumber,
+      over: Number(ev.over || 0),
+      ball: Number(ev.ball || 0),
       eventId: ev.eventId,
+      clientActionId: ev.clientActionId || `${match._id}:${ev.eventId}`,
       sequence: seq,
       eventType: ev.eventType || 'delivery',
       extraType: ev.extraType || 'none',

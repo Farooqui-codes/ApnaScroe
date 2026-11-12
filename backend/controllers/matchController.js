@@ -77,7 +77,18 @@ async function listMatches(req, res, next) {
       });
     }
 
-    const matches = await Match.find({ $and: andClauses }).sort({ matchDate: -1, createdAt: -1 }).limit(60).lean();
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 30));
+    const filter = { $and: andClauses };
+
+    const [total, matches] = await Promise.all([
+      Match.countDocuments(filter),
+      Match.find(filter)
+        .sort({ matchDate: -1, createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+    ]);
     const matchIds = matches.map((m) => m._id);
     const innings = await Innings.find({ matchId: { $in: matchIds } })
       .select('matchId inningsNumber battingTeamName totalRuns wickets oversString status target')
@@ -95,7 +106,12 @@ async function listMatches(req, res, next) {
       inningsSummary: (innMap[String(m._id)] || []).sort((a, b) => a.inningsNumber - b.inningsNumber)
     }));
 
-    res.json({ success: true, matches: enriched });
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    res.json({
+      success: true,
+      matches: enriched,
+      pagination: { page, limit, total, totalPages, hasMore: page < totalPages }
+    });
   } catch (err) {
     next(err);
   }
