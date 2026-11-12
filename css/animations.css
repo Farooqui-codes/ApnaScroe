@@ -182,8 +182,21 @@ button:disabled, .btn:disabled, .btn[aria-disabled="true"] {
 }
 [data-tooltip]:focus-visible::after { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* Desktop Pointer-Only Hover Effects (prevents sticky hover on touch screens) */
-@media (hover: hover) and (pointer: fine) {
+/* Smooth GPU Hover Transitions */
+.btn, .icon-btn, .choice-card, .match-card, .tournament-card,
+.quick-action-card, .kpi-card, .lp-feature-card, .lp-step-card, .lp-stat-box,
+.team-card, .player-card, #pricingCardsGrid .card,
+.nav-item, .tab-btn, .preset-chip, .choice-pill-btn, .wizard-step-pill,
+.profile-trigger-btn, .score-btn, .extra-btn, .ctrl-btn {
+  transition: transform var(--hover-mid) var(--hover-ease),
+              box-shadow var(--hover-mid) var(--hover-ease),
+              border-color var(--hover-fast) ease,
+              background-color var(--hover-fast) ease,
+              color var(--hover-fast) ease;
+}
+
+/* Pointer Hover Effects (works on mice, trackpads & touchscreen laptops) */
+@media (any-hover: hover) {
   /* 9.1 Buttons */
   .btn-primary:not(:disabled):hover {
     transform: translateY(-2px);
@@ -191,21 +204,41 @@ button:disabled, .btn:disabled, .btn[aria-disabled="true"] {
     background: linear-gradient(135deg, #259F5A 0%, var(--brand-primary) 100%);
   }
   .btn-primary:not(:disabled):hover::after { transform: translateX(120%); }
-  .btn-secondary:not(:disabled):hover { border-color: var(--brand-primary); }
+  .btn-secondary:not(:disabled):hover {
+    transform: translateY(-2px);
+    border-color: var(--brand-primary);
+    box-shadow: var(--shadow-sm);
+  }
   .btn-secondary:not(:disabled):hover::before { transform: scaleX(1); }
   .btn-lime:not(:disabled):hover { transform: translateY(-2px); box-shadow: var(--hover-glow-green); }
+  .btn-danger:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(198, 40, 40, 0.28);
+  }
+  .btn-ghost:not(:disabled):hover {
+    transform: translateY(-1px);
+    background: var(--hover-tint);
+    color: var(--text-brand);
+  }
   .btn:not(:disabled):hover svg, .icon-btn:not(:disabled):hover svg {
     transform: translateX(2px) scale(1.08);
     transition: transform var(--hover-fast) var(--hover-ease);
   }
-  .icon-btn:not(:disabled):hover {
+  .icon-btn:not(:disabled):hover, .profile-trigger-btn:hover {
     border-color: var(--brand-primary);
     box-shadow: var(--shadow-sm);
-    transform: rotate(-4deg) scale(1.05);
+    transform: translateY(-1px) scale(1.03);
+  }
+  .tab-btn:hover, .preset-chip:hover, .choice-pill-btn:hover, .wizard-step-pill:hover {
+    transform: translateY(-2px);
+    border-color: var(--brand-primary);
+    box-shadow: var(--shadow-sm);
   }
 
   /* 9.2 Cards */
   .choice-card:hover, .match-card:hover, .tournament-card:hover,
+  .quick-action-card:hover, .kpi-card:hover, .lp-feature-card:hover,
+  .lp-step-card:hover, .team-card:hover, .player-card:hover,
   #pricingCardsGrid .card:hover, .lp-stat-box:hover {
     transform: translateY(-6px);
     box-shadow: var(--shadow-lg);
@@ -214,6 +247,7 @@ button:disabled, .btn:disabled, .btn[aria-disabled="true"] {
   }
   .choice-card:hover .choice-icon-box,
   .card:hover .lp-feature-icon,
+  .lp-feature-card:hover .lp-feature-icon,
   .quick-action-card:hover .quick-action-icon {
     transform: scale(1.08) rotate(-5deg);
     transition: transform var(--hover-mid) var(--hover-ease);
@@ -229,6 +263,11 @@ button:disabled, .btn:disabled, .btn[aria-disabled="true"] {
   }
 
   /* 9.3 Navigation, Links & Footer */
+  .nav-item:hover {
+    transform: translateX(4px);
+    background: var(--hover-tint);
+    color: var(--text-brand);
+  }
   .lp-nav-links a { position: relative; }
   .lp-nav-links a::after {
     content: "";
@@ -277,7 +316,11 @@ button:disabled, .btn:disabled, .btn[aria-disabled="true"] {
   }
 
   /* 9.6 Cricket-Themed Touches (fast & zero layout shift) */
-  .score-btn:hover { transform: translateY(-2px); border-color: var(--brand-primary); }
+  .score-btn:hover, .extra-btn:hover, .ctrl-btn:hover {
+    transform: translateY(-2px);
+    border-color: var(--brand-primary);
+    box-shadow: var(--shadow-sm);
+  }
   .score-btn.btn-four:hover { box-shadow: 0 0 16px rgba(32, 139, 78, 0.45); }
   .score-btn.btn-six:hover { box-shadow: var(--hover-glow-gold); }
   .score-btn.btn-wicket:hover { box-shadow: 0 0 14px rgba(198, 40, 40, 0.40); }
