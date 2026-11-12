@@ -140,7 +140,7 @@
           <div class="recent-balls-strip" id="recentBallsStrip"></div>
         </div>
 
-        <!-- Primary Sunlight-Readable Scoring Pad -->
+        <!-- Primary Sunlight-Readable Scoring Pad (Simplified & Focused) -->
         <div class="scoring-pad-card" id="scoringPadCard">
           <div class="runs-keypad">
             <button type="button" class="score-btn" data-run="0">0<span>Dot</span></button>
@@ -153,19 +153,11 @@
             <button type="button" class="score-btn btn-wicket" id="wicketBtn">OUT<span>Wicket</span></button>
           </div>
 
-          <div class="extras-keypad">
+          <div class="extras-keypad" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:0;">
             <button type="button" class="extra-btn" data-extra="wide">Wide</button>
             <button type="button" class="extra-btn" data-extra="no_ball">No Ball</button>
-            <button type="button" class="extra-btn" data-extra="bye">Bye</button>
-            <button type="button" class="extra-btn" data-extra="leg_bye">Leg Bye</button>
-            <button type="button" class="extra-btn" id="overthrowBtn">Overthrow</button>
-            <button type="button" class="extra-btn" data-extra="penalty">Penalty / Custom</button>
-          </div>
-
-          <div class="actions-keypad">
-            <button type="button" class="ctrl-btn danger-outline" id="undoBallBtn">↶ Undo Ball</button>
-            <button type="button" class="ctrl-btn" id="retireBtn">Retire Batter</button>
-            <button type="button" class="ctrl-btn" id="endOverBtn">End Over</button>
+            <button type="button" class="ctrl-btn danger-outline" id="undoBallBtn" style="min-height:50px;">↶ Undo</button>
+            <button type="button" class="ctrl-btn" id="moreScoringActionsBtn" style="min-height:50px;background:var(--brand-soft-mint);border-color:var(--brand-primary);color:var(--text-primary);font-weight:800;">⋯ More</button>
           </div>
         </div>
 
@@ -313,21 +305,25 @@
     </div>
   </div>
 
-  <!-- Modal: Match Controls Menu -->
+  <!-- Modal: More Actions & Match Controls -->
   <div class="modal-backdrop" id="matchControlModal">
     <div class="modal-dialog">
       <div class="modal-header">
-        <h3 class="modal-title">Match Controls</h3>
+        <h3 class="modal-title">More Actions & Match Controls</h3>
         <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('matchControlModal')">✕</button>
       </div>
       <div class="form-grid-2" id="matchControlButtonsGrid">
+        <button type="button" class="btn btn-secondary" data-mc="bye">Bye Runs</button>
+        <button type="button" class="btn btn-secondary" data-mc="leg_bye">Leg Bye Runs</button>
+        <button type="button" class="btn btn-secondary" data-mc="overthrow">Overthrow Runs</button>
+        <button type="button" class="btn btn-secondary" data-mc="penalty">Penalty / Custom</button>
+        <button type="button" class="btn btn-secondary" data-mc="swap_batsmen">Swap Batsmen</button>
+        <button type="button" class="btn btn-secondary" data-mc="change_bowler">Change Bowler</button>
+        <button type="button" class="btn btn-secondary" data-mc="change_striker">Change Striker</button>
+        <button type="button" class="btn btn-secondary" data-mc="retire">Retire Batter</button>
+        <button type="button" class="btn btn-secondary" data-mc="end_over">End Current Over</button>
         <button type="button" class="btn btn-secondary" data-mc="pause">Pause Match</button>
         <button type="button" class="btn btn-secondary" data-mc="resume">Resume Match</button>
-        <button type="button" class="btn btn-secondary" data-mc="change_bowler">Change Bowler</button>
-        <button type="button" class="btn btn-secondary" data-mc="swap_batsmen">Swap Batsmen</button>
-        <button type="button" class="btn btn-secondary" data-mc="change_striker">Change Striker</button>
-        <button type="button" class="btn btn-secondary" data-mc="retire">Retire Batsman</button>
-        <button type="button" class="btn btn-secondary" data-mc="undo">Undo Last Ball</button>
         <button type="button" class="btn btn-secondary" data-mc="correct_score">Correct Score (+/-)</button>
         <button type="button" class="btn btn-secondary" data-mc="change_xi">Change Playing XI</button>
         <button type="button" class="btn btn-secondary" data-mc="end_innings">End Innings</button>

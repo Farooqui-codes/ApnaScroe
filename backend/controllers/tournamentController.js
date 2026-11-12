@@ -12,8 +12,12 @@ const { logAudit } = require('../utils/logger');
 
 async function listTournaments(req, res, next) {
   try {
-    const { status, village, search } = req.query;
+    const { status, village, search, mine } = req.query;
     const query = {};
+    if (mine === '1') {
+      if (req.user) query.organizerId = req.user._id;
+      else return res.json({ success: true, tournaments: [] });
+    }
     if (status) query.status = status;
     if (village) query.village = new RegExp(String(village), 'i');
     if (search) query.name = new RegExp(String(search), 'i');

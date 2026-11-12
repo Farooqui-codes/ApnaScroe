@@ -10,7 +10,6 @@ const { Server } = require('socket.io');
 const config = require('./config/env');
 const { connectDB } = require('./config/db');
 const { seedSystemPresets } = require('./utils/seedPresets');
-const { seedSampleDataIfEmpty } = require('./utils/seedSampleData');
 const { initSocket } = require('./sockets/liveSocket');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -180,9 +179,6 @@ async function startServer() {
   try {
     await connectDB();
     await seedSystemPresets();
-    if (process.env.SEED_SAMPLE_DATA === 'true') {
-      await seedSampleDataIfEmpty();
-    }
     console.log('[ApnaScore] Connected to MongoDB & verified system rule presets.');
   } catch (err) {
     console.error('[ApnaScore] Database connection failed:', err.message);

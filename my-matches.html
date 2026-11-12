@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#208B4E" />
+  <title>My Matches – ApnaScore</title>
+  <meta name="description" content="View all your live, upcoming, and completed cricket matches and open scorecards on ApnaScore." />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="ApnaScore" />
+  <meta property="og:title" content="My Matches – ApnaScore" />
+  <meta property="og:description" content="View all your live, upcoming, and completed cricket matches and open scorecards on ApnaScore." />
+  <meta property="og:image" content="/assets/images/apnascore-og-preview.jpg" />
+  <meta property="og:url" content="/my-matches.html" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="/css/animations.css" />
+</head>
+<body>
+  <div id="appShell">
+    <div class="main-content-slot">
+      <div class="card mb-2">
+        <div class="card-header">
+          <div>
+            <h1 class="card-title" style="font-size:1.25rem;">My Matches</h1>
+            <span class="text-sm text-muted">Apne live, upcoming aur completed matches dekho</span>
+          </div>
+          <a href="/match-create.html" class="btn btn-primary btn-sm">+ Start Match</a>
+        </div>
+
+        <div class="tabs-bar" id="myMatchFilterTabs">
+          <button type="button" class="tab-btn active" data-filter="all">All</button>
+          <button type="button" class="tab-btn" data-filter="live">Live</button>
+          <button type="button" class="tab-btn" data-filter="upcoming">Upcoming</button>
+          <button type="button" class="tab-btn" data-filter="completed">Completed</button>
+        </div>
+
+        <div class="form-grid-2">
+          <input class="form-control" id="mmSearchInput" placeholder="Search by team or match title..." />
+          <select class="form-control" id="mmKindFilter">
+            <option value="all">All Match Types</option>
+            <option value="simple">Simple Matches Only</option>
+            <option value="tournament">Tournament Matches Only</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="myMatchesGrid" class="match-list-grid">
+        <div class="empty-state">Loading your matches...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/icons.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/scoring-engine.js"></script>
+  <script src="/js/offline-sync.js"></script>
+  <script src="/js/vendor/gsap.min.js"></script>
+  <script src="/js/animations.js"></script>
+  <script src="/js/main.js"></script>
+  <script src="/js/my-matches.js"></script>
+</body>
+</html>

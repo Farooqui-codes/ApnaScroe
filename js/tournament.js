@@ -1,11 +1,11 @@
 /**
- * ApnaScore Tournament Management Controller
+ * ApnaScore Separate Tournament Management Controller
  */
-(function () {
+(function (root) {
   'use strict';
 
   let allTeams = [];
-  let currentTournamentData = null;
+  let activeFilter = 'mine';
 
   document.addEventListener('DOMContentLoaded', async () => {
     ApnaUI.initShell({ activePage: 'tournaments', pageTitle: 'Tournaments' });
@@ -49,18 +49,40 @@
       ApnaAuth.requireAuth();
       return;
     }
+    goTourStep(1);
     document.getElementById('createTourModal').classList.add('open');
+  }
+
+  function goTourStep(step) {
+    document.querySelectorAll('.tw-panel').forEach((p) => {
+      p.classList.toggle('hidden', Number(p.dataset.twp) !== step);
+    });
+    document.querySelectorAll('#tourWizSteps .wizard-step-pill').forEach((pill) => {
+      const s = Number(pill.dataset.tw);
+      pill.classList.toggle('active', s === step);
+      pill.classList.toggle('done', s < step);
+    });
   }
 
   function bindListControls() {
     document.getElementById('openCreateTourBtn').addEventListener('click', openCreateModal);
     document.getElementById('tourSearchInput').addEventListener('input', loadTournaments);
-    document.getElementById('tourStatusFilter').addEventListener('change', loadTournaments);
+
+    document.querySelectorAll('#tourListTabs .tab-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('#tourListTabs .tab-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.tfilter;
+        loadTournaments();
+      });
+    });
 
     document.getElementById('createTourForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       try {
         const selectedTeams = Array.from(document.getElementById('ctTeamsMulti').selectedOptions).map((o) => o.value);
+        const presetId = document.getElementById('ctRulePreset').value;
+        const baseRules = ApnaScoringEngine.getPresetById(presetId);
         const res = await ApnaAPI.post('/api/tournaments', {
           name: document.getElementById('ctName').value.trim(),
           village: document.getElementById('ctVillage').value.trim(),
@@ -71,6 +93,7 @@
           entryFee: Number(document.getElementById('ctFee').value || 0),
           prizeMoney: document.getElementById('ctPrize').value.trim(),
           maxTeams: Number(document.getElementById('ctMaxTeams').value || 8),
+          rules: baseRules,
           pointsConfig: { win: 2, loss: 0, tie: 1, noResult: 1, tieBreaker: document.getElementById('ctTieBreaker').value },
           isPublic: document.getElementById('ctPublic').checked,
           teamIds: selectedTeams
@@ -87,23 +110,29 @@
   async function loadTournaments() {
     const grid = document.getElementById('tournamentsGrid');
     const search = document.getElementById('tourSearchInput').value.trim();
-    const status = document.getElementById('tourStatusFilter').value;
     const qs = new URLSearchParams();
     if (search) qs.set('search', search);
-    if (status) qs.set('status', status);
+    if (activeFilter === 'mine') qs.set('mine', '1');
+    else qs.set('status', activeFilter);
 
     try {
       const res = await ApnaAPI.get(`/api/tournaments?${qs.toString()}`);
       const list = res.tournaments || [];
       if (!list.length) {
-        grid.innerHTML = `<div class="empty-state">No tournaments yet. Click "+ Create Tournament" to launch one!</div>`;
+        grid.innerHTML = `
+          <div class="card empty-state" style="grid-column:1/-1;">
+            <p style="margin:0 0 6px;font-weight:700;color:var(--text-primary);">No tournaments created yet.</p>
+            <p class="text-sm text-muted" style="margin:0 0 14px;">Create your first tournament.</p>
+            <button type="button" class="btn btn-primary btn-sm" onclick="TourWiz.openCreate()">+ Create Tournament</button>
+          </div>
+        `;
         return;
       }
       grid.innerHTML = list.map((t) => `
         <div class="tournament-card">
           <div class="tournament-banner">
             <div>
-              <span class="badge badge-lime" style="background:var(--brand-lime);color:#0F3822;">${ApnaUI.escapeHtml(t.format.replace('_', ' ').toUpperCase())}</span>
+              <span class="badge" style="background:var(--brand-lime);color:#0F3822;">${ApnaUI.escapeHtml(t.format.replace('_', ' ').toUpperCase())}</span>
               <h3 style="margin:6px 0 0;font-size:1.08rem;">${ApnaUI.escapeHtml(t.name)}</h3>
               <div style="font-size:0.82rem;color:#D7F7E3;">${ApnaUI.escapeHtml(t.village)} • ${t.oversPerMatch} Overs</div>
             </div>
@@ -114,11 +143,10 @@
               <span class="text-muted">Teams: ${(t.registeredTeams || []).length}/${t.maxTeams}</span>
               <span class="badge badge-success">${ApnaUI.escapeHtml(t.status.toUpperCase())}</span>
             </div>
-            <div class="text-sm text-muted">Prize: ${ApnaUI.escapeHtml(t.prizeMoney || 'Trophy')} • Fee: ₹${t.entryFee || 0}</div>
             ${t.winnerTeamId ? `<div class="text-sm" style="color:var(--brand-primary);font-weight:700;">🏆 Winner: ${ApnaUI.escapeHtml(t.winnerTeamId.name)}</div>` : ''}
             <div class="flex-gap mt-1">
-              <a href="/tournament.html?id=${t._id}" class="btn btn-primary btn-sm">Manage / View</a>
-              <a href="/api/scorecards/tournament/${t._id}/pdf" target="_blank" class="btn btn-secondary btn-sm">PDF</a>
+              <a href="/tournament.html?id=${t._id}" class="btn btn-primary btn-sm">Open Tournament</a>
+              <a href="/api/scorecards/tournament/${t._id}/pdf" target="_blank" class="btn btn-secondary btn-sm">Results PDF</a>
             </div>
           </div>
         </div>
@@ -133,7 +161,7 @@
       btn.addEventListener('click', () => {
         document.querySelectorAll('#tourDetailTabs .tab-btn').forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
-        ['points', 'fixtures', 'teams', 'awards'].forEach((k) => {
+        ['overview', 'teams', 'fixtures', 'points', 'live', 'results', 'settings'].forEach((k) => {
           document.getElementById(`tPanel-${k}`).classList.toggle('hidden', k !== btn.dataset.ttab);
         });
       });
@@ -142,53 +170,103 @@
 
   async function loadTournamentDetail(id) {
     try {
-      const data = await ApnaAPI.get(`/api/tournaments/${id}`);
-      currentTournamentData = data;
+      const [data, mRes] = await Promise.all([
+        ApnaAPI.get(`/api/tournaments/${id}`),
+        ApnaAPI.get(`/api/matches?tournamentId=${encodeURIComponent(id)}`).catch(() => ({ matches: [] }))
+      ]);
       const t = data.tournament;
+      const tMatches = mRes.matches || [];
+
       document.getElementById('tdTitle').textContent = t.name;
-      document.getElementById('tdMeta').textContent = `${t.village} • ${t.format.replace('_', ' ').toUpperCase()} • ${t.oversPerMatch} Overs • Status: ${t.status.toUpperCase()}`;
+      document.getElementById('tdMeta').textContent = `${t.village} • ${t.format.replace('_', ' ').toUpperCase()} • ${t.oversPerMatch} Overs • ${t.status.toUpperCase()}`;
       document.getElementById('tdShareBtn').href = `/public-tournament.html?id=${t.shareCode || t._id}`;
       document.getElementById('tdPdfBtn').href = `/api/scorecards/tournament/${t._id}/pdf`;
 
-      renderPointsTable(data.pointsTable || []);
-      renderFixtures(t, data.fixtures || []);
+      renderOverview(t, data.fixtures || [], tMatches);
       renderTournamentTeams(t);
-      renderAwards(t, data.awards || [], data.leaderboards || {});
+      renderFixtures(t, data.fixtures || []);
+      renderPointsTable(data.pointsTable || []);
+      renderTournamentMatches('tPanel-live', tMatches.filter((m) => ['live', 'paused', 'innings_break'].includes(m.status)), 'No live tournament matches right now.');
+      renderResults(t, tMatches.filter((m) => ['completed', 'tied', 'abandoned'].includes(m.status)), data.leaderboards || {});
+      renderTournamentSettings(t);
     } catch (err) {
       ApnaUI.showToast(err.message, 'error');
     }
   }
 
-  function renderPointsTable(rows) {
-    const el = document.getElementById('tPanel-points');
-    if (!rows.length) {
-      el.innerHTML = `<div class="empty-state">Register at least 2 teams to initialize the points table.</div>`;
-      return;
-    }
-    el.innerHTML = `
-      <div class="card-header"><h3 class="card-title">Points Table & Net Run Rate</h3></div>
-      <div class="table-wrap">
-        <table class="data-table">
-          <thead><tr><th>#</th><th>Team</th><th class="num">P</th><th class="num">W</th><th class="num">L</th><th class="num">T</th><th class="num">NR</th><th class="num">Pts</th><th class="num">NRR</th></tr></thead>
-          <tbody>
-            ${rows.map((r, i) => `
-              <tr>
-                <td>${i + 1}</td>
-                <td><strong>${ApnaUI.escapeHtml(r.teamName)}</strong> ${r.qualified ? '<span class="badge badge-success">Q</span>' : ''}</td>
-                <td class="num">${r.played}</td>
-                <td class="num">${r.won}</td>
-                <td class="num">${r.lost}</td>
-                <td class="num">${r.tied}</td>
-                <td class="num">${r.noResult}</td>
-                <td class="num"><strong>${r.points}</strong></td>
-                <td class="num">${Number(r.netRunRate || 0) >= 0 ? '+' : ''}${Number(r.netRunRate || 0).toFixed(3)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+  function renderOverview(t, fixtures, matches) {
+    const liveCount = matches.filter((m) => ['live', 'paused', 'innings_break'].includes(m.status)).length;
+    const doneCount = matches.filter((m) => ['completed', 'tied'].includes(m.status)).length;
+    document.getElementById('tPanel-overview').innerHTML = `
+      <div class="card-header"><h3 class="card-title">Tournament Overview</h3></div>
+      <div class="kpi-grid">
+        <div class="kpi-card"><span class="kpi-label">Registered Teams</span><span class="kpi-value">${(t.registeredTeams || []).length} / ${t.maxTeams}</span></div>
+        <div class="kpi-card"><span class="kpi-label">Fixtures</span><span class="kpi-value">${fixtures.length}</span></div>
+        <div class="kpi-card"><span class="kpi-label">Live Matches</span><span class="kpi-value">${liveCount}</span></div>
+        <div class="kpi-card"><span class="kpi-label">Completed</span><span class="kpi-value">${doneCount}</span></div>
       </div>
+      <p class="text-sm text-muted">Start Date: ${new Date(t.startDate).toLocaleDateString()} • Overs: ${t.oversPerMatch} • Prize: ${ApnaUI.escapeHtml(t.prizeMoney || 'Trophy')}</p>
+      ${t.winnerTeamId ? `<div class="card" style="background:var(--success-bg);"><strong>🏆 Champion: ${ApnaUI.escapeHtml(t.winnerTeamId.name)}</strong></div>` : ''}
     `;
   }
+
+  function renderTournamentTeams(t) {
+    const el = document.getElementById('tPanel-teams');
+    const regIds = new Set((t.registeredTeams || []).map((r) => String(r.teamId?._id || r.teamId)));
+    const available = allTeams.filter((team) => !regIds.has(String(team._id)));
+
+    el.innerHTML = `
+      <div class="card-header">
+        <h3 class="card-title">Teams (${(t.registeredTeams || []).length})</h3>
+        <a href="/team.html?action=create" class="btn btn-secondary btn-sm">+ Create New Team</a>
+      </div>
+      <div class="flex-gap mb-2">
+        <select class="form-control" id="regTeamSelect" style="max-width:280px;">
+          ${available.map((tm) => `<option value="${tm._id}">${ApnaUI.escapeHtml(tm.name)} (${ApnaUI.escapeHtml(tm.village)})</option>`).join('') || '<option value="">No available teams</option>'}
+        </select>
+        <input class="form-control" id="regGroupInput" value="Group A" style="max-width:130px;" />
+        <button type="button" class="btn btn-primary btn-sm" id="regTeamBtn">+ Add Team</button>
+      </div>
+      <div>
+        ${(t.registeredTeams || []).map((r) => {
+          const tm = r.teamId || {};
+          return `
+            <div class="fixture-card">
+              <div>
+                <strong>${ApnaUI.escapeHtml(tm.name || 'Team')}</strong>
+                <span class="text-sm text-muted"> • ${ApnaUI.escapeHtml(r.groupName)} • ${ApnaUI.escapeHtml(r.status.toUpperCase())}</span>
+              </div>
+              ${r.status === 'pending' ? `<button type="button" class="btn btn-primary btn-sm" onclick="TourApprove('${t._id}','${tm._id}','approved')">Approve</button>` : ''}
+            </div>
+          `;
+        }).join('') || '<div class="empty-state">No teams added to this tournament yet.</div>'}
+      </div>
+    `;
+
+    document.getElementById('regTeamBtn').onclick = async () => {
+      const teamId = document.getElementById('regTeamSelect').value;
+      if (!teamId) return ApnaUI.showToast('Create or select a team first.', 'error');
+      try {
+        await ApnaAPI.post(`/api/tournaments/${t._id}/register-team`, {
+          teamId,
+          groupName: document.getElementById('regGroupInput').value.trim() || 'Group A'
+        });
+        ApnaUI.showToast('Team added.');
+        await loadTournamentDetail(t._id);
+      } catch (err) {
+        ApnaUI.showToast(err.message, 'error');
+      }
+    };
+  }
+
+  window.TourApprove = async (tourId, teamId, status) => {
+    try {
+      await ApnaAPI.post(`/api/tournaments/${tourId}/approve-team`, { teamId, status });
+      await loadTournamentDetail(tourId);
+    } catch (err) {
+      ApnaUI.showToast(err.message, 'error');
+    }
+  };
 
   function renderFixtures(t, fixtures) {
     const el = document.getElementById('tPanel-fixtures');
@@ -198,16 +276,14 @@
     el.innerHTML = `
       <div class="card-header">
         <h3 class="card-title">Tournament Fixtures</h3>
-        <div class="flex-gap">
-          <button type="button" class="btn btn-primary btn-sm" id="autoGenFixturesBtn">Auto-Generate Fixtures</button>
-        </div>
+        <button type="button" class="btn btn-primary btn-sm" id="autoGenFixturesBtn">Auto-Generate Fixtures</button>
       </div>
       <div class="card mb-2" style="background:var(--bg-surface-alt);">
         <strong class="text-sm">Add Manual Fixture</strong>
         <div class="form-grid-3 mt-1">
           <select class="form-control" id="mfTeamA">${teamOpts}</select>
           <select class="form-control" id="mfTeamB">${teamOpts}</select>
-          <input class="form-control" id="mfRound" placeholder="Round (e.g. Semi-Final)" value="League Match" />
+          <input class="form-control" id="mfRound" placeholder="Round" value="League Match" />
         </div>
         <button type="button" class="btn btn-secondary btn-sm mt-1" id="addManualFixtureBtn">+ Add Fixture</button>
       </div>
@@ -225,7 +301,7 @@
                 : (f.teamAId && f.teamBId ? `<a href="/match-create.html?tournamentId=${t._id}&fixtureId=${f._id}&teamAId=${f.teamAId}&teamBId=${f.teamBId}" class="btn btn-primary btn-sm">Start Match</a>` : '')}
             </div>
           </div>
-        `).join('') : '<div class="empty-state">No fixtures generated yet.</div>'}
+        `).join('') : '<div class="empty-state">No fixtures created yet. Add at least 2 teams and click Auto-Generate Fixtures.</div>'}
       </div>
     `;
 
@@ -249,7 +325,6 @@
           teamBId: b,
           roundName: document.getElementById('mfRound').value.trim() || 'League Match'
         });
-        ApnaUI.showToast('Fixture added.');
         await loadTournamentDetail(t._id);
       } catch (err) {
         ApnaUI.showToast(err.message, 'error');
@@ -257,119 +332,73 @@
     };
   }
 
-  function renderTournamentTeams(t) {
-    const el = document.getElementById('tPanel-teams');
-    const regIds = new Set((t.registeredTeams || []).map((r) => String(r.teamId?._id || r.teamId)));
-    const available = allTeams.filter((team) => !regIds.has(String(team._id)));
-
+  function renderPointsTable(rows) {
+    const el = document.getElementById('tPanel-points');
+    if (!rows.length) {
+      el.innerHTML = `<div class="empty-state">Add teams to see the Points Table & NRR.</div>`;
+      return;
+    }
     el.innerHTML = `
-      <div class="card-header">
-        <h3 class="card-title">Registered Teams & Branding</h3>
-        <div class="flex-gap">
-          <label class="btn btn-secondary btn-sm" style="cursor:pointer;">Upload Logo <input type="file" accept="image/*" id="tourLogoUploadInp" class="hidden" /></label>
-          <label class="btn btn-secondary btn-sm" style="cursor:pointer;">Upload Poster <input type="file" accept="image/*" id="tourPosterUploadInp" class="hidden" /></label>
-        </div>
-      </div>
-      <div class="flex-gap mb-2">
-        <select class="form-control" id="regTeamSelect" style="max-width:280px;">
-          ${available.map((tm) => `<option value="${tm._id}">${ApnaUI.escapeHtml(tm.name)} (${ApnaUI.escapeHtml(tm.village)})</option>`).join('')}
-        </select>
-        <input class="form-control" id="regGroupInput" value="Group A" style="max-width:140px;" />
-        <button type="button" class="btn btn-primary btn-sm" id="regTeamBtn">+ Register Team</button>
-      </div>
-      <div>
-        ${(t.registeredTeams || []).map((r) => {
-          const tm = r.teamId || {};
-          return `
-            <div class="fixture-card">
-              <div>
-                <strong>${ApnaUI.escapeHtml(tm.name || 'Team')}</strong>
-                <span class="text-sm text-muted"> • ${ApnaUI.escapeHtml(r.groupName)} • Status: ${ApnaUI.escapeHtml(r.status.toUpperCase())}</span>
-              </div>
-              <div class="flex-gap">
-                ${r.status === 'pending' ? `<button type="button" class="btn btn-primary btn-sm" onclick="TourApprove('${t._id}','${tm._id}','approved')">Approve</button>` : ''}
-              </div>
-            </div>
-          `;
-        }).join('') || '<div class="empty-state">No teams registered yet.</div>'}
+      <div class="card-header"><h3 class="card-title">Points Table & Net Run Rate</h3></div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Team</th><th class="num">P</th><th class="num">W</th><th class="num">L</th><th class="num">T</th><th class="num">Pts</th><th class="num">NRR</th></tr></thead>
+          <tbody>
+            ${rows.map((r, i) => `
+              <tr>
+                <td>${i + 1}</td>
+                <td><strong>${ApnaUI.escapeHtml(r.teamName)}</strong> ${r.qualified ? '<span class="badge badge-success">Q</span>' : ''}</td>
+                <td class="num">${r.played}</td>
+                <td class="num">${r.won}</td>
+                <td class="num">${r.lost}</td>
+                <td class="num">${r.tied}</td>
+                <td class="num"><strong>${r.points}</strong></td>
+                <td class="num">${Number(r.netRunRate || 0) >= 0 ? '+' : ''}${Number(r.netRunRate || 0).toFixed(3)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
       </div>
     `;
-
-    document.getElementById('regTeamBtn').onclick = async () => {
-      const teamId = document.getElementById('regTeamSelect').value;
-      if (!teamId) return ApnaUI.showToast('Select a team to register.', 'error');
-      try {
-        await ApnaAPI.post(`/api/tournaments/${t._id}/register-team`, {
-          teamId,
-          groupName: document.getElementById('regGroupInput').value.trim() || 'Group A'
-        });
-        ApnaUI.showToast('Team registered.');
-        await loadTournamentDetail(t._id);
-      } catch (err) {
-        ApnaUI.showToast(err.message, 'error');
-      }
-    };
-
-    const bindMediaUpload = (inputId, type) => {
-      document.getElementById(inputId)?.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const fd = new FormData();
-        fd.append('image', file);
-        fd.append('type', type);
-        try {
-          await ApnaAPI.upload(`/api/tournaments/${t._id}/media`, fd);
-          ApnaUI.showToast(`Tournament ${type} updated!`);
-          await loadTournamentDetail(t._id);
-        } catch (err) {
-          ApnaUI.showToast(err.message, 'error');
-        }
-      });
-    };
-    bindMediaUpload('tourLogoUploadInp', 'logo');
-    bindMediaUpload('tourPosterUploadInp', 'poster');
   }
 
-  window.TourApprove = async (tourId, teamId, status) => {
-    try {
-      await ApnaAPI.post(`/api/tournaments/${tourId}/approve-team`, { teamId, status });
-      ApnaUI.showToast('Team status updated.');
-      await loadTournamentDetail(tourId);
-    } catch (err) {
-      ApnaUI.showToast(err.message, 'error');
+  function renderTournamentMatches(panelId, matches, emptyMsg) {
+    const el = document.getElementById(panelId);
+    if (!matches.length) {
+      el.innerHTML = `<div class="empty-state">${emptyMsg}</div>`;
+      return;
     }
-  };
+    el.innerHTML = `<div class="match-list-grid">${matches.map((m) => `
+      <div class="match-card">
+        <strong>${ApnaUI.escapeHtml(m.title)}</strong>
+        <div class="text-sm text-muted">${ApnaUI.escapeHtml(m.result?.marginText || m.status.toUpperCase())}</div>
+        <div class="flex-gap">
+          <a href="/live-score.html?matchId=${m._id}" class="btn btn-primary btn-sm">Open Match</a>
+          <a href="/scorecard.html?matchId=${m._id}" class="btn btn-secondary btn-sm">Scorecard</a>
+        </div>
+      </div>
+    `).join('')}</div>`;
+  }
 
-  function renderAwards(t, awards, leaderboards) {
-    const el = document.getElementById('tPanel-awards');
+  function renderResults(t, completedMatches, leaderboards) {
+    const el = document.getElementById('tPanel-results');
     const approved = (t.registeredTeams || []).filter((r) => r.status === 'approved' && r.teamId);
     const opts = approved.map((r) => `<option value="${r.teamId._id}">${ApnaUI.escapeHtml(r.teamId.name)}</option>`).join('');
 
     el.innerHTML = `
-      <div class="card-header"><h3 class="card-title">Tournament Champions & Caps</h3></div>
+      <div class="card-header"><h3 class="card-title">Tournament Results & Awards</h3></div>
       <div class="cap-grid">
-        <div class="cap-card cap-orange">
-          <span class="text-sm">Orange Cap (Most Runs)</span>
-          <strong>${leaderboards.orangeCap ? `${ApnaUI.escapeHtml(leaderboards.orangeCap.name)} (${leaderboards.orangeCap.runs} runs)` : 'TBD'}</strong>
-        </div>
-        <div class="cap-card cap-purple">
-          <span class="text-sm">Purple Cap (Most Wickets)</span>
-          <strong>${leaderboards.purpleCap ? `${ApnaUI.escapeHtml(leaderboards.purpleCap.name)} (${leaderboards.purpleCap.wickets} wkts)` : 'TBD'}</strong>
-        </div>
-        <div class="cap-card cap-mvp">
-          <span class="text-sm">MVP / Player of Tournament</span>
-          <strong>${leaderboards.playerOfTournament ? `${ApnaUI.escapeHtml(leaderboards.playerOfTournament.name)} (${leaderboards.playerOfTournament.mvpPoints} pts)` : 'TBD'}</strong>
-        </div>
+        <div class="cap-card cap-orange"><span class="text-sm">Orange Cap</span><strong>${leaderboards.orangeCap ? `${ApnaUI.escapeHtml(leaderboards.orangeCap.name)} (${leaderboards.orangeCap.runs} runs)` : 'No runs recorded yet'}</strong></div>
+        <div class="cap-card cap-purple"><span class="text-sm">Purple Cap</span><strong>${leaderboards.purpleCap ? `${ApnaUI.escapeHtml(leaderboards.purpleCap.name)} (${leaderboards.purpleCap.wickets} wkts)` : 'No wickets recorded yet'}</strong></div>
       </div>
-
-      ${t.winnerTeamId ? `<div class="card mb-2" style="background:var(--success-bg);"><strong>🏆 Champion: ${ApnaUI.escapeHtml(t.winnerTeamId.name)}</strong></div>` : ''}
-
-      <div class="form-grid-2">
-        <div class="form-group"><label class="form-label">Announce Winner</label><select class="form-control" id="awWinnerSel">${opts}</select></div>
+      <div id="tourCompletedList"></div>
+      <div class="form-grid-2 mt-2">
+        <div class="form-group"><label class="form-label">Declare Champion</label><select class="form-control" id="awWinnerSel">${opts}</select></div>
         <div class="form-group"><label class="form-label">Runner Up</label><select class="form-control" id="awRunnerSel"><option value="">None</option>${opts}</select></div>
       </div>
-      <button type="button" class="btn btn-primary" id="announceWinnerBtn">Declare Tournament Winner</button>
+      <button type="button" class="btn btn-primary" id="announceWinnerBtn">Declare Winner</button>
     `;
+    renderTournamentMatches('tourCompletedList', completedMatches, 'No completed tournament matches yet.');
 
     document.getElementById('announceWinnerBtn').onclick = async () => {
       const winnerTeamId = document.getElementById('awWinnerSel').value;
@@ -386,4 +415,60 @@
       }
     };
   }
-}());
+
+  function renderTournamentSettings(t) {
+    const el = document.getElementById('tPanel-settings');
+    el.innerHTML = `
+      <div class="card-header"><h3 class="card-title">Tournament Settings & Branding</h3></div>
+      <div class="form-grid-2">
+        <div class="form-group"><label class="form-label">Tournament Status</label>
+          <select class="form-control" id="tsStatusSel">
+            <option value="upcoming" ${t.status === 'upcoming' ? 'selected' : ''}>Upcoming</option>
+            <option value="ongoing" ${t.status === 'ongoing' ? 'selected' : ''}>Live / Ongoing</option>
+            <option value="completed" ${t.status === 'completed' ? 'selected' : ''}>Completed</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Overs per Match</label><input type="number" min="1" max="50" class="form-control" id="tsOversInp" value="${t.oversPerMatch}" /></div>
+      </div>
+      <div class="flex-gap">
+        <button type="button" class="btn btn-primary btn-sm" id="tsSaveBtn">Save Settings</button>
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer;">Upload Logo <input type="file" accept="image/*" id="tourLogoUploadInp" class="hidden" /></label>
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer;">Upload Poster <input type="file" accept="image/*" id="tourPosterUploadInp" class="hidden" /></label>
+      </div>
+    `;
+
+    document.getElementById('tsSaveBtn').onclick = async () => {
+      try {
+        await ApnaAPI.put(`/api/tournaments/${t._id}`, {
+          status: document.getElementById('tsStatusSel').value,
+          oversPerMatch: Number(document.getElementById('tsOversInp').value || t.oversPerMatch)
+        });
+        ApnaUI.showToast('Tournament settings saved.');
+        await loadTournamentDetail(t._id);
+      } catch (err) {
+        ApnaUI.showToast(err.message, 'error');
+      }
+    };
+
+    const bindMedia = (inputId, type) => {
+      document.getElementById(inputId)?.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const fd = new FormData();
+        fd.append('image', file);
+        fd.append('type', type);
+        try {
+          await ApnaAPI.upload(`/api/tournaments/${t._id}/media`, fd);
+          ApnaUI.showToast(`Tournament ${type} updated!`);
+          await loadTournamentDetail(t._id);
+        } catch (err) {
+          ApnaUI.showToast(err.message, 'error');
+        }
+      });
+    };
+    bindMedia('tourLogoUploadInp', 'logo');
+    bindMedia('tourPosterUploadInp', 'poster');
+  }
+
+  root.TourWiz = { go: goTourStep, openCreate: openCreateModal };
+}(window));

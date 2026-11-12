@@ -7,22 +7,23 @@
   const THEME_KEY = 'apnascore_theme';
 
   const SIDEBAR_ITEMS = [
-    { id: 'dashboard', label: 'Dashboard', href: '/dashboard.html', icon: 'home', section: 'Main' },
-    { id: 'live', label: 'Live Matches', href: '/live-score.html', icon: 'radio', section: 'Main' },
-    { id: 'match-create', label: 'Start New Match', href: '/match-create.html', icon: 'plusBat', section: 'Main' },
-    { id: 'tournaments', label: 'Tournaments', href: '/tournament.html', icon: 'trophy', section: 'Competitions' },
-    { id: 'teams', label: 'Teams', href: '/team.html', icon: 'shield', section: 'Competitions' },
-    { id: 'players', label: 'Players', href: '/player.html', icon: 'users', section: 'Competitions' },
-    { id: 'scorecards', label: 'Scorecards', href: '/scorecard.html', icon: 'fileText', section: 'Analytics' },
-    { id: 'statistics', label: 'Statistics', href: '/statistics.html', icon: 'barChart', section: 'Analytics' },
-    { id: 'leaderboards', label: 'Leaderboards', href: '/leaderboards.html', icon: 'award', section: 'Analytics' },
+    { id: 'dashboard', label: 'Home', href: '/dashboard.html', icon: 'home', section: 'Main' },
+    { id: 'match-create', label: 'Simple Match', href: '/match-create.html', icon: 'plusBat', section: 'Main' },
+    { id: 'my-matches', label: 'My Matches', href: '/my-matches.html', icon: 'radio', section: 'Main' },
+    { id: 'live', label: 'Live Scorer', href: '/live-score.html', icon: 'radio', section: 'Main' },
+    { id: 'tournaments', label: 'Tournaments', href: '/tournament.html', icon: 'trophy', section: 'Tournaments & Teams' },
+    { id: 'teams', label: 'Teams', href: '/team.html', icon: 'shield', section: 'Tournaments & Teams' },
+    { id: 'players', label: 'Players', href: '/player.html', icon: 'users', section: 'Tournaments & Teams' },
+    { id: 'scorecards', label: 'Scorecards', href: '/scorecard.html', icon: 'fileText', section: 'Records' },
+    { id: 'statistics', label: 'Statistics', href: '/statistics.html', icon: 'barChart', section: 'Records' },
+    { id: 'leaderboards', label: 'Leaderboards', href: '/leaderboards.html', icon: 'award', section: 'Records' },
     { id: 'settings', label: 'Settings', href: '/settings.html', icon: 'settings', section: 'Account' },
     { id: 'profile', label: 'Profile', href: '/profile.html', icon: 'user', section: 'Account' }
   ];
 
   const BOTTOM_TABS = [
     { id: 'dashboard', label: 'Home', href: '/dashboard.html', icon: 'home' },
-    { id: 'live', label: 'Live', href: '/live-score.html', icon: 'radio' },
+    { id: 'my-matches', label: 'Live', href: '/my-matches.html?filter=live', icon: 'radio' },
     { id: 'match-create', label: 'Score', href: '/match-create.html', icon: 'plusBat', isCenter: true },
     { id: 'tournaments', label: 'Tournaments', href: '/tournament.html', icon: 'trophy' },
     { id: 'profile', label: 'Profile', href: '/profile.html', icon: 'user' }

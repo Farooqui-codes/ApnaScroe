@@ -395,34 +395,62 @@
     const batOpts = batSquad.map((p) => `<option value="${p.playerId}">${ApnaUI.escapeHtml(p.name)}</option>`).join('');
     const bowlOpts = bowlSquad.map((p) => `<option value="${p.playerId}">${ApnaUI.escapeHtml(p.name)}</option>`).join('');
 
+    const resolveNameOrSelect = (selId, txtId, fallbackLabel, side) => {
+      const customName = document.getElementById(txtId)?.value.trim();
+      if (customName) {
+        const newId = `qp_${side}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+        return { id: newId, name: customName };
+      }
+      const sel = document.getElementById(selId);
+      if (sel && sel.value) {
+        return { id: sel.value, name: sel.options[sel.selectedIndex]?.text || fallbackLabel };
+      }
+      const autoId = `qp_${side}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+      return { id: autoId, name: fallbackLabel };
+    };
+
     if (mode === 'openers') {
-      title.textContent = 'Select Striker, Non-Striker & Bowler';
+      title.textContent = 'Select or Enter Striker, Non-Striker & Bowler';
       body.innerHTML = `
-        <div class="form-group"><label class="form-label">Striker</label><select class="form-control" id="selStriker">${batOpts}</select></div>
-        <div class="form-group"><label class="form-label">Non-Striker</label><select class="form-control" id="selNonStriker">${batOpts}</select></div>
-        <div class="form-group"><label class="form-label">Bowler</label><select class="form-control" id="selBowler">${bowlOpts}</select></div>
+        <div class="form-group">
+          <label class="form-label">Striker</label>
+          ${batSquad.length ? `<select class="form-control mb-1" id="selStriker">${batOpts}</select>` : ''}
+          <input class="form-control" id="txtStriker" placeholder="${batSquad.length ? 'Or type new striker name...' : 'Enter striker name (e.g. Raju)'}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Non-Striker</label>
+          ${batSquad.length > 1 ? `<select class="form-control mb-1" id="selNonStriker">${batOpts}</select>` : ''}
+          <input class="form-control" id="txtNonStriker" placeholder="${batSquad.length > 1 ? 'Or type new non-striker name...' : 'Enter non-striker name (e.g. Vikram)'}" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Opening Bowler</label>
+          ${bowlSquad.length ? `<select class="form-control mb-1" id="selBowler">${bowlOpts}</select>` : ''}
+          <input class="form-control" id="txtBowler" placeholder="${bowlSquad.length ? 'Or type new bowler name...' : 'Enter bowler name (e.g. Suresh)'}" />
+        </div>
       `;
-      if (batSquad.length > 1) document.getElementById('selNonStriker').selectedIndex = 1;
+      if (batSquad.length > 1 && document.getElementById('selNonStriker')) {
+        document.getElementById('selNonStriker').selectedIndex = 1;
+      }
       saveBtn.onclick = async () => {
-        const sEl = document.getElementById('selStriker');
-        const nsEl = document.getElementById('selNonStriker');
-        const bEl = document.getElementById('selBowler');
-        if (sEl.value === nsEl.value && !matchDoc.rulesSnapshot.localRules.lastManBatting) {
+        const s = resolveNameOrSelect('selStriker', 'txtStriker', 'Batsman 1', 'bat');
+        const ns = resolveNameOrSelect('selNonStriker', 'txtNonStriker', 'Batsman 2', 'bat');
+        const b = resolveNameOrSelect('selBowler', 'txtBowler', 'Bowler 1', 'bowl');
+        if (s.id === ns.id && !matchDoc.rulesSnapshot.localRules.lastManBatting) {
           return ApnaUI.showToast('Striker and Non-Striker must be different players.', 'error');
         }
         closeModal('playersSelectModal');
         await dispatchEvent({
           eventType: 'set_openers',
-          strikerId: sEl.value,
-          strikerName: sEl.options[sEl.selectedIndex]?.text || 'Striker',
-          nonStrikerId: nsEl.value,
-          nonStrikerName: nsEl.options[nsEl.selectedIndex]?.text || 'Non-Striker',
-          bowlerId: bEl.value,
-          bowlerName: bEl.options[bEl.selectedIndex]?.text || 'Bowler'
+          strikerId: s.id,
+          strikerName: s.name,
+          nonStrikerId: ns.id,
+          nonStrikerName: ns.name,
+          bowlerId: b.id,
+          bowlerName: b.name
         });
       };
     } else if (mode === 'new_batsman') {
-      title.textContent = 'Select Incoming Batsman';
+      title.textContent = 'Select or Enter Next Batsman';
       const available = batSquad.filter((p) => {
         const st = computedState.battingStats[String(p.playerId)];
         const isCurrent = String(p.playerId) === String(computedState.strikerId) || String(p.playerId) === String(computedState.nonStrikerId);
@@ -432,22 +460,24 @@
         if (st.isOut && st.dismissalType === 'retired_out' && matchDoc.rulesSnapshot.wickets.allowRetiredOutReturn) return true;
         return !st.isOut && !st.isRetiredHurt;
       });
-      body.innerHTML = `<div class="form-group"><label class="form-label">Next Batsman</label><select class="form-control" id="selNewBat">${
-        available.map((p) => `<option value="${p.playerId}">${ApnaUI.escapeHtml(p.name)}</option>`).join('')
-      }</select></div>`;
+      body.innerHTML = `
+        <div class="form-group">
+          <label class="form-label">Next Batsman</label>
+          ${available.length ? `<select class="form-control mb-1" id="selNewBat">${available.map((p) => `<option value="${p.playerId}">${ApnaUI.escapeHtml(p.name)}</option>`).join('')}</select>` : ''}
+          <input class="form-control" id="txtNewBat" placeholder="${available.length ? 'Or type incoming batsman name...' : 'Enter batsman name'}" />
+        </div>`;
       saveBtn.onclick = async () => {
-        const el = document.getElementById('selNewBat');
-        if (!el.value) return closeModal('playersSelectModal');
+        const nb = resolveNameOrSelect('selNewBat', 'txtNewBat', `Batsman ${(computedState.wickets || 0) + 3}`, 'bat');
         closeModal('playersSelectModal');
         await dispatchEvent({
           eventType: 'new_batsman',
-          playerId: el.value,
-          playerName: el.options[el.selectedIndex]?.text || 'Batsman',
+          playerId: nb.id,
+          playerName: nb.name,
           slot: computedState.dismissedSlot || 'striker'
         });
       };
     } else if (mode === 'change_bowler') {
-      title.textContent = 'Select Next Bowler';
+      title.textContent = 'Select or Enter Next Bowler';
       const rules = matchDoc.rulesSnapshot;
       const filtered = bowlSquad.filter((p) => {
         if (
@@ -460,28 +490,36 @@
         }
         return true;
       });
-      body.innerHTML = `<div class="form-group"><label class="form-label">Bowler</label><select class="form-control" id="selNextBowl">${
-        filtered.map((p) => `<option value="${p.playerId}">${ApnaUI.escapeHtml(p.name)}</option>`).join('')
-      }</select></div>`;
+      body.innerHTML = `
+        <div class="form-group">
+          <label class="form-label">Bowler</label>
+          ${filtered.length ? `<select class="form-control mb-1" id="selNextBowl">${filtered.map((p) => `<option value="${p.playerId}">${ApnaUI.escapeHtml(p.name)}</option>`).join('')}</select>` : ''}
+          <input class="form-control" id="txtNextBowl" placeholder="${filtered.length ? 'Or type new bowler name...' : 'Enter bowler name'}" />
+        </div>`;
       saveBtn.onclick = async () => {
-        const el = document.getElementById('selNextBowl');
+        const bw = resolveNameOrSelect('selNextBowl', 'txtNextBowl', `Bowler ${(computedState.completedOvers || 0) + 2}`, 'bowl');
         closeModal('playersSelectModal');
         await dispatchEvent({
           eventType: 'change_bowler',
-          bowlerId: el.value,
-          bowlerName: el.options[el.selectedIndex]?.text || 'Bowler'
+          bowlerId: bw.id,
+          bowlerName: bw.name
         });
       };
     } else if (mode === 'change_striker') {
       title.textContent = 'Change Active Striker';
-      body.innerHTML = `<div class="form-group"><label class="form-label">Striker</label><select class="form-control" id="selChangeStriker">${batOpts}</select></div>`;
+      body.innerHTML = `
+        <div class="form-group">
+          <label class="form-label">Striker</label>
+          ${batSquad.length ? `<select class="form-control mb-1" id="selChangeStriker">${batOpts}</select>` : ''}
+          <input class="form-control" id="txtChangeStriker" placeholder="Or type striker name..." />
+        </div>`;
       saveBtn.onclick = async () => {
-        const el = document.getElementById('selChangeStriker');
+        const st = resolveNameOrSelect('selChangeStriker', 'txtChangeStriker', 'Striker', 'bat');
         closeModal('playersSelectModal');
         await dispatchEvent({
           eventType: 'change_striker',
-          strikerId: el.value,
-          strikerName: el.options[el.selectedIndex]?.text || 'Striker'
+          strikerId: st.id,
+          strikerName: st.name
         });
       };
     }
@@ -503,16 +541,14 @@
       btn.addEventListener('click', () => openExtraModal(btn.dataset.extra));
     });
 
-    document.getElementById('overthrowBtn').addEventListener('click', () => openExtraModal('overthrow'));
+    document.getElementById('moreScoringActionsBtn')?.addEventListener('click', () => {
+      document.getElementById('matchControlModal').classList.add('open');
+    });
     document.getElementById('wicketBtn').addEventListener('click', openWicketModal);
     document.getElementById('undoBallBtn').addEventListener('click', undoLastBall);
     document.getElementById('swapBatsmenBtn').addEventListener('click', () => dispatchEvent({ eventType: 'swap_batsmen' }));
     document.getElementById('selectOpenersBtn').addEventListener('click', () => openPlayersModal('openers'));
     document.getElementById('changeBowlerBtn').addEventListener('click', () => openPlayersModal('change_bowler'));
-    document.getElementById('retireBtn').addEventListener('click', openRetireModal);
-    document.getElementById('endOverBtn').addEventListener('click', () => {
-      if (confirm('End the current over now?')) dispatchEvent({ eventType: 'end_over' });
-    });
 
     document.getElementById('outdoorModeBtn').addEventListener('click', () => {
       document.body.classList.toggle('outdoor-mode');
@@ -785,6 +821,11 @@
 
   async function handleMatchControlAction(action) {
     closeModal('matchControlModal');
+    if (['bye', 'leg_bye', 'overthrow', 'penalty'].includes(action)) return openExtraModal(action);
+    if (action === 'end_over') {
+      if (confirm('End the current over now?')) return dispatchEvent({ eventType: 'end_over' });
+      return;
+    }
     if (action === 'change_bowler') return openPlayersModal('change_bowler');
     if (action === 'swap_batsmen') return dispatchEvent({ eventType: 'swap_batsmen' });
     if (action === 'change_striker') return openPlayersModal('change_striker');

@@ -5,25 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#208B4E" />
   <title>Tournaments – ApnaScore</title>
-  <meta name="description" content="Organize village leagues, knockouts, round-robin & group-stage cricket tournaments with auto fixtures, live NRR points tables, Orange/Purple Caps & Results PDF." />
+  <meta name="description" content="Organize village leagues, knockouts, round-robin & group-stage cricket tournaments with auto fixtures, live NRR points tables & Results PDF." />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="ApnaScore" />
-  <meta property="og:title" content="Cricket Tournaments, Fixtures & NRR Points Table – ApnaScore" />
-  <meta property="og:description" content="Organize village leagues, knockouts, round-robin & group-stage cricket tournaments with auto fixtures, live NRR points tables, Orange/Purple Caps & Results PDF." />
+  <meta property="og:title" content="Tournaments – ApnaScore" />
+  <meta property="og:description" content="Create tournaments, manage teams, generate fixtures, and track Points Table & NRR separately from simple matches." />
   <meta property="og:image" content="/assets/images/apnascore-og-preview.jpg" />
-  <meta property="og:image:type" content="image/jpeg" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="ApnaScore – Apne Gaon ka Apna Scorer" />
   <meta property="og:url" content="/tournament.html" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Cricket Tournaments, Fixtures & NRR Points Table – ApnaScore" />
-  <meta name="twitter:description" content="Organize village leagues, knockouts, round-robin & group-stage cricket tournaments with auto fixtures, live NRR points tables, Orange/Purple Caps & Results PDF." />
-  <meta name="twitter:image" content="/assets/images/apnascore-og-preview.jpg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/responsive.css" />
+  <link rel="stylesheet" href="/css/dashboard.css" />
   <link rel="stylesheet" href="/css/tournament.css" />
   <link rel="stylesheet" href="/css/animations.css" />
 </head>
@@ -35,20 +29,20 @@
         <div class="card mb-2">
           <div class="flex-between">
             <div>
-              <h2 class="card-title">Cricket Tournaments</h2>
-              <span class="text-sm text-muted">Manage leagues, knockouts, fixtures, points tables & NRR</span>
+              <h1 class="card-title" style="font-size:1.25rem;">Tournaments</h1>
+              <span class="text-sm text-muted">Apna tournament banao, teams add karo aur matches manage karo</span>
             </div>
             <button type="button" class="btn btn-primary" id="openCreateTourBtn">+ Create Tournament</button>
           </div>
-          <div class="form-grid-2 mt-2">
-            <input class="form-control" id="tourSearchInput" placeholder="Search tournament name..." />
-            <select class="form-control" id="tourStatusFilter">
-              <option value="">All Statuses</option>
-              <option value="ongoing">Ongoing</option>
-              <option value="upcoming">Upcoming</option>
-              <option value="completed">Completed</option>
-            </select>
+
+          <div class="tabs-bar mt-2" id="tourListTabs">
+            <button type="button" class="tab-btn active" data-tfilter="mine">My Tournaments</button>
+            <button type="button" class="tab-btn" data-tfilter="upcoming">Upcoming</button>
+            <button type="button" class="tab-btn" data-tfilter="ongoing">Live</button>
+            <button type="button" class="tab-btn" data-tfilter="completed">Completed</button>
           </div>
+
+          <input class="form-control" id="tourSearchInput" placeholder="Search tournament by name or village..." />
         </div>
         <div id="tournamentsGrid" class="entity-grid">
           <div class="empty-state">Loading tournaments...</div>
@@ -72,66 +66,109 @@
         </div>
 
         <div class="tabs-bar" id="tourDetailTabs">
-          <button type="button" class="tab-btn active" data-ttab="points">Points Table</button>
-          <button type="button" class="tab-btn" data-ttab="fixtures">Fixtures & Matches</button>
-          <button type="button" class="tab-btn" data-ttab="teams">Teams & Registration</button>
-          <button type="button" class="tab-btn" data-ttab="awards">Awards & Winner</button>
+          <button type="button" class="tab-btn active" data-ttab="overview">Overview</button>
+          <button type="button" class="tab-btn" data-ttab="teams">Teams</button>
+          <button type="button" class="tab-btn" data-ttab="fixtures">Fixtures</button>
+          <button type="button" class="tab-btn" data-ttab="points">Points Table</button>
+          <button type="button" class="tab-btn" data-ttab="live">Live Matches</button>
+          <button type="button" class="tab-btn" data-ttab="results">Results</button>
+          <button type="button" class="tab-btn" data-ttab="settings">Tournament Settings</button>
         </div>
 
-        <div id="tPanel-points" class="card"></div>
-        <div id="tPanel-fixtures" class="card hidden"></div>
+        <div id="tPanel-overview" class="card"></div>
         <div id="tPanel-teams" class="card hidden"></div>
-        <div id="tPanel-awards" class="card hidden"></div>
+        <div id="tPanel-fixtures" class="card hidden"></div>
+        <div id="tPanel-points" class="card hidden"></div>
+        <div id="tPanel-live" class="card hidden"></div>
+        <div id="tPanel-results" class="card hidden"></div>
+        <div id="tPanel-settings" class="card hidden"></div>
       </section>
     </div>
   </div>
 
-  <!-- Create Tournament Modal -->
+  <!-- Create Tournament 3-Step Wizard Modal -->
   <div class="modal-backdrop" id="createTourModal">
-    <div class="modal-dialog" style="max-width:650px;">
+    <div class="modal-dialog" style="max-width:600px;">
       <div class="modal-header">
         <h3 class="modal-title">Create Tournament</h3>
         <button type="button" class="icon-btn" onclick="document.getElementById('createTourModal').classList.remove('open')">✕</button>
       </div>
+
+      <div class="wizard-steps mb-2" id="tourWizSteps">
+        <button type="button" class="wizard-step-pill active" data-tw="1">1. Info</button>
+        <button type="button" class="wizard-step-pill" data-tw="2">2. Format</button>
+        <button type="button" class="wizard-step-pill" data-tw="3">3. Rules & Registration</button>
+      </div>
+
       <form id="createTourForm">
-        <div class="form-grid-2">
-          <div class="form-group"><label class="form-label">Tournament Name</label><input class="form-control" id="ctName" required placeholder="e.g. Rampur Premier League" /></div>
-          <div class="form-group"><label class="form-label">Village / City</label><input class="form-control" id="ctVillage" required placeholder="e.g. Rampur" /></div>
-          <div class="form-group"><label class="form-label">Format</label>
-            <select class="form-control" id="ctFormat">
-              <option value="league_knockout">League + Knockout</option>
-              <option value="league">League</option>
-              <option value="round_robin">Round Robin</option>
-              <option value="group_stage">Group Stage</option>
-              <option value="knockout">Knockout</option>
-              <option value="double_elimination">Double Elimination</option>
-            </select>
+        <div class="tw-panel" data-twp="1">
+          <div class="form-group"><label class="form-label">Tournament Name</label><input class="form-control" id="ctName" required placeholder="e.g. Rampur Cricket Cup" /></div>
+          <div class="form-grid-2">
+            <div class="form-group"><label class="form-label">Location / Village</label><input class="form-control" id="ctVillage" required placeholder="e.g. Rampur" /></div>
+            <div class="form-group"><label class="form-label">Start Date</label><input class="form-control" id="ctStart" type="date" required /></div>
           </div>
-          <div class="form-group"><label class="form-label">Overs Per Match</label><input class="form-control" id="ctOvers" type="number" min="1" max="50" value="8" /></div>
-          <div class="form-group"><label class="form-label">Start Date</label><input class="form-control" id="ctStart" type="date" required /></div>
-          <div class="form-group"><label class="form-label">End Date</label><input class="form-control" id="ctEnd" type="date" required /></div>
-          <div class="form-group"><label class="form-label">Entry Fee (₹)</label><input class="form-control" id="ctFee" type="number" min="0" value="500" /></div>
-          <div class="form-group"><label class="form-label">Prize Money / Trophy</label><input class="form-control" id="ctPrize" placeholder="e.g. ₹21,000 + Trophy" /></div>
-          <div class="form-group"><label class="form-label">Max Teams</label><input class="form-control" id="ctMaxTeams" type="number" min="2" max="64" value="8" /></div>
-          <div class="form-group"><label class="form-label">Tie-Breaker Rule</label>
-            <select class="form-control" id="ctTieBreaker">
-              <option value="nrr">Net Run Rate (NRR)</option>
-              <option value="wins">Total Wins</option>
-              <option value="head_to_head">Head to Head</option>
-            </select>
+          <div class="flex-between mt-2">
+            <span></span>
+            <button type="button" class="btn btn-primary" onclick="TourWiz.go(2)">Next: Format →</button>
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Pre-register Teams (Hold Ctrl/Cmd to select multiple)</label>
-          <select class="form-control" id="ctTeamsMulti" multiple style="min-height:90px;"></select>
+
+        <div class="tw-panel hidden" data-twp="2">
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label">Number of Teams</label><input class="form-control" id="ctMaxTeams" type="number" min="2" max="64" value="8" /></div>
+            <div class="form-group"><label class="form-label">Overs per Match</label><input class="form-control" id="ctOvers" type="number" min="1" max="50" value="8" /></div>
+            <div class="form-group"><label class="form-label">Tournament Format</label>
+              <select class="form-control" id="ctFormat">
+                <option value="knockout">Knockout</option>
+                <option value="league">League</option>
+                <option value="round_robin">Round Robin</option>
+                <option value="group_stage">Group Stage</option>
+                <option value="league_knockout">League + Knockout</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Date</label>
+            <input class="form-control" id="ctEnd" type="date" required />
+          </div>
+          <div class="flex-between mt-2">
+            <button type="button" class="btn btn-secondary" onclick="TourWiz.go(1)">← Back</button>
+            <button type="button" class="btn btn-primary" onclick="TourWiz.go(3)">Next: Rules →</button>
+          </div>
         </div>
-        <div class="switch-row mb-2">
-          <label for="ctPublic">Publicly Visible Tournament</label>
-          <input type="checkbox" class="toggle-check" id="ctPublic" checked />
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" onclick="document.getElementById('createTourModal').classList.remove('open')">Cancel</button>
-          <button type="submit" class="btn btn-primary">Create Tournament</button>
+
+        <div class="tw-panel hidden" data-twp="3">
+          <div class="form-grid-2">
+            <div class="form-group"><label class="form-label">Entry Fee (₹)</label><input class="form-control" id="ctFee" type="number" min="0" value="0" /></div>
+            <div class="form-group"><label class="form-label">Prize Money / Trophy</label><input class="form-control" id="ctPrize" placeholder="Optional" /></div>
+            <div class="form-group"><label class="form-label">Scoring Rule Preset</label>
+              <select class="form-control" id="ctRulePreset">
+                <option value="village_6_over">6/8-Over Village Rules</option>
+                <option value="standard_cricket">Standard Cricket</option>
+                <option value="tennis_ball">Tennis Ball Cricket</option>
+                <option value="gully_cricket">Gully Cricket</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Tie-Breaker</label>
+              <select class="form-control" id="ctTieBreaker">
+                <option value="nrr">Net Run Rate (NRR)</option>
+                <option value="wins">Total Wins</option>
+                <option value="head_to_head">Head to Head</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Add Existing Teams (Optional)</label>
+            <select class="form-control" id="ctTeamsMulti" multiple style="min-height:80px;"></select>
+          </div>
+          <div class="switch-row mb-2">
+            <label for="ctPublic">Publicly Visible Tournament</label>
+            <input type="checkbox" class="toggle-check" id="ctPublic" checked />
+          </div>
+          <div class="flex-between mt-2">
+            <button type="button" class="btn btn-secondary" onclick="TourWiz.go(2)">← Back</button>
+            <button type="submit" class="btn btn-primary btn-lg">Create Tournament</button>
+          </div>
         </div>
       </form>
     </div>

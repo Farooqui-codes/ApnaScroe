@@ -354,4 +354,119 @@ describe('Guest Access & Guest-to-Account Migration (MongoDB + HTTP E2E)', () =>
     const userTeamsAfterDev2 = await Team.countDocuments({ userId: targetUser._id });
     assert.equal(userTeamsAfterDev2, 4);
   });
+
+  it('11-12. Empty dashboard shows zero counts, guest creates 6-over simple match without teams/tournament, and simple matches stay isolated from tournaments', async () => {
+    // 1. Unauthenticated dashboard shows 0 counts and empty arrays
+    const anonDash = await api('GET', '/api/dashboard/summary');
+    assert.equal(anonDash.status, 200);
+    assert.equal(anonDash.data.counts.totalMatches, 0);
+    assert.equal(anonDash.data.counts.liveMatches, 0);
+    assert.equal(anonDash.data.counts.activeTournaments, 0);
+    assert.equal(anonDash.data.liveMatches.length, 0);
+    assert.equal(anonDash.data.recentMatches.length, 0);
+
+    // 2. Fresh registered user sees empty dashboard & empty mine=1 lists (not other users' matches)
+    const freshUser = await api('POST', '/api/auth/register', {
+      name: 'Fresh Player',
+      email: 'fresh@apnascore.in',
+      village: 'Naya Gaon',
+      role: 'organizer',
+      password: 'password123'
+    });
+    assert.equal(freshUser.status, 201);
+    const freshHeaders = { Authorization: `Bearer ${freshUser.data.token}` };
+
+    const freshDash = await api('GET', '/api/dashboard/summary', null, freshHeaders);
+    assert.equal(freshDash.status, 200);
+    assert.equal(freshDash.data.counts.totalMatches, 0);
+    assert.equal(freshDash.data.counts.totalTeams, 0);
+    assert.equal(freshDash.data.recentMatches.length, 0);
+
+    // 3. Guest starts a 6-over Simple Match with only team names (no pre-created teams/players or tournament)
+    const gRes = await api('POST', '/api/guest/session', { deviceId: 'dev_simple_ux' });
+    assert.equal(gRes.status, 201);
+    const gHeaders = { 'X-Guest-Id': gRes.data.guestId, 'X-Guest-Token': gRes.data.guestToken };
+
+    const simpleCreate = await api('POST', '/api/matches', {
+      teamAName: 'Gully Heroes',
+      teamBName: 'Mohalla Eleven',
+      oversPerInnings: 6,
+      playersPerTeam: 8,
+      tossWinnerSide: 'A',
+      tossDecision: 'bat',
+      startImmediately: true
+    }, gHeaders);
+    assert.equal(simpleCreate.status, 201);
+    const simpleMatch = simpleCreate.data.match;
+    assert.equal(simpleMatch.teamA.name, 'Gully Heroes');
+    assert.equal(simpleMatch.teamB.name, 'Mohalla Eleven');
+    assert.equal(simpleMatch.oversPerInnings, 6);
+    assert.equal(simpleMatch.tournamentId || null, null);
+
+    // Score a delivery on the Simple Match (first set openers cleanly, matching scoring UI fallback IDs)
+    const sOpeners = await api('POST', `/api/scoring/${simpleMatch._id}/event`, {
+      eventType: 'set_openers',
+      strikerId: 'qp_bat_1',
+      strikerName: 'Aman',
+      nonStrikerId: 'qp_bat_2',
+      nonStrikerName: 'Bilal',
+      bowlerId: 'qp_bowl_1',
+      bowlerName: 'Danish'
+    }, gHeaders);
+    assert.equal(sOpeners.status, 201);
+
+    const sBall = await api('POST', `/api/scoring/${simpleMatch._id}/event`, {
+      eventType: 'delivery',
+      batRuns: 4
+    }, gHeaders);
+    assert.equal(sBall.status, 201);
+    assert.equal(sBall.data.state.totalRuns, 4);
+
+    // Simple Match appears in mine=1&simpleOnly=1 and NEVER in tournamentOnly=1
+    const simpleList = await api('GET', '/api/matches?mine=1&simpleOnly=1', null, gHeaders);
+    assert.equal(simpleList.status, 200);
+    assert.equal(simpleList.data.matches.length, 1);
+    assert.equal(String(simpleList.data.matches[0]._id), String(simpleMatch._id));
+
+    const tourOnlyForGuest = await api('GET', '/api/matches?mine=1&tournamentOnly=1', null, gHeaders);
+    assert.equal(tourOnlyForGuest.status, 200);
+    assert.equal(tourOnlyForGuest.data.matches.length, 0);
+
+    // 4. Separate Tournament created by freshUser does not mix with Simple Matches
+    const tourRes = await api('POST', '/api/tournaments', {
+      name: 'Gramin Cup 2026',
+      village: 'Naya Gaon',
+      startDate: '2026-12-01',
+      endDate: '2026-12-05',
+      oversPerMatch: 8,
+      maxTeams: 4,
+      format: 'knockout'
+    }, freshHeaders);
+    assert.equal(tourRes.status, 201);
+    const tourId = tourRes.data.tournament._id;
+
+    const tourMatchRes = await api('POST', '/api/matches', {
+      tournamentId: tourId,
+      teamAName: 'Naya Gaon A',
+      teamBName: 'Naya Gaon B',
+      oversPerInnings: 8,
+      tossWinnerSide: 'A',
+      tossDecision: 'bat',
+      startImmediately: true
+    }, freshHeaders);
+    assert.equal(tourMatchRes.status, 201);
+    assert.equal(String(tourMatchRes.data.match.tournamentId), String(tourId));
+
+    const freshSimpleList = await api('GET', '/api/matches?mine=1&simpleOnly=1', null, freshHeaders);
+    assert.equal(freshSimpleList.status, 200);
+    assert.equal(freshSimpleList.data.matches.length, 0);
+
+    const freshTourMatches = await api('GET', '/api/matches?mine=1&tournamentOnly=1', null, freshHeaders);
+    assert.equal(freshTourMatches.status, 200);
+    assert.equal(freshTourMatches.data.matches.length, 1);
+
+    const tourDetails = await api('GET', `/api/tournaments/${tourId}`, null, freshHeaders);
+    assert.equal(tourDetails.status, 200);
+    assert.equal(tourDetails.data.fixtures.length, 0); // only created match, not simple match
+  });
 });

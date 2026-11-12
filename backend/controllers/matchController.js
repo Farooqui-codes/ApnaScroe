@@ -3,6 +3,7 @@ const Match = require('../models/Match');
 const Innings = require('../models/Innings');
 const Delivery = require('../models/Delivery');
 const Team = require('../models/Team');
+const Player = require('../models/Player');
 const TournamentFixture = require('../models/TournamentFixture');
 const Award = require('../models/Award');
 const engine = require('../services/scoringEngine');
@@ -41,12 +42,22 @@ function buildMatchVisibility(req) {
 
 async function listMatches(req, res, next) {
   try {
-    const { status, tournamentId, teamId, search, mine } = req.query;
+    const { status, tournamentId, teamId, search, mine, simpleOnly, tournamentOnly } = req.query;
     const andClauses = [buildMatchVisibility(req)];
 
     if (mine === '1') {
-      if (req.guest) andClauses.push({ ownerType: 'guest', guestId: req.guest.guestId });
-      else if (req.user) andClauses.push({ $or: [{ userId: req.user._id }, { scorerId: req.user._id }] });
+      if (req.guest) {
+        andClauses.push({ ownerType: 'guest', guestId: req.guest.guestId });
+      } else if (req.user) {
+        andClauses.push({ $or: [{ userId: req.user._id }, { scorerId: req.user._id }, { authorizedScorers: req.user._id }] });
+      } else {
+        return res.json({ success: true, matches: [] });
+      }
+    }
+    if (simpleOnly === '1') {
+      andClauses.push({ tournamentId: null });
+    } else if (tournamentOnly === '1') {
+      andClauses.push({ tournamentId: { $ne: null } });
     }
     if (status) {
       andClauses.push({ status: status.includes(',') ? { $in: status.split(',') } : status });
@@ -121,6 +132,10 @@ async function createMatch(req, res, next) {
       fixtureId,
       teamAId,
       teamBId,
+      teamAName,
+      teamBName,
+      teamAPlayerNames,
+      teamBPlayerNames,
       teamASquad,
       teamBSquad,
       teamACaptainId,
@@ -134,6 +149,7 @@ async function createMatch(req, res, next) {
       oversPerInnings,
       playersPerTeam,
       tossWinnerTeamId,
+      tossWinnerSide,
       tossDecision,
       rules,
       officials,
@@ -151,11 +167,14 @@ async function createMatch(req, res, next) {
       });
     }
 
-    if (!teamAId || !teamBId) {
+    if ((!teamAId && !teamAName) || (!teamBId && !teamBName)) {
       return res.status(400).json({ success: false, message: 'Both Team A and Team B are required.' });
     }
-    if (String(teamAId) === String(teamBId)) {
+    if (teamAId && teamBId && String(teamAId) === String(teamBId)) {
       return res.status(400).json({ success: false, message: 'Team A and Team B must be different teams.' });
+    }
+    if (!teamAId && !teamBId && String(teamAName).trim().toLowerCase() === String(teamBName).trim().toLowerCase()) {
+      return res.status(400).json({ success: false, message: 'Team A and Team B names must be different.' });
     }
 
     if (clientMatchId) {
@@ -169,9 +188,56 @@ async function createMatch(req, res, next) {
       }
     }
 
+    const resolveOrCreateTeam = async (id, name, playerNames) => {
+      if (id) {
+        return await Team.findById(id).populate('players', 'name');
+      }
+      const cleanName = String(name).trim();
+      const ownerQuery = isGuest
+        ? { ownerType: 'guest', guestId: req.guest.guestId, name: new RegExp(`^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
+        : { ownerType: 'user', userId: req.user._id, name: new RegExp(`^${cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') };
+
+      let teamDoc = await Team.findOne(ownerQuery).populate('players', 'name');
+      if (!teamDoc) {
+        const short = cleanName.split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 4) || 'TEAM';
+        teamDoc = await Team.create({
+          ownerType: isGuest ? 'guest' : 'user',
+          guestId: isGuest ? req.guest.guestId : null,
+          userId: req.user ? req.user._id : null,
+          managerId: req.user ? req.user._id : null,
+          name: cleanName,
+          shortName: short,
+          village: venue ? String(venue).trim() : 'Local Ground',
+          inviteCode: isGuest ? '' : uuidv4().slice(0, 8).toUpperCase()
+        });
+      }
+
+      if (Array.isArray(playerNames) && playerNames.length > 0) {
+        const createdPlayers = [];
+        for (const rawName of playerNames) {
+          const pName = String(rawName || '').trim();
+          if (!pName) continue;
+          const pDoc = await Player.create({
+            ownerType: isGuest ? 'guest' : 'user',
+            guestId: isGuest ? req.guest.guestId : null,
+            userId: req.user ? req.user._id : null,
+            createdBy: req.user ? req.user._id : null,
+            name: pName,
+            village: teamDoc.village || 'Local Ground',
+            teams: [teamDoc._id]
+          });
+          teamDoc.players.push(pDoc._id);
+          createdPlayers.push(pDoc);
+        }
+        await teamDoc.save();
+        return await Team.findById(teamDoc._id).populate('players', 'name');
+      }
+      return teamDoc;
+    };
+
     const [teamA, teamB] = await Promise.all([
-      Team.findById(teamAId).populate('players', 'name'),
-      Team.findById(teamBId).populate('players', 'name')
+      resolveOrCreateTeam(teamAId, teamAName, teamAPlayerNames),
+      resolveOrCreateTeam(teamBId, teamBName, teamBPlayerNames)
     ]);
     if (!teamA || !teamB) {
       return res.status(404).json({ success: false, message: 'Selected team(s) not found.' });
@@ -214,8 +280,11 @@ async function createMatch(req, res, next) {
     const squadB = buildSquad(teamBSquad, teamB, teamBCaptainId, teamBWicketkeeperId);
 
     let tossWinner = teamA;
-    if (tossWinnerTeamId && String(tossWinnerTeamId) === String(teamB._id)) tossWinner = teamB;
+    if (tossWinnerSide === 'B' || (tossWinnerTeamId && String(tossWinnerTeamId) === String(teamB._id))) {
+      tossWinner = teamB;
+    }
     const decision = tossDecision === 'bowl' ? 'bowl' : 'bat';
+    const hasToss = Boolean(tossWinnerTeamId || tossWinnerSide);
     const battingFirst =
       (String(tossWinner._id) === String(teamA._id) && decision === 'bat') ||
       (String(tossWinner._id) === String(teamB._id) && decision === 'bowl')
@@ -259,9 +328,9 @@ async function createMatch(req, res, next) {
       oversPerInnings: rulesSnapshot.format.oversPerInnings,
       playersPerTeam: rulesSnapshot.format.playersPerTeam,
       toss: {
-        winnerTeamId: tossWinnerTeamId ? tossWinner._id : null,
-        winnerTeamName: tossWinnerTeamId ? tossWinner.name : '',
-        decision: tossWinnerTeamId ? decision : ''
+        winnerTeamId: hasToss ? tossWinner._id : null,
+        winnerTeamName: hasToss ? tossWinner.name : '',
+        decision: hasToss ? decision : ''
       },
       rulesSnapshot,
       status: startImmediately === false ? 'upcoming' : 'live',

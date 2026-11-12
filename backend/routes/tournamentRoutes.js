@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const tourCtrl = require('../controllers/tournamentController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuth } = require('../middleware/auth');
 const { requireRole, canManageTournament } = require('../middleware/rbac');
 const { uploadImage } = require('../middleware/upload');
 
-router.get('/', tourCtrl.listTournaments);
+router.get('/', optionalAuth, tourCtrl.listTournaments);
 router.get('/:id', tourCtrl.getTournament);
 router.post('/', authenticate, requireRole('organizer'), tourCtrl.createTournament);
 router.put('/:id', authenticate, canManageTournament, tourCtrl.updateTournament);

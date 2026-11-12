@@ -20,6 +20,9 @@ const statsService = require('../services/statsService');
 const tournamentService = require('../services/tournamentService');
 
 async function seedSampleDataIfEmpty() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Sample data seeding is disabled in production.');
+  }
   const existingUsers = await User.countDocuments();
   const existingMatches = await Match.countDocuments();
   if (existingUsers > 0 || existingMatches > 0) {
