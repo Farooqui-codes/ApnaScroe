@@ -46,28 +46,36 @@
 
       <!-- Active Match Scoring Screen -->
       <section id="activeScoringView" class="hidden">
-        <!-- Dedicated Match Control Header -->
-        <div class="scoring-header-bar">
-          <div class="flex-gap">
-            <a href="/dashboard.html" class="btn btn-secondary btn-sm" id="backOverviewBtn">← Overview</a>
-            <span class="badge badge-live" id="matchStatusBadge"><span class="live-dot"></span>LIVE</span>
+        <!-- Compact App Bar -->
+        <div class="scoring-header-bar" id="scoringAppbar">
+          <div class="sc-appbar-left">
+            <a href="/dashboard.html" class="sc-back-arrow" id="backOverviewBtn" aria-label="Back to Dashboard">←</a>
+            <div class="sc-title-wrap">
+              <span class="sc-match-title" id="scMatchTitle">Match</span>
+              <span class="badge badge-live" id="matchStatusBadge"><span class="live-dot"></span>LIVE</span>
+            </div>
           </div>
-          <div class="flex-gap">
-            <button type="button" class="btn btn-secondary btn-sm" id="outdoorModeBtn">☀ Outdoor Mode</button>
-            <button type="button" class="btn btn-secondary btn-sm" id="shareMatchBtn">Share / QR</button>
-            <button type="button" class="btn btn-primary btn-sm" id="matchControlsBtn">Match Controls</button>
+          <div class="sc-appbar-actions">
+            <button type="button" class="sc-appbar-icon-btn" id="openSummaryGraphBtn" title="Match Summary & Graph" aria-label="Match Summary & Graph">📊</button>
+            <button type="button" class="sc-appbar-icon-btn" id="openScorecardMiniBtn" title="Full Scorecard" aria-label="Full Scorecard">📋</button>
+            <button type="button" class="sc-appbar-icon-btn" id="outdoorModeBtn" title="Outdoor Sunlight Mode" aria-label="Outdoor Mode">☀</button>
+            <button type="button" class="sc-appbar-icon-btn" id="shareMatchBtn" title="Share Match" aria-label="Share">🔗</button>
+            <button type="button" class="btn btn-primary btn-sm" id="matchControlsBtn">Controls</button>
           </div>
         </div>
 
-        <!-- Scoreboard Hero -->
+        <!-- Scoreboard Hero Card -->
         <div class="scoreboard-hero" id="scoreboardHero">
           <div class="scoreboard-top-row">
             <div>
-              <div class="batting-team-name" id="batTeamTitle">Batting Team</div>
+              <div class="batting-team-name">
+                <span id="batTeamTitle">Batting Team</span>
+                <span id="inningsBadge" class="sc-innings-badge">1st Innings</span>
+              </div>
               <div class="bowling-team-sub" id="bowlTeamSub">vs Bowling Team</div>
             </div>
             <div style="text-align:right;">
-              <span class="main-score-digits" id="mainScoreDigits">0/0</span>
+              <span class="main-score-digits" id="mainScoreDigits">0-0</span>
               <span class="overs-digits" id="mainOversDigits">(0.0 / 6 ov)</span>
             </div>
           </div>
@@ -76,73 +84,85 @@
             <span id="crrText">CRR: 0.00</span>
             <span id="targetText" class="hidden">Target: 0</span>
             <span id="reqText" class="hidden">Need 0 off 0 balls (RRR: 0.00)</span>
-            <span id="extrasText">Extras: 0</span>
           </div>
+          <div class="sc-highlight-line" id="scHighlightLine">Projected: 0 (at CRR 0.00)</div>
         </div>
 
         <!-- Innings Break / Result Banner -->
-        <div id="inningsActionBanner" class="card mb-2 hidden" style="border:2px solid var(--brand-primary);background:var(--success-bg);">
+        <div id="inningsActionBanner" class="card mb-1 hidden" style="border:2px solid var(--brand-primary);background:var(--success-bg);padding:10px 14px;">
           <div class="flex-between">
             <strong id="inningsActionTitle">Innings Completed</strong>
             <div class="flex-gap" id="inningsActionButtons"></div>
           </div>
         </div>
 
-        <!-- Striker / Non-Striker & Bowler Crease Info -->
-        <div class="crease-grid">
-          <div class="card" style="padding:12px;">
-            <div class="flex-between mb-2">
-              <strong class="text-sm">BATSMEN</strong>
-              <div class="flex-gap">
-                <button type="button" class="btn btn-secondary btn-sm" id="swapBatsmenBtn">⇄ Swap</button>
-                <button type="button" class="btn btn-secondary btn-sm" id="selectOpenersBtn">Edit</button>
+        <!-- Batsmen Table & Current Bowler Strip -->
+        <div class="sc-crease-container">
+          <div class="sc-batters-strip">
+            <div class="sc-batter-row on-strike" id="strikerRow">
+              <div class="sc-batter-left">
+                <span class="sc-strike-star">*</span>
+                <span class="batter-name" id="strikerName">Striker</span>
+              </div>
+              <div class="sc-batter-stats" id="strikerMeta">
+                <strong id="strikerRuns">0</strong> <span class="sc-stat-sub">(0b 0x4 0x6 SR 0.0)</span>
               </div>
             </div>
-            <div class="batter-row on-strike" id="strikerRow">
-              <div>
-                <div class="batter-name" id="strikerName">Select Striker *</div>
-                <div class="text-sm text-muted" id="strikerMeta">0b • 0x4 • 0x6 • SR 0.0</div>
+            <div class="sc-batter-row" id="nonStrikerRow">
+              <div class="sc-batter-left">
+                <span class="sc-strike-star" style="visibility:hidden;">*</span>
+                <span class="batter-name" id="nonStrikerName">Non-Striker</span>
               </div>
-              <div class="batter-figures" id="strikerRuns">0</div>
-            </div>
-            <div class="batter-row" id="nonStrikerRow">
-              <div>
-                <div class="batter-name" id="nonStrikerName">Select Non-Striker</div>
-                <div class="text-sm text-muted" id="nonStrikerMeta">0b • 0x4 • 0x6 • SR 0.0</div>
+              <div class="sc-batter-stats" id="nonStrikerMeta">
+                <strong id="nonStrikerRuns">0</strong> <span class="sc-stat-sub">(0b 0x4 0x6 SR 0.0)</span>
               </div>
-              <div class="batter-figures" id="nonStrikerRuns">0</div>
             </div>
-            <div class="text-sm text-muted mt-1" id="partnershipText">Partnership: 0 (0)</div>
           </div>
 
-          <div class="card" style="padding:12px;">
-            <div class="flex-between mb-2">
-              <strong class="text-sm">BOWLER</strong>
-              <button type="button" class="btn btn-secondary btn-sm" id="changeBowlerBtn">Change Bowler</button>
+          <div class="sc-bowler-strip" id="bowlerStrip">
+            <div class="sc-bowler-left">
+              <span class="sc-bowler-badge">BOWL</span>
+              <span class="batter-name" id="bowlerName">Bowler</span>
             </div>
-            <div class="batter-row" style="margin-bottom:8px;">
-              <div>
-                <div class="batter-name" id="bowlerName">Select Bowler</div>
-                <div class="text-sm text-muted" id="bowlerMeta">0.0 ov • 0 M • Econ 0.00</div>
-              </div>
-              <div class="batter-figures" id="bowlerFigures">0-0</div>
+            <div class="sc-bowler-stats">
+              <strong id="bowlerFigures">0-0</strong>
+              <span class="sc-stat-sub" id="bowlerMeta">(0.0 ov • 0 M • Econ 0.00)</span>
             </div>
-            <div class="text-sm text-muted" id="bowlerExtrasMeta">Wides: 0 • No-Balls: 0</div>
           </div>
         </div>
 
-        <!-- Recent Balls Timeline -->
-        <div class="card" style="padding:10px 14px;margin-bottom:12px;">
-          <div class="flex-between">
-            <strong class="text-sm">RECENT BALLS (Tap any ball to inspect / edit)</strong>
-            <span class="text-sm text-muted" id="ballCountLabel">0 balls</span>
-          </div>
+        <!-- This Over Row -->
+        <div class="sc-this-over-row">
+          <div class="sc-this-over-label">This Over:</div>
           <div class="recent-balls-strip" id="recentBallsStrip"></div>
         </div>
 
-        <!-- Primary Sunlight-Readable Scoring Pad (Simplified & Focused) -->
-        <div class="scoring-pad-card" id="scoringPadCard">
-          <div class="runs-keypad">
+        <!-- Extras & Wicket Toggle Row -->
+        <div class="sc-toggle-chips-row" id="toggleChipsRow">
+          <button type="button" class="sc-toggle-chip" data-toggle="wide" id="chipWide">Wide</button>
+          <button type="button" class="sc-toggle-chip" data-toggle="no_ball" id="chipNoBall">No Ball</button>
+          <button type="button" class="sc-toggle-chip" data-toggle="bye" id="chipBye">Byes</button>
+          <button type="button" class="sc-toggle-chip" data-toggle="leg_bye" id="chipLegBye">Leg Byes</button>
+          <button type="button" class="sc-toggle-chip sc-chip-wicket" data-toggle="wicket" id="chipWicket">Wicket</button>
+          <button type="button" class="sc-chip-btn" id="swapBatsmenBtn" title="Swap Strike">⇄ Swap</button>
+          <button type="button" class="sc-chip-btn" id="quickRetireBtn" title="Retire Batsman">Retire</button>
+        </div>
+
+        <!-- Bottom Control Area fixed in thumb reach -->
+        <div class="sc-thumb-controls-wrap" id="scoringPadCard">
+          <div class="sc-thumb-left-col">
+            <button type="button" class="ctrl-btn danger-outline sc-undo-btn" id="undoBallBtn">↶ Undo</button>
+            <div class="sc-thumb-metric-box">
+              <span class="sc-thumb-metric-lbl">P'ship</span>
+              <strong class="sc-thumb-metric-val" id="partnershipVal">0 (0)</strong>
+            </div>
+            <div class="sc-thumb-metric-box">
+              <span class="sc-thumb-metric-lbl">Extras</span>
+              <strong class="sc-thumb-metric-val" id="extrasVal">0</strong>
+            </div>
+          </div>
+
+          <div class="sc-thumb-runs-pad">
             <button type="button" class="score-btn" data-run="0">0<span>Dot</span></button>
             <button type="button" class="score-btn" data-run="1">1<span>Single</span></button>
             <button type="button" class="score-btn" data-run="2">2<span>Two</span></button>
@@ -150,19 +170,23 @@
             <button type="button" class="score-btn btn-four" data-run="4">4<span>FOUR</span></button>
             <button type="button" class="score-btn" data-run="5">5<span>Five</span></button>
             <button type="button" class="score-btn btn-six" data-run="6">6<span>SIX</span></button>
-            <button type="button" class="score-btn btn-wicket" id="wicketBtn">OUT<span>Wicket</span></button>
-          </div>
-
-          <div class="extras-keypad" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:0;">
-            <button type="button" class="extra-btn" data-extra="wide">Wide</button>
-            <button type="button" class="extra-btn" data-extra="no_ball">No Ball</button>
-            <button type="button" class="ctrl-btn danger-outline" id="undoBallBtn" style="min-height:50px;">↶ Undo</button>
-            <button type="button" class="ctrl-btn more-actions-btn" id="moreScoringActionsBtn">⋯ More</button>
+            <button type="button" class="score-btn more-actions-btn" id="moreScoringActionsBtn">⋯<span>More</span></button>
           </div>
         </div>
 
-        <!-- Commentary & Full Mini Scorecard Tabs -->
-        <div class="card">
+        <!-- Hidden container for fallback element bindings -->
+        <div class="hidden">
+          <button type="button" id="wicketBtn"></button>
+          <button type="button" id="selectOpenersBtn"></button>
+          <button type="button" id="changeBowlerBtn"></button>
+          <span id="partnershipText"></span>
+          <span id="extrasText"></span>
+          <span id="ballCountLabel"></span>
+          <span id="bowlerExtrasMeta"></span>
+        </div>
+
+        <!-- Desktop Panels: Commentary & Full Mini Scorecard Tabs (visible on desktop) -->
+        <div class="card sc-desktop-panel">
           <div class="tabs-bar">
             <button type="button" class="tab-btn active" data-scview="commentary">Commentary</button>
             <button type="button" class="tab-btn" data-scview="scorecard">Full Scorecard</button>
@@ -349,6 +373,38 @@
         <button type="button" class="btn btn-primary" id="copyShareLinkBtn">Copy Link</button>
         <a id="whatsappShareBtn" target="_blank" rel="noopener" class="btn btn-lime">Share on WhatsApp</a>
         <a id="openScorecardPdfBtn" class="btn btn-secondary">Scorecard & PDF</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Match Summary & Graph -->
+  <div class="modal-backdrop" id="matchSummaryModal">
+    <div class="modal-dialog" style="max-width:600px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Match Summary & Analysis</h3>
+        <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('matchSummaryModal')">✕</button>
+      </div>
+      <div id="summaryModalBody" style="max-height:70vh;overflow-y:auto;">
+        <div id="summaryModalContent"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="ScoringUI.closeModal('matchSummaryModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Full Scorecard Sheet -->
+  <div class="modal-backdrop" id="fullScorecardModal">
+    <div class="modal-dialog" style="max-width:700px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Full Match Scorecard</h3>
+        <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('fullScorecardModal')">✕</button>
+      </div>
+      <div id="fullScorecardModalBody" style="max-height:75vh;overflow-y:auto;">
+        <div id="fullScorecardModalContent"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="ScoringUI.closeModal('fullScorecardModal')">Close</button>
       </div>
     </div>
   </div>

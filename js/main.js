@@ -24,8 +24,8 @@
 
   const BOTTOM_TABS = [
     { id: 'dashboard', label: 'Home', href: '/dashboard.html', icon: 'home' },
-    { id: 'my-matches', label: 'Live', href: '/my-matches.html?filter=live', icon: 'radio' },
-    { id: 'match-create', label: 'Score', href: '/match-create.html', icon: 'plusBat', isCenter: true },
+    { id: 'my-matches', label: 'Matches', href: '/my-matches.html', icon: 'radio' },
+    { id: 'match-create', label: 'Start Match', href: '/match-create.html', icon: 'plusBat', isCenter: true },
     { id: 'tournaments', label: 'Tournaments', href: '/tournament.html', icon: 'trophy' },
     { id: 'profile', label: 'Profile', href: '/profile.html', icon: 'user' }
   ];
@@ -87,6 +87,45 @@
     return html;
   }
 
+  function renderDrawerNav(activeId) {
+    return `
+      <div class="drawer-main-links">
+        <a href="/dashboard.html" class="nav-item ${activeId === 'dashboard' ? 'active' : ''}">
+          ${root.ApnaIcons.icon('home', 20)}<span class="nav-label">Home</span>
+        </a>
+        <a href="/tournament.html?upgrade=1" class="nav-item">
+          ${root.ApnaIcons.icon('award', 20)}<span class="nav-label">Pro Upgrade</span>
+        </a>
+        <a href="/pricing.html" class="nav-item ${activeId === 'pricing' ? 'active' : ''}">
+          ${root.ApnaIcons.icon('award', 20)}<span class="nav-label">Pricing</span>
+        </a>
+        <a href="/settings.html" class="nav-item ${activeId === 'settings' ? 'active' : ''}">
+          ${root.ApnaIcons.icon('settings', 20)}<span class="nav-label">Settings</span>
+        </a>
+        <a href="/profile.html" class="nav-item ${activeId === 'profile' ? 'active' : ''}">
+          ${root.ApnaIcons.icon('user', 20)}<span class="nav-label">Profile</span>
+        </a>
+        <button type="button" class="nav-item hidden" id="drawerInstallBtn" style="width:100%;text-align:left;background:none;border:0;cursor:pointer;">
+          ${root.ApnaIcons.icon('plusBat', 20)}<span class="nav-label">Install App</span>
+        </button>
+        <div class="drawer-ios-tip hidden" id="drawerIosTip">Install: Tap <strong>Share → Add to Home Screen</strong></div>
+        <a href="https://wa.me/919004920733?text=Hi%20Umair%2C%20I%20have%20feedback%20for%20ApnaScore" target="_blank" rel="noopener noreferrer" class="nav-item" id="drawerFeedbackBtn">
+          ${root.ApnaIcons.icon('messageCircle' in (root.ApnaIcons?.icons || {}) ? 'messageCircle' : 'radio', 20)}<span class="nav-label">Feedback / Report a problem</span>
+        </a>
+        <a href="/dashboard.html#aboutSection" class="nav-item" id="drawerAboutBtn">
+          ${root.ApnaIcons.icon('fileText', 20)}<span class="nav-label">About App</span>
+        </a>
+      </div>
+      <div class="nav-section-title" style="margin-top:14px;padding-top:10px;border-top:1px solid var(--border-color);">Shortcuts</div>
+      <a href="/my-matches.html" class="nav-item ${activeId === 'my-matches' ? 'active' : ''}">${root.ApnaIcons.icon('radio', 20)}<span class="nav-label">My Matches</span></a>
+      <a href="/tournament.html" class="nav-item ${activeId === 'tournaments' ? 'active' : ''}">${root.ApnaIcons.icon('trophy', 20)}<span class="nav-label">Tournaments</span></a>
+      <a href="/team.html" class="nav-item ${activeId === 'teams' ? 'active' : ''}">${root.ApnaIcons.icon('shield', 20)}<span class="nav-label">Teams</span></a>
+      <a href="/player.html" class="nav-item ${activeId === 'players' ? 'active' : ''}">${root.ApnaIcons.icon('users', 20)}<span class="nav-label">Players</span></a>
+      <a href="/scorecard.html" class="nav-item ${activeId === 'scorecards' ? 'active' : ''}">${root.ApnaIcons.icon('fileText', 20)}<span class="nav-label">Scorecards</span></a>
+      <a href="/leaderboards.html" class="nav-item ${activeId === 'leaderboards' ? 'active' : ''}">${root.ApnaIcons.icon('barChart', 20)}<span class="nav-label">Leaderboards</span></a>
+    `;
+  }
+
   function initShell({ activePage = 'dashboard', pageTitle = 'ApnaScore', requireAuth = false } = {}) {
     initTheme();
     if (requireAuth && root.ApnaAuth && !root.ApnaAuth.requireAuth()) return false;
@@ -102,6 +141,7 @@
     if (isCollapsed) document.body.classList.add('sidebar-collapsed');
 
     const navHtml = renderNavLinks(activePage);
+    const drawerNavHtml = renderDrawerNav(activePage);
     const bottomHtml = BOTTOM_TABS.map((tab) => {
       const active = tab.id === activePage ? 'active' : '';
       if (tab.isCenter) {
@@ -142,11 +182,7 @@
           <span id="drawerStatusText">${navigator.onLine ? 'Online' : 'Offline'}</span>
         </div>
         <nav class="sidebar-nav" id="mobileDrawerNav">
-          ${navHtml}
-          <button type="button" class="nav-item hidden" id="drawerInstallBtn" style="width:100%;text-align:left;background:none;border:0;cursor:pointer;">
-            ${root.ApnaIcons.icon('plusBat', 20)}<span class="nav-label">Install App</span>
-          </button>
-          <div class="drawer-ios-tip hidden" id="drawerIosTip">Install: Tap <strong>Share → Add to Home Screen</strong></div>
+          ${drawerNavHtml}
         </nav>
       </aside>
 
@@ -154,7 +190,11 @@
         <header class="topbar">
           <div class="topbar-left">
             <button class="icon-btn desktop-sidebar-toggle" id="sidebarCollapseBtn" aria-label="Toggle sidebar">${root.ApnaIcons.icon('menu', 18)}</button>
-            <button class="icon-btn topbar-mobile-brand" id="openDrawerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">${root.ApnaIcons.icon('menu', 18)}</button>
+            ${
+              activePage !== 'dashboard'
+                ? `<button type="button" class="icon-btn mobile-back-btn" id="mobileBackBtn" aria-label="Go Back">${root.ApnaIcons.icon('arrowLeft', 20)}</button>`
+                : `<button type="button" class="icon-btn topbar-mobile-brand" id="openDrawerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">${root.ApnaIcons.icon('menu', 18)}</button>`
+            }
             <a href="/dashboard.html" class="topbar-mobile-brand">
               <img src="/assets/icons/apnascore-icon.png" alt="ApnaScore" style="width:32px;height:32px;border-radius:8px;object-fit:contain;" />
             </a>
@@ -167,6 +207,7 @@
               <span class="sync-label-text">Online</span>
             </button>
             <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark mode"></button>
+            <button type="button" class="icon-btn hide-on-desktop" id="openDrawerBtnAlt" aria-label="Open menu" aria-controls="mobileDrawer">${root.ApnaIcons.icon('menu', 18)}</button>
             ${
               user
                 ? `<div class="profile-menu-wrap">
@@ -280,23 +321,44 @@
     const drawer = document.getElementById('mobileDrawer');
     const backdrop = document.getElementById('mobileDrawerBackdrop');
     const openDrawerBtn = document.getElementById('openDrawerBtn');
+    const openDrawerBtnAlt = document.getElementById('openDrawerBtnAlt');
     const closeDrawerBtn = document.getElementById('closeDrawerBtn');
+    const mobileBackBtn = document.getElementById('mobileBackBtn');
+
+    mobileBackBtn?.addEventListener('click', () => {
+      try { navigator.vibrate?.(10); } catch (_) {}
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/dashboard.html';
+      }
+    });
+
     const toggleDrawer = (open) => {
       if (!drawer) return;
       drawer.classList.toggle('open', open);
       backdrop?.classList.toggle('open', open);
       openDrawerBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+      openDrawerBtnAlt?.setAttribute('aria-expanded', open ? 'true' : 'false');
       if (open) {
         setTimeout(() => closeDrawerBtn?.focus(), 60);
       } else {
-        openDrawerBtn?.focus();
+        (openDrawerBtn || openDrawerBtnAlt)?.focus();
       }
     };
     openDrawerBtn?.addEventListener('click', () => toggleDrawer(true));
+    openDrawerBtnAlt?.addEventListener('click', () => toggleDrawer(true));
     closeDrawerBtn?.addEventListener('click', () => toggleDrawer(false));
     backdrop?.addEventListener('click', () => toggleDrawer(false));
     drawer?.querySelectorAll('a.nav-item').forEach((link) => {
       link.addEventListener('click', () => toggleDrawer(false));
+    });
+
+    // Native feel haptics on bottom navigation tabs
+    document.querySelectorAll('.bottom-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        try { navigator.vibrate?.(12); } catch (_) {}
+      });
     });
     document.addEventListener('keydown', (e) => {
       if (!drawer || !drawer.classList.contains('open')) return;

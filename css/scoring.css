@@ -391,3 +391,386 @@ body.outdoor-mode * {
     font-size: 2.2rem;
   }
 }
+
+/* ==========================================================================
+   §16 Mobile Scoring Screen (100dvh, Thumb-friendly, Toggle Chips)
+   ========================================================================== */
+.sc-appbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.sc-back-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 900;
+  cursor: pointer;
+  text-decoration: none;
+}
+.sc-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.sc-match-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 170px;
+}
+.sc-appbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sc-appbar-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sc-innings-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  margin-left: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sc-highlight-line {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(154, 222, 104, 0.18);
+  border: 1px solid rgba(154, 222, 104, 0.35);
+  color: var(--brand-lime);
+  font-weight: 800;
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
+}
+
+/* Compact Batsmen & Bowler Crease */
+.sc-crease-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.sc-batters-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sc-batter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  font-size: 0.88rem;
+}
+.sc-batter-row.on-strike {
+  border-color: var(--brand-primary);
+  background: var(--success-bg);
+  box-shadow: 0 0 0 1px var(--brand-primary);
+}
+.sc-batter-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.sc-strike-star {
+  color: var(--brand-primary);
+  font-weight: 900;
+  font-size: 1.05rem;
+}
+.sc-batter-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.sc-stat-sub {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.sc-bowler-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-alt);
+  border: 1px dashed var(--border-color);
+  font-size: 0.88rem;
+}
+.sc-bowler-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sc-bowler-badge {
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--brand-primary);
+  color: #FFFFFF;
+}
+.sc-bowler-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* This Over Row */
+.sc-this-over-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  margin-bottom: 6px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+.sc-this-over-label {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.sc-this-over-row .recent-balls-strip {
+  margin-bottom: 0;
+  padding: 2px;
+  gap: 6px;
+}
+.sc-this-over-row .ball-chip {
+  min-width: 34px;
+  height: 34px;
+  font-size: 0.82rem;
+  border-radius: 50%;
+  padding: 0;
+}
+
+/* Extras & Wicket Toggle Chips Row */
+.sc-toggle-chips-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 6px;
+  margin-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+.sc-toggle-chip {
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid #D97706;
+  background: #FEF3C7;
+  color: #78350F;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+[data-theme="dark"] .sc-toggle-chip {
+  background: #422B05;
+  color: #FCD34D;
+  border-color: #D97706;
+}
+.sc-toggle-chip.active {
+  background: #D97706 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.35);
+  transform: scale(1.04);
+}
+.sc-toggle-chip.sc-chip-wicket {
+  border-color: var(--danger);
+  background: #FEE2E2;
+  color: var(--danger);
+}
+[data-theme="dark"] .sc-toggle-chip.sc-chip-wicket {
+  background: #450A0A;
+  color: #FCA5A5;
+}
+.sc-toggle-chip.sc-chip-wicket.active {
+  background: var(--danger) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.35);
+}
+.sc-chip-btn {
+  padding: 7px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Bottom Controls Area (Fixed Thumb-Reach) */
+.sc-thumb-controls-wrap {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 8px;
+}
+.sc-thumb-left-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: space-between;
+}
+.sc-undo-btn {
+  height: 44px;
+  width: 100%;
+  font-weight: 800;
+  font-size: 0.86rem;
+  border-radius: var(--radius-sm);
+}
+.sc-thumb-metric-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 5px 4px;
+  text-align: center;
+}
+.sc-thumb-metric-lbl {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.sc-thumb-metric-val {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sc-thumb-runs-pad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.sc-thumb-runs-pad .score-btn {
+  min-height: 52px;
+  font-size: 1.35rem;
+  border-radius: var(--radius-sm);
+}
+.sc-thumb-runs-pad .score-btn span {
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+.sc-thumb-runs-pad .score-btn.btn-four {
+  background: #16A34A;
+  border-color: #15803D;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+}
+.sc-thumb-runs-pad .score-btn.btn-six {
+  background: #D97706;
+  border-color: #B45309;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);
+}
+
+/* Full Screen 100dvh Fit on Mobile */
+@media (max-width: 768px) {
+  body.scoring-active {
+    height: 100dvh;
+    overflow: hidden !important;
+    touch-action: manipulation;
+  }
+  body.scoring-active #appShell,
+  body.scoring-active .main-area,
+  body.scoring-active .page-content {
+    height: 100dvh;
+    overflow: hidden !important;
+    padding: 0;
+    margin: 0;
+  }
+  body.scoring-active .topbar {
+    display: none !important;
+  }
+  body.scoring-active #activeScoringView {
+    display: flex !important;
+    flex-direction: column;
+    height: 100dvh;
+    padding: env(safe-area-inset-top, 6px) 8px env(safe-area-inset-bottom, 8px);
+    overflow: hidden;
+    justify-content: space-between;
+  }
+  body.scoring-active .scoreboard-hero {
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    border-radius: var(--radius-md);
+  }
+  body.scoring-active .main-score-digits {
+    font-size: 2.1rem;
+  }
+  body.scoring-active .overs-digits {
+    font-size: 1rem;
+  }
+  body.scoring-active .scoring-header-bar {
+    padding: 6px 8px;
+    margin-bottom: 6px;
+  }
+  .sc-desktop-panel {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .sc-desktop-panel {
+    margin-top: 14px;
+    display: block;
+  }
+}

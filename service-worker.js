@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apnascore-shell-v10';
+const CACHE_NAME = 'apnascore-shell-v11';
 
 const APP_SHELL_ASSETS = [
   '/',

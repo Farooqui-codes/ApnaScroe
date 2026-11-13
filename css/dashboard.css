@@ -227,3 +227,71 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Section 3: About ApnaScore Single Collapsed Accordion */
+.about-apnascore-accordion {
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  margin-top: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.18s ease;
+}
+.about-apnascore-accordion[open] {
+  border-color: var(--brand-primary);
+}
+.about-accordion-summary {
+  padding: 14px 18px;
+  font-weight: 800;
+  cursor: pointer;
+  background: var(--bg-surface-alt);
+  user-select: none;
+  font-size: 0.96rem;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style: none;
+}
+.about-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+.about-accordion-summary .chevron-indicator {
+  transition: transform 0.2s ease;
+  font-size: 1.1rem;
+  color: var(--brand-primary);
+}
+.about-apnascore-accordion[open] .about-accordion-summary .chevron-indicator {
+  transform: rotate(180deg);
+}
+.about-accordion-body {
+  padding: 18px;
+  background: var(--bg-surface);
+}
+
+/* Mobile swipe carousel for Live & Recent Matches */
+@media (max-width: 768px) {
+  .match-list-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .match-list-grid .match-card {
+    min-width: 270px;
+    max-width: 310px;
+    flex-shrink: 0;
+    scroll-snap-align: start;
+  }
+  .primary-choices-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .choice-card {
+    padding: 16px 14px;
+    gap: 12px;
+  }
+}

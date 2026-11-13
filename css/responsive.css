@@ -32,9 +32,46 @@ body.scoring-active .main-area {
 }
 
 @media (max-width: 768px) {
+  /* Native App-like Shell */
+  body {
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overscroll-behavior-y: contain;
+    min-height: 100dvh;
+  }
+  button, a, input, select, textarea {
+    touch-action: manipulation;
+  }
   .topbar {
-    padding: 0 12px;
-    height: 58px;
+    background: var(--brand-primary, #208B4E) !important;
+    color: #FFFFFF !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    padding: env(safe-area-inset-top, 0px) 12px 0 12px;
+    height: calc(56px + env(safe-area-inset-top, 0px));
+  }
+  .topbar-page-title {
+    color: #FFFFFF !important;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+  .topbar .icon-btn {
+    color: #FFFFFF !important;
+  }
+  .mobile-back-btn {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: transparent;
+    border: none;
+    color: #FFFFFF !important;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .hide-on-desktop {
+    display: inline-flex !important;
   }
   .page-content {
     padding: 12px;
@@ -52,6 +89,10 @@ body.scoring-active .main-area {
   #themeToggleBtn {
     display: none !important;
   }
+}
+
+.hide-on-desktop {
+  display: none;
 }
 
 .drawer-status-row {

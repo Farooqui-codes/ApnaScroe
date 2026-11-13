@@ -180,12 +180,20 @@
     document.getElementById('batTeamTitle').textContent = computedState.battingTeamName;
     document.getElementById('bowlTeamSub').textContent = `vs ${computedState.bowlingTeamName} • ${matchDoc.venue}`;
     const scoreEl = document.getElementById('mainScoreDigits');
-    const newScoreStr = `${computedState.totalRuns}/${computedState.wickets}`;
+    const newScoreStr = `${computedState.totalRuns}-${computedState.wickets}`;
     if (scoreEl.textContent !== newScoreStr) {
       scoreEl.textContent = newScoreStr;
       if (window.ApnaAnimations?.pulseScore) ApnaAnimations.pulseScore('mainScoreDigits');
     }
     document.getElementById('mainOversDigits').textContent = `(${computedState.oversString} / ${rules.format.oversPerInnings} ov)`;
+
+    const scMatchTitleEl = document.getElementById('scMatchTitle');
+    if (scMatchTitleEl) scMatchTitleEl.textContent = `${matchDoc.teamA?.name || 'Team A'} vs ${matchDoc.teamB?.name || 'Team B'}`;
+
+    const inningsBadgeEl = document.getElementById('inningsBadge');
+    if (inningsBadgeEl) {
+      inningsBadgeEl.textContent = activeInnings.inningsNumber === 1 ? '1st Innings' : '2nd Innings';
+    }
 
     const statusBadge = document.getElementById('matchStatusBadge');
     statusBadge.textContent = matchDoc.status.toUpperCase();
@@ -193,45 +201,73 @@
 
     document.getElementById('freeHitBanner').classList.toggle('hidden', !computedState.isFreeHit);
     document.getElementById('crrText').textContent = `CRR: ${computedState.currentRunRate.toFixed(2)}`;
-    document.getElementById('extrasText').textContent = `Extras: ${computedState.extrasBreakdown.total}`;
 
+    // Extras
+    const extrasValEl = document.getElementById('extrasVal');
+    if (extrasValEl) extrasValEl.textContent = computedState.extrasBreakdown.total;
+    const extrasTextEl = document.getElementById('extrasText');
+    if (extrasTextEl) extrasTextEl.textContent = `Extras: ${computedState.extrasBreakdown.total}`;
+
+    // Target, RRR, and Highlight Alert Line
     const targetEl = document.getElementById('targetText');
     const reqEl = document.getElementById('reqText');
+    const highlightLine = document.getElementById('scHighlightLine');
+
     if (computedState.target) {
-      targetEl.classList.remove('hidden');
-      reqEl.classList.remove('hidden');
-      targetEl.textContent = `Target: ${computedState.target}`;
-      reqEl.textContent = `Need ${computedState.remainingRuns} off ${computedState.remainingBalls}b (RRR: ${(computedState.requiredRunRate || 0).toFixed(2)})`;
+      targetEl?.classList.remove('hidden');
+      reqEl?.classList.remove('hidden');
+      if (targetEl) targetEl.textContent = `Target: ${computedState.target}`;
+      if (reqEl) reqEl.textContent = `Need ${computedState.remainingRuns} off ${computedState.remainingBalls}b (RRR: ${(computedState.requiredRunRate || 0).toFixed(2)})`;
+      if (highlightLine) {
+        highlightLine.textContent = `${computedState.battingTeamName} need ${computedState.remainingRuns} run${computedState.remainingRuns === 1 ? '' : 's'} in ${computedState.remainingBalls} ball${computedState.remainingBalls === 1 ? '' : 's'}`;
+        highlightLine.style.background = 'rgba(217, 119, 6, 0.18)';
+        highlightLine.style.borderColor = '#D97706';
+        highlightLine.style.color = '#F59E0B';
+      }
     } else {
-      targetEl.classList.add('hidden');
-      reqEl.classList.add('hidden');
+      targetEl?.classList.add('hidden');
+      reqEl?.classList.add('hidden');
+      if (highlightLine) {
+        const crr = computedState.currentRunRate || 0;
+        const proj = crr > 0 ? Math.round(crr * rules.format.oversPerInnings) : computedState.totalRuns;
+        highlightLine.textContent = `Projected Score: ${proj} (at current CRR ${crr.toFixed(2)})`;
+        highlightLine.style.background = 'rgba(154, 222, 104, 0.18)';
+        highlightLine.style.borderColor = 'rgba(154, 222, 104, 0.35)';
+        highlightLine.style.color = 'var(--brand-lime)';
+      }
     }
 
     // Strikers & Non-Striker
     const sStat = computedState.strikerId ? computedState.battingStats[computedState.strikerId] : null;
     const nsStat = computedState.nonStrikerId ? computedState.battingStats[computedState.nonStrikerId] : null;
-    document.getElementById('strikerName').textContent = sStat ? `${sStat.name} *` : 'Select Striker *';
+    document.getElementById('strikerName').textContent = sStat ? sStat.name : 'Select Striker *';
     document.getElementById('strikerRuns').textContent = sStat ? sStat.runs : '0';
-    document.getElementById('strikerMeta').textContent = sStat ? `${sStat.balls}b • ${sStat.fours}x4 • ${sStat.sixes}x6 • SR ${sStat.strikeRate.toFixed(1)}` : 'Tap Edit to assign';
+    document.getElementById('strikerMeta').innerHTML = sStat ? `<strong id="strikerRuns">${sStat.runs}</strong> <span class="sc-stat-sub">(${sStat.balls}b • ${sStat.fours}x4 • ${sStat.sixes}x6 • SR ${sStat.strikeRate.toFixed(1)})</span>` : '<span class="sc-stat-sub">Tap to assign</span>';
 
     document.getElementById('nonStrikerName').textContent = nsStat ? nsStat.name : (rules.localRules.lastManBatting ? 'Last Man Batting' : 'Select Non-Striker');
     document.getElementById('nonStrikerRuns').textContent = nsStat ? nsStat.runs : '-';
-    document.getElementById('nonStrikerMeta').textContent = nsStat ? `${nsStat.balls}b • ${nsStat.fours}x4 • ${nsStat.sixes}x6 • SR ${nsStat.strikeRate.toFixed(1)}` : '-';
+    document.getElementById('nonStrikerMeta').innerHTML = nsStat ? `<strong id="nonStrikerRuns">${nsStat.runs}</strong> <span class="sc-stat-sub">(${nsStat.balls}b • ${nsStat.fours}x4 • ${nsStat.sixes}x6 • SR ${nsStat.strikeRate.toFixed(1)})</span>` : '<span class="sc-stat-sub">-</span>';
 
     const part = computedState.currentPartnership || { runs: 0, balls: 0 };
-    document.getElementById('partnershipText').textContent = `Partnership: ${part.runs} run(s) (${part.balls} balls)`;
+    const pValEl = document.getElementById('partnershipVal');
+    if (pValEl) pValEl.textContent = `${part.runs} (${part.balls})`;
+    const pTextEl = document.getElementById('partnershipText');
+    if (pTextEl) pTextEl.textContent = `Partnership: ${part.runs} run(s) (${part.balls} balls)`;
 
     // Bowler
     const bw = computedState.currentBowlerId ? computedState.bowlingStats[computedState.currentBowlerId] : null;
     document.getElementById('bowlerName').textContent = bw ? bw.name : 'Select Bowler';
     document.getElementById('bowlerFigures').textContent = bw ? `${bw.wickets}-${bw.runs}` : '0-0';
-    document.getElementById('bowlerMeta').textContent = bw ? `${bw.overs} ov • ${bw.maidens} M • Econ ${bw.economy.toFixed(2)}` : 'Select opening bowler';
-    document.getElementById('bowlerExtrasMeta').textContent = bw ? `Wides: ${bw.wides} • No-Balls: ${bw.noBalls}` : '';
+    document.getElementById('bowlerMeta').textContent = bw ? `(${bw.overs} ov • ${bw.maidens} M • Econ ${bw.economy.toFixed(2)})` : '(Select opening bowler)';
+    const bwExtrasEl = document.getElementById('bowlerExtrasMeta');
+    if (bwExtrasEl) bwExtrasEl.textContent = bw ? `Wides: ${bw.wides} • No-Balls: ${bw.noBalls}` : '';
 
-    // Recent balls timeline
+    // Recent balls timeline (This over)
     const strip = document.getElementById('recentBallsStrip');
     const recent = (computedState.recentBalls || []).slice(-18);
-    document.getElementById('ballCountLabel').textContent = `${computedState.legalBalls} legal balls`;
+    const ballCountLabelEl = document.getElementById('ballCountLabel');
+    if (ballCountLabelEl) ballCountLabelEl.textContent = `${computedState.legalBalls} legal balls`;
+
     if (!recent.length) {
       strip.innerHTML = `<span class="text-sm text-muted">No deliveries bowled yet.</span>`;
     } else {
@@ -241,6 +277,7 @@
         else if (b.isBoundarySix) cls += ' boundary-6';
         else if (b.isBoundaryFour) cls += ' boundary-4';
         else if (b.extraType !== 'none') cls += ' extra-ball';
+        else if (b.batRuns === 0) cls += ' dot-ball';
         return `<button type="button" class="${cls}" data-evid="${b.eventId}" title="Over ${b.overLabel}">${ApnaUI.escapeHtml(b.badge)}</button>`;
       }).join('');
       strip.scrollLeft = strip.scrollWidth;
@@ -288,9 +325,8 @@
     renderRulesSummary();
   }
 
-  function renderMiniScorecard() {
-    const el = document.getElementById('scPanel-scorecard');
-    if (!computedState) return;
+  function renderFullScorecardHTML() {
+    if (!computedState) return '<p class="text-muted">No scorecard data available yet.</p>';
     const batRows = (computedState.battingOrder || []).map((pid) => {
       const b = computedState.battingStats[pid];
       return `<tr><td><strong>${ApnaUI.escapeHtml(b.name)}</strong><br><span class="text-sm text-muted">${ApnaUI.escapeHtml(b.dismissalText)}</span></td><td class="num"><strong>${b.runs}</strong></td><td class="num">${b.balls}</td><td class="num">${b.fours}</td><td class="num">${b.sixes}</td><td class="num">${b.strikeRate.toFixed(1)}</td></tr>`;
@@ -300,14 +336,26 @@
       return `<tr><td><strong>${ApnaUI.escapeHtml(bw.name)}</strong></td><td class="num">${bw.overs}</td><td class="num">${bw.maidens}</td><td class="num">${bw.runs}</td><td class="num"><strong>${bw.wickets}</strong></td><td class="num">${bw.economy.toFixed(2)}</td></tr>`;
     }).join('');
 
-    el.innerHTML = `
-      <div class="table-wrap mb-2">
-        <table class="data-table"><thead><tr><th>Batsman</th><th class="num">R</th><th class="num">B</th><th class="num">4s</th><th class="num">6s</th><th class="num">SR</th></tr></thead><tbody>${batRows || '<tr><td colspan="6">No batting data</td></tr>'}</tbody></table>
+    return `
+      <div style="margin-bottom:12px;">
+        <h4 style="margin:0 0 8px;font-size:0.95rem;">Batting (${computedState.battingTeamName})</h4>
+        <div class="table-wrap">
+          <table class="data-table"><thead><tr><th>Batsman</th><th class="num">R</th><th class="num">B</th><th class="num">4s</th><th class="num">6s</th><th class="num">SR</th></tr></thead><tbody>${batRows || '<tr><td colspan="6">No batting data</td></tr>'}</tbody></table>
+        </div>
       </div>
-      <div class="table-wrap">
-        <table class="data-table"><thead><tr><th>Bowler</th><th class="num">O</th><th class="num">M</th><th class="num">R</th><th class="num">W</th><th class="num">Econ</th></tr></thead><tbody>${bowlRows || '<tr><td colspan="6">No bowling data</td></tr>'}</tbody></table>
+      <div>
+        <h4 style="margin:0 0 8px;font-size:0.95rem;">Bowling (${computedState.bowlingTeamName})</h4>
+        <div class="table-wrap">
+          <table class="data-table"><thead><tr><th>Bowler</th><th class="num">O</th><th class="num">M</th><th class="num">R</th><th class="num">W</th><th class="num">Econ</th></tr></thead><tbody>${bowlRows || '<tr><td colspan="6">No bowling data</td></tr>'}</tbody></table>
+        </div>
       </div>
     `;
+  }
+
+  function renderMiniScorecard() {
+    const el = document.getElementById('scPanel-scorecard');
+    if (!el || !computedState) return;
+    el.innerHTML = renderFullScorecardHTML();
   }
 
   function renderRulesSummary() {
@@ -401,6 +449,235 @@
     return { batSquad: batTeam.squad || [], bowlSquad: bowlTeam.squad || [] };
   }
 
+  // ==========================================================================
+  // §17 Smart Player Autocomplete & History
+  // ==========================================================================
+  let wakeLockSentinel = null;
+  async function requestWakeLock() {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockSentinel = await navigator.wakeLock.request('screen');
+        wakeLockSentinel.addEventListener('release', () => {
+          wakeLockSentinel = null;
+        });
+      } catch (_) {}
+    }
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !wakeLockSentinel && !document.getElementById('activeScoringView').classList.contains('hidden')) {
+      requestWakeLock();
+    }
+  });
+
+  const SmartPlayerAutocomplete = {
+    async getPlayerHistory() {
+      const historyMap = new Map();
+      try {
+        const stored = JSON.parse(localStorage.getItem('apnascore_player_history') || '[]');
+        stored.forEach((p) => {
+          if (p && p.name) historyMap.set(p.name.toLowerCase(), p);
+        });
+      } catch (_) {}
+
+      if (window.ApnaOffline) {
+        try {
+          const localMatches = await ApnaOffline.getAllLocalMatches();
+          localMatches.forEach((lm) => {
+            const m = lm.match || {};
+            [...(m.teamA?.squad || []), ...(m.teamB?.squad || [])].forEach((p) => {
+              if (p && p.name) {
+                historyMap.set(p.name.toLowerCase(), { playerId: p.playerId || `p_${Date.now()}`, name: p.name });
+              }
+            });
+          });
+        } catch (_) {}
+      }
+      return Array.from(historyMap.values());
+    },
+
+    savePlayerToHistory(player) {
+      if (!player || !player.name) return;
+      try {
+        const stored = JSON.parse(localStorage.getItem('apnascore_player_history') || '[]');
+        const exists = stored.some((p) => p.name.toLowerCase() === player.name.toLowerCase());
+        if (!exists) {
+          stored.unshift({ playerId: player.playerId || player.id, name: player.name });
+          localStorage.setItem('apnascore_player_history', JSON.stringify(stored.slice(0, 100)));
+        }
+      } catch (_) {}
+    },
+
+    attach(inputEl, { getEligibleSquad, role = 'batsman', getCreaseIds = () => [], onSelect }) {
+      if (!inputEl) return;
+
+      let wrap = inputEl.parentElement;
+      if (!wrap.classList.contains('autocomplete-wrap')) {
+        const container = document.createElement('div');
+        container.className = 'autocomplete-wrap';
+        container.style.position = 'relative';
+        wrap.replaceChild(container, inputEl);
+        container.appendChild(inputEl);
+        wrap = container;
+      }
+
+      let dropdown = wrap.querySelector('.autocomplete-dropdown');
+      if (!dropdown) {
+        dropdown = document.createElement('div');
+        dropdown.className = 'autocomplete-dropdown hidden';
+        wrap.appendChild(dropdown);
+      }
+
+      const positionDropdown = () => {
+        dropdown.style.position = 'absolute';
+        dropdown.style.left = '0';
+        dropdown.style.right = '0';
+        dropdown.style.zIndex = '150';
+        dropdown.style.background = 'var(--bg-surface)';
+        dropdown.style.border = '1px solid var(--border-color)';
+        dropdown.style.borderRadius = 'var(--radius-md)';
+        dropdown.style.boxShadow = 'var(--shadow-lg)';
+        dropdown.style.maxHeight = '210px';
+        dropdown.style.overflowY = 'auto';
+
+        if (window.visualViewport) {
+          const rect = inputEl.getBoundingClientRect();
+          const vpHeight = window.visualViewport.height;
+          if (rect.bottom + 180 > vpHeight) {
+            dropdown.style.bottom = '100%';
+            dropdown.style.top = 'auto';
+            dropdown.style.marginBottom = '6px';
+            dropdown.style.marginTop = '0';
+          } else {
+            dropdown.style.top = '100%';
+            dropdown.style.bottom = 'auto';
+            dropdown.style.marginTop = '6px';
+            dropdown.style.marginBottom = '0';
+          }
+        } else {
+          dropdown.style.top = '100%';
+          dropdown.style.marginTop = '6px';
+        }
+      };
+
+      const renderSuggestions = async () => {
+        const val = inputEl.value.trim();
+        const eligibleSquad = (getEligibleSquad ? getEligibleSquad() : []) || [];
+        const creaseIds = (getCreaseIds ? getCreaseIds() : []) || [];
+
+        // 1. EMPTY INPUT: Render instant horizontal chips of squad players
+        if (!val) {
+          if (!eligibleSquad.length) {
+            dropdown.innerHTML = `<div class="ac-hint text-xs text-muted" style="padding:8px 10px;">Type a player name or choose below</div>`;
+            dropdown.classList.remove('hidden');
+            positionDropdown();
+            return;
+          }
+          dropdown.innerHTML = `
+            <div class="ac-chips-header text-xs text-muted" style="padding:6px 10px;font-weight:700;">Squad Players (Tap to select):</div>
+            <div class="ac-chips-row" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 10px 10px;">
+              ${eligibleSquad.map((p) => `
+                <button type="button" class="ac-chip-btn" data-pid="${p.playerId}" data-pname="${ApnaUI.escapeHtml(p.name)}" style="padding:6px 11px;border-radius:var(--radius-pill);border:1px solid var(--border-color);background:var(--bg-surface-alt);color:var(--text-primary);font-size:0.82rem;font-weight:700;cursor:pointer;">
+                  ${ApnaUI.escapeHtml(p.name)}
+                </button>
+              `).join('')}
+            </div>
+          `;
+          dropdown.querySelectorAll('.ac-chip-btn').forEach((chip) => {
+            chip.onclick = (e) => {
+              e.preventDefault();
+              inputEl.value = chip.dataset.pname;
+              inputEl.dataset.pid = chip.dataset.pid;
+              dropdown.classList.add('hidden');
+              onSelect?.({ id: chip.dataset.pid, name: chip.dataset.pname });
+            };
+          });
+          dropdown.classList.remove('hidden');
+          positionDropdown();
+          return;
+        }
+
+        // 2. TYPING: Fuzzy search + highlighted <mark> letters + top 5 results
+        const historyPlayers = await SmartPlayerAutocomplete.getPlayerHistory();
+        const allCandidatesMap = new Map();
+        eligibleSquad.forEach((p) => allCandidatesMap.set(p.name.toLowerCase(), { ...p, source: 'squad' }));
+        historyPlayers.forEach((p) => {
+          if (!allCandidatesMap.has(p.name.toLowerCase())) {
+            allCandidatesMap.set(p.name.toLowerCase(), { ...p, source: 'history' });
+          }
+        });
+
+        const q = val.toLowerCase();
+        const matches = Array.from(allCandidatesMap.values()).filter((p) => p.name.toLowerCase().includes(q)).slice(0, 5);
+
+        let html = '';
+        if (matches.length) {
+          html += matches.map((p) => {
+            const isAtCrease = creaseIds.includes(String(p.playerId || p.id));
+            const badge = isAtCrease
+              ? `<span class="badge badge-warning" style="font-size:0.65rem;">At Crease</span>`
+              : (p.source === 'squad'
+                ? `<span class="badge badge-neutral" style="font-size:0.65rem;">Squad</span>`
+                : `<span class="badge badge-neutral" style="font-size:0.65rem;">History</span>`);
+
+            const idx = p.name.toLowerCase().indexOf(q);
+            const highlighted = idx >= 0
+              ? `${ApnaUI.escapeHtml(p.name.slice(0, idx))}<mark class="ac-mark" style="background:#FFE082;border-radius:2px;font-weight:900;">${ApnaUI.escapeHtml(p.name.slice(idx, idx + q.length))}</mark>${ApnaUI.escapeHtml(p.name.slice(idx + q.length))}`
+              : ApnaUI.escapeHtml(p.name);
+
+            return `
+              <div class="ac-item" data-pid="${p.playerId || p.id}" data-pname="${ApnaUI.escapeHtml(p.name)}" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border-color);">
+                <div style="font-weight:700;color:var(--text-primary);">${highlighted}</div>
+                <div>${badge}</div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        const exactMatch = matches.some((m) => m.name.toLowerCase() === q);
+        if (!exactMatch) {
+          html += `
+            <div class="ac-item ac-item-add" data-add="1" style="padding:10px 12px;cursor:pointer;color:var(--brand-primary);font-weight:800;background:var(--bg-surface-alt);">
+              + Add "${ApnaUI.escapeHtml(val)}" as new player
+            </div>
+          `;
+        }
+
+        dropdown.innerHTML = html;
+        dropdown.querySelectorAll('.ac-item').forEach((item) => {
+          item.onclick = (e) => {
+            e.preventDefault();
+            if (item.dataset.add) {
+              const newId = `qp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+              inputEl.value = val;
+              inputEl.dataset.pid = newId;
+              dropdown.classList.add('hidden');
+              SmartPlayerAutocomplete.savePlayerToHistory({ id: newId, name: val });
+              onSelect?.({ id: newId, name: val, isNew: true });
+            } else {
+              inputEl.value = item.dataset.pname;
+              inputEl.dataset.pid = item.dataset.pid;
+              dropdown.classList.add('hidden');
+              SmartPlayerAutocomplete.savePlayerToHistory({ id: item.dataset.pid, name: item.dataset.pname });
+              onSelect?.({ id: item.dataset.pid, name: item.dataset.pname });
+            }
+          };
+        });
+
+        dropdown.classList.remove('hidden');
+        positionDropdown();
+      };
+
+      inputEl.addEventListener('focus', renderSuggestions);
+      inputEl.addEventListener('input', renderSuggestions);
+      document.addEventListener('click', (e) => {
+        if (!wrap.contains(e.target)) dropdown.classList.add('hidden');
+      });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', positionDropdown);
+      }
+    }
+  };
+
   function openPlayersModal(mode) {
     const { batSquad, bowlSquad } = getSquads();
     const modal = document.getElementById('playersSelectModal');
@@ -412,10 +689,12 @@
     const bowlOpts = bowlSquad.map((p) => `<option value="${p.playerId}">${ApnaUI.escapeHtml(p.name)}</option>`).join('');
 
     const resolveNameOrSelect = (selId, txtId, fallbackLabel, side) => {
-      const customName = document.getElementById(txtId)?.value.trim();
+      const txtEl = document.getElementById(txtId);
+      const customName = txtEl?.value.trim();
       if (customName) {
-        const newId = `qp_${side}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-        return { id: newId, name: customName };
+        const customId = txtEl.dataset.pid || `qp_${side}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+        SmartPlayerAutocomplete.savePlayerToHistory({ id: customId, name: customName });
+        return { id: customId, name: customName };
       }
       const sel = document.getElementById(selId);
       if (sel && sel.value) {
@@ -431,22 +710,38 @@
         <div class="form-group">
           <label class="form-label">Striker</label>
           ${batSquad.length ? `<select class="form-control mb-1" id="selStriker">${batOpts}</select>` : ''}
-          <input class="form-control" id="txtStriker" placeholder="${batSquad.length ? 'Or type new striker name...' : 'Enter striker name (e.g. Raju)'}" />
+          <input class="form-control" id="txtStriker" placeholder="${batSquad.length ? 'Or type/pick striker name...' : 'Enter striker name (e.g. Raju)'}" autocomplete="off" />
         </div>
         <div class="form-group">
           <label class="form-label">Non-Striker</label>
           ${batSquad.length > 1 ? `<select class="form-control mb-1" id="selNonStriker">${batOpts}</select>` : ''}
-          <input class="form-control" id="txtNonStriker" placeholder="${batSquad.length > 1 ? 'Or type new non-striker name...' : 'Enter non-striker name (e.g. Vikram)'}" />
+          <input class="form-control" id="txtNonStriker" placeholder="${batSquad.length > 1 ? 'Or type/pick non-striker name...' : 'Enter non-striker name (e.g. Vikram)'}" autocomplete="off" />
         </div>
         <div class="form-group">
           <label class="form-label">Opening Bowler</label>
           ${bowlSquad.length ? `<select class="form-control mb-1" id="selBowler">${bowlOpts}</select>` : ''}
-          <input class="form-control" id="txtBowler" placeholder="${bowlSquad.length ? 'Or type new bowler name...' : 'Enter bowler name (e.g. Suresh)'}" />
+          <input class="form-control" id="txtBowler" placeholder="${bowlSquad.length ? 'Or type/pick bowler name...' : 'Enter bowler name (e.g. Suresh)'}" autocomplete="off" />
         </div>
       `;
       if (batSquad.length > 1 && document.getElementById('selNonStriker')) {
         document.getElementById('selNonStriker').selectedIndex = 1;
       }
+
+      // Attach smart autocompletes
+      SmartPlayerAutocomplete.attach(document.getElementById('txtStriker'), {
+        getEligibleSquad: () => batSquad,
+        role: 'batsman'
+      });
+      SmartPlayerAutocomplete.attach(document.getElementById('txtNonStriker'), {
+        getEligibleSquad: () => batSquad,
+        role: 'batsman',
+        getCreaseIds: () => [document.getElementById('txtStriker')?.dataset?.pid]
+      });
+      SmartPlayerAutocomplete.attach(document.getElementById('txtBowler'), {
+        getEligibleSquad: () => bowlSquad,
+        role: 'bowler'
+      });
+
       saveBtn.onclick = async () => {
         const s = resolveNameOrSelect('selStriker', 'txtStriker', 'Batsman 1', 'bat');
         const ns = resolveNameOrSelect('selNonStriker', 'txtNonStriker', 'Batsman 2', 'bat');
@@ -480,8 +775,15 @@
         <div class="form-group">
           <label class="form-label">Next Batsman</label>
           ${available.length ? `<select class="form-control mb-1" id="selNewBat">${available.map((p) => `<option value="${p.playerId}">${ApnaUI.escapeHtml(p.name)}</option>`).join('')}</select>` : ''}
-          <input class="form-control" id="txtNewBat" placeholder="${available.length ? 'Or type incoming batsman name...' : 'Enter batsman name'}" />
+          <input class="form-control" id="txtNewBat" placeholder="${available.length ? 'Or type/pick incoming batsman...' : 'Enter batsman name'}" autocomplete="off" />
         </div>`;
+
+      SmartPlayerAutocomplete.attach(document.getElementById('txtNewBat'), {
+        getEligibleSquad: () => available,
+        role: 'batsman',
+        getCreaseIds: () => [computedState.strikerId, computedState.nonStrikerId]
+      });
+
       saveBtn.onclick = async () => {
         const nb = resolveNameOrSelect('selNewBat', 'txtNewBat', `Batsman ${(computedState.wickets || 0) + 3}`, 'bat');
         closeModal('playersSelectModal');
@@ -510,8 +812,14 @@
         <div class="form-group">
           <label class="form-label">Bowler</label>
           ${filtered.length ? `<select class="form-control mb-1" id="selNextBowl">${filtered.map((p) => `<option value="${p.playerId}">${ApnaUI.escapeHtml(p.name)}</option>`).join('')}</select>` : ''}
-          <input class="form-control" id="txtNextBowl" placeholder="${filtered.length ? 'Or type new bowler name...' : 'Enter bowler name'}" />
+          <input class="form-control" id="txtNextBowl" placeholder="${filtered.length ? 'Or type/pick bowler name...' : 'Enter bowler name'}" autocomplete="off" />
         </div>`;
+
+      SmartPlayerAutocomplete.attach(document.getElementById('txtNextBowl'), {
+        getEligibleSquad: () => filtered,
+        role: 'bowler'
+      });
+
       saveBtn.onclick = async () => {
         const bw = resolveNameOrSelect('selNextBowl', 'txtNextBowl', `Bowler ${(computedState.completedOvers || 0) + 2}`, 'bowl');
         closeModal('playersSelectModal');
@@ -527,8 +835,14 @@
         <div class="form-group">
           <label class="form-label">Striker</label>
           ${batSquad.length ? `<select class="form-control mb-1" id="selChangeStriker">${batOpts}</select>` : ''}
-          <input class="form-control" id="txtChangeStriker" placeholder="Or type striker name..." />
+          <input class="form-control" id="txtChangeStriker" placeholder="Or type striker name..." autocomplete="off" />
         </div>`;
+
+      SmartPlayerAutocomplete.attach(document.getElementById('txtChangeStriker'), {
+        getEligibleSquad: () => batSquad,
+        role: 'batsman'
+      });
+
       saveBtn.onclick = async () => {
         const st = resolveNameOrSelect('selChangeStriker', 'txtChangeStriker', 'Striker', 'bat');
         closeModal('playersSelectModal');
@@ -544,15 +858,60 @@
   }
 
   function bindScoringUI() {
+    let activeToggleExtra = null;
+
+    // Toggle Chips Logic (§16)
+    document.querySelectorAll('.sc-toggle-chip[data-toggle]').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const toggle = chip.dataset.toggle;
+        if (toggle === 'wicket') {
+          openWicketModal();
+          return;
+        }
+        if (activeToggleExtra === toggle) {
+          activeToggleExtra = null;
+          chip.classList.remove('active');
+        } else {
+          activeToggleExtra = toggle;
+          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
+          chip.classList.add('active');
+          try { navigator.vibrate?.(10); } catch (_) {}
+        }
+      });
+    });
+
     // Runs buttons (0..6)
     document.querySelectorAll('.score-btn[data-run]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const run = Number(btn.dataset.run);
-        dispatchEvent({ extraType: 'none', batRuns: run });
+        try {
+          if (run === 4 || run === 6) navigator.vibrate?.([20, 50, 20]);
+          else navigator.vibrate?.(12);
+        } catch (_) {}
+
+        if (activeToggleExtra === 'wide') {
+          activeToggleExtra = null;
+          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
+          dispatchEvent({ extraType: 'wide', additionalExtraRuns: run, batRuns: 0 });
+        } else if (activeToggleExtra === 'no_ball') {
+          activeToggleExtra = null;
+          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
+          dispatchEvent({ extraType: 'no_ball', additionalExtraRuns: 0, batRuns: run });
+        } else if (activeToggleExtra === 'bye') {
+          activeToggleExtra = null;
+          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
+          dispatchEvent({ extraType: 'bye', additionalExtraRuns: run || 1, batRuns: 0 });
+        } else if (activeToggleExtra === 'leg_bye') {
+          activeToggleExtra = null;
+          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
+          dispatchEvent({ extraType: 'leg_bye', additionalExtraRuns: run || 1, batRuns: 0 });
+        } else {
+          dispatchEvent({ extraType: 'none', batRuns: run });
+        }
       });
     });
 
-    // Extras buttons
+    // Extras modal fallback
     document.querySelectorAll('.extra-btn[data-extra]').forEach((btn) => {
       btn.addEventListener('click', () => openExtraModal(btn.dataset.extra));
     });
@@ -560,13 +919,23 @@
     document.getElementById('moreScoringActionsBtn')?.addEventListener('click', () => {
       document.getElementById('matchControlModal').classList.add('open');
     });
-    document.getElementById('wicketBtn').addEventListener('click', openWicketModal);
-    document.getElementById('undoBallBtn').addEventListener('click', undoLastBall);
-    document.getElementById('swapBatsmenBtn').addEventListener('click', () => dispatchEvent({ eventType: 'swap_batsmen' }));
-    document.getElementById('selectOpenersBtn').addEventListener('click', () => openPlayersModal('openers'));
-    document.getElementById('changeBowlerBtn').addEventListener('click', () => openPlayersModal('change_bowler'));
+    document.getElementById('wicketBtn')?.addEventListener('click', openWicketModal);
+    document.getElementById('undoBallBtn')?.addEventListener('click', undoLastBall);
+    document.getElementById('swapBatsmenBtn')?.addEventListener('click', () => {
+      try { navigator.vibrate?.(12); } catch (_) {}
+      dispatchEvent({ eventType: 'swap_batsmen' });
+    });
+    document.getElementById('quickRetireBtn')?.addEventListener('click', openRetireModal);
+    document.getElementById('selectOpenersBtn')?.addEventListener('click', () => openPlayersModal('openers'));
+    document.getElementById('changeBowlerBtn')?.addEventListener('click', () => openPlayersModal('change_bowler'));
 
-    document.getElementById('outdoorModeBtn').addEventListener('click', (e) => {
+    // Crease tap shortcuts to edit batsmen/bowler
+    document.getElementById('strikerRow')?.addEventListener('click', () => openPlayersModal('change_striker'));
+    document.getElementById('nonStrikerRow')?.addEventListener('click', () => openPlayersModal('openers'));
+    document.getElementById('bowlerStrip')?.addEventListener('click', () => openPlayersModal('change_bowler'));
+
+    // Outdoor Mode Toggle
+    document.getElementById('outdoorModeBtn')?.addEventListener('click', (e) => {
       document.body.classList.toggle('outdoor-mode');
       const isOn = document.body.classList.contains('outdoor-mode');
       localStorage.setItem('apnascore_outdoor_mode', isOn ? '1' : '0');
@@ -575,18 +944,22 @@
       e.currentTarget.classList.toggle('btn-secondary', !isOn);
     });
 
+    // Summary & Scorecard Modal Opener
+    document.getElementById('openSummaryGraphBtn')?.addEventListener('click', openMatchSummaryModal);
+    document.getElementById('openScorecardMiniBtn')?.addEventListener('click', openFullScorecardModal);
+
     // Commentary & Scorecard tabs
     document.querySelectorAll('[data-scview]').forEach((tab) => {
       tab.addEventListener('click', () => {
         document.querySelectorAll('[data-scview]').forEach((t) => t.classList.remove('active'));
         tab.classList.add('active');
         ['commentary', 'scorecard', 'rules'].forEach((k) => {
-          document.getElementById(`scPanel-${k}`).classList.toggle('hidden', k !== tab.dataset.scview);
+          document.getElementById(`scPanel-${k}`)?.classList.toggle('hidden', k !== tab.dataset.scview);
         });
       });
     });
 
-    document.getElementById('addCommNoteBtn').addEventListener('click', () => {
+    document.getElementById('addCommNoteBtn')?.addEventListener('click', () => {
       const inp = document.getElementById('manualCommentaryInput');
       if (!inp.value.trim() || !computedState) return;
       computedState.commentary.unshift({
@@ -599,13 +972,13 @@
     });
 
     // Recent balls tap to edit
-    document.getElementById('recentBallsStrip').addEventListener('click', (e) => {
+    document.getElementById('recentBallsStrip')?.addEventListener('click', (e) => {
       const chip = e.target.closest('.ball-chip[data-evid]');
       if (chip) openEditBallModal(chip.dataset.evid);
     });
 
     // Match controls modal
-    document.getElementById('matchControlsBtn').addEventListener('click', () => {
+    document.getElementById('matchControlsBtn')?.addEventListener('click', () => {
       document.getElementById('matchControlModal').classList.add('open');
     });
     document.querySelectorAll('#matchControlButtonsGrid [data-mc]').forEach((btn) => {
@@ -613,7 +986,57 @@
     });
 
     // Share modal
-    document.getElementById('shareMatchBtn').addEventListener('click', openShareModal);
+    document.getElementById('shareMatchBtn')?.addEventListener('click', openShareModal);
+
+    // Acquire Wake Lock to keep screen on while scoring
+    requestWakeLock();
+  }
+
+  function openMatchSummaryModal() {
+    const modal = document.getElementById('matchSummaryModal');
+    const content = document.getElementById('summaryModalContent');
+    if (!modal || !content || !computedState) return;
+
+    const crr = (computedState.currentRunRate || 0).toFixed(2);
+    const rules = matchDoc.rulesSnapshot;
+    const oversTotal = rules?.format?.oversPerInnings || 6;
+    const proj = crr > 0 ? Math.round(crr * oversTotal) : computedState.totalRuns;
+
+    content.innerHTML = `
+      <div style="background:var(--brand-primary-deep);color:#fff;border-radius:var(--radius-md);padding:14px;margin-bottom:14px;">
+        <div style="font-size:0.85rem;color:var(--brand-lime);font-weight:700;">MATCH SUMMARY</div>
+        <div style="font-size:1.4rem;font-weight:900;margin:4px 0;">${computedState.totalRuns}/${computedState.wickets} <span style="font-size:1rem;font-weight:700;color:var(--brand-lime);">(${computedState.oversString} ov)</span></div>
+        <div style="display:flex;gap:14px;font-size:0.85rem;flex-wrap:wrap;margin-top:6px;">
+          <span>CRR: <strong>${crr}</strong></span>
+          ${computedState.target ? `<span>Target: <strong>${computedState.target}</strong></span><span>RRR: <strong>${(computedState.requiredRunRate || 0).toFixed(2)}</strong></span>` : `<span>Projected: <strong>${proj}</strong></span>`}
+          <span>Extras: <strong>${computedState.extrasBreakdown.total}</strong></span>
+        </div>
+      </div>
+      <div class="card mb-2" style="padding:12px;">
+        <strong class="text-sm">Extras Breakdown</strong>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;text-align:center;">
+          <div style="background:var(--bg-surface-alt);padding:8px;border-radius:var(--radius-sm);"><div class="text-xs text-muted">Wides</div><strong>${computedState.extrasBreakdown.wides}</strong></div>
+          <div style="background:var(--bg-surface-alt);padding:8px;border-radius:var(--radius-sm);"><div class="text-xs text-muted">No-Balls</div><strong>${computedState.extrasBreakdown.noBalls}</strong></div>
+          <div style="background:var(--bg-surface-alt);padding:8px;border-radius:var(--radius-sm);"><div class="text-xs text-muted">Byes</div><strong>${computedState.extrasBreakdown.byes}</strong></div>
+          <div style="background:var(--bg-surface-alt);padding:8px;border-radius:var(--radius-sm);"><div class="text-xs text-muted">Leg Byes</div><strong>${computedState.extrasBreakdown.legByes}</strong></div>
+        </div>
+      </div>
+      <div class="card" style="padding:12px;">
+        <strong class="text-sm">Current Partnership</strong>
+        <div style="margin-top:6px;font-size:1rem;color:var(--text-primary);font-weight:800;">
+          ${computedState.currentPartnership?.runs || 0} runs <span class="text-muted text-sm">(${computedState.currentPartnership?.balls || 0} balls)</span>
+        </div>
+      </div>
+    `;
+    modal.classList.add('open');
+  }
+
+  function openFullScorecardModal() {
+    const modal = document.getElementById('fullScorecardModal');
+    const content = document.getElementById('fullScorecardModalContent');
+    if (!modal || !content) return;
+    content.innerHTML = renderFullScorecardHTML();
+    modal.classList.add('open');
   }
 
   function openExtraModal(extraType) {
@@ -1033,5 +1456,15 @@
     document.getElementById(id)?.classList.remove('open');
   }
 
-  root.ScoringUI = { closeModal };
+  root.ScoringUI = {
+    closeModal,
+    openPlayersModal,
+    openWicketModal,
+    openRetireModal,
+    openMatchSummaryModal,
+    openFullScorecardModal,
+    dispatchEvent,
+    undoLastBall,
+    SmartPlayerAutocomplete
+  };
 }(window));

@@ -56,12 +56,40 @@
       }
     }
 
+    const activeLiveMatch = merged.find((m) => ['live', 'paused', 'innings_break'].includes(m.status));
+    const heroCard = document.getElementById('activeMatchHeroCard');
+    if (activeLiveMatch && heroCard) {
+      const inn1 = (activeLiveMatch.inningsSummary || [])[0];
+      const inn2 = (activeLiveMatch.inningsSummary || [])[1];
+      const activeInn = inn2 || inn1;
+      const teamAName = activeLiveMatch.teamA?.name || 'Team A';
+      const teamBName = activeLiveMatch.teamB?.name || 'Team B';
+      const scoreStr = activeInn ? `${activeInn.totalRuns}/${activeInn.wickets}` : '0/0';
+      const ovStr = activeInn ? `(${activeInn.oversString} / ${activeLiveMatch.oversPerInnings} ov)` : `(0.0 / ${activeLiveMatch.oversPerInnings} ov)`;
+
+      const teamsEl = document.getElementById('activeMatchTeams');
+      const scoreEl = document.getElementById('activeMatchScore');
+      const metaEl = document.getElementById('activeMatchMeta');
+      const ctaBtn = document.getElementById('activeMatchCtaBtn');
+      const scBtn = document.getElementById('activeMatchScorecardBtn');
+
+      if (teamsEl) teamsEl.textContent = `${teamAName} vs ${teamBName}`;
+      if (scoreEl) scoreEl.textContent = scoreStr;
+      if (metaEl) metaEl.textContent = `${(activeInn && activeInn.battingTeamName) || teamAName} batting • ${ovStr}`;
+      if (ctaBtn) ctaBtn.href = `/live-score.html?matchId=${activeLiveMatch._id}`;
+      if (scBtn) scBtn.href = `/scorecard.html?matchId=${activeLiveMatch._id}`;
+
+      heroCard.classList.remove('hidden');
+    } else if (heroCard) {
+      heroCard.classList.add('hidden');
+    }
+
     if (!merged.length) {
       el.innerHTML = `
         <div class="empty-state" style="grid-column:1/-1;">
-          <p style="margin:0 0 8px;font-weight:700;color:var(--text-primary);">No matches yet.</p>
-          <p class="text-sm text-muted" style="margin:0 0 14px;">Start your first cricket match.</p>
-          <a href="/match-create.html" class="btn btn-primary btn-sm">Start Match</a>
+          <p style="margin:0 0 8px;font-weight:700;color:var(--text-primary);">Abhi tak koi match nahi, pehla match shuru karo</p>
+          <p class="text-sm text-muted" style="margin:0 0 14px;">No matches yet. Start your first cricket match in seconds.</p>
+          <a href="/match-create.html" class="btn btn-primary btn-sm btn-ripple">Start Match</a>
         </div>
       `;
       return;
