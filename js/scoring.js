@@ -178,29 +178,44 @@
     const rules = matchDoc.rulesSnapshot;
 
     document.getElementById('batTeamTitle').textContent = computedState.battingTeamName;
-    document.getElementById('bowlTeamSub').textContent = `vs ${computedState.bowlingTeamName} • ${matchDoc.venue}`;
+    const bowlSubEl = document.getElementById('bowlTeamSub');
+    if (bowlSubEl) bowlSubEl.textContent = `vs ${computedState.bowlingTeamName} • ${matchDoc.venue}`;
     const scoreEl = document.getElementById('mainScoreDigits');
     const newScoreStr = `${computedState.totalRuns}-${computedState.wickets}`;
     if (scoreEl.textContent !== newScoreStr) {
       scoreEl.textContent = newScoreStr;
       if (window.ApnaAnimations?.pulseScore) ApnaAnimations.pulseScore('mainScoreDigits');
     }
-    document.getElementById('mainOversDigits').textContent = `(${computedState.oversString} / ${rules.format.oversPerInnings} ov)`;
+    const oversDigitsEl = document.getElementById('mainOversDigits');
+    if (oversDigitsEl) oversDigitsEl.textContent = `(${computedState.oversString})`;
 
     const scMatchTitleEl = document.getElementById('scMatchTitle');
-    if (scMatchTitleEl) scMatchTitleEl.textContent = `${matchDoc.teamA?.name || 'Team A'} vs ${matchDoc.teamB?.name || 'Team B'}`;
+    if (scMatchTitleEl) scMatchTitleEl.textContent = `${matchDoc.teamA?.name || 'Team A'} v/s ${matchDoc.teamB?.name || 'Team B'}`;
 
     const inningsBadgeEl = document.getElementById('inningsBadge');
     if (inningsBadgeEl) {
-      inningsBadgeEl.textContent = activeInnings.inningsNumber === 1 ? '1st Innings' : '2nd Innings';
+      inningsBadgeEl.textContent = activeInnings.inningsNumber === 1 ? '1st inning' : '2nd inning';
     }
 
     const statusBadge = document.getElementById('matchStatusBadge');
-    statusBadge.textContent = matchDoc.status.toUpperCase();
-    statusBadge.className = `badge ${matchDoc.status === 'live' ? 'badge-live' : 'badge-success'}`;
+    if (statusBadge) {
+      statusBadge.textContent = matchDoc.status.toUpperCase();
+      statusBadge.className = `badge ${matchDoc.status === 'live' ? 'badge-live' : 'badge-success'}`;
+    }
 
-    document.getElementById('freeHitBanner').classList.toggle('hidden', !computedState.isFreeHit);
-    document.getElementById('crrText').textContent = `CRR: ${computedState.currentRunRate.toFixed(2)}`;
+    document.getElementById('freeHitBanner')?.classList.toggle('hidden', !computedState.isFreeHit);
+    
+    // CRR, Target, RR values matching photo
+    const crrTextEl = document.getElementById('crrText');
+    if (crrTextEl) crrTextEl.textContent = `CRR: ${computedState.currentRunRate.toFixed(2)}`;
+    const crrValEl = document.getElementById('crrVal');
+    if (crrValEl) crrValEl.textContent = computedState.currentRunRate.toFixed(2);
+
+    const targetValEl = document.getElementById('targetVal');
+    if (targetValEl) targetValEl.textContent = computedState.target ? computedState.target : '-';
+
+    const rrValEl = document.getElementById('rrVal');
+    if (rrValEl) rrValEl.textContent = computedState.requiredRunRate ? computedState.requiredRunRate.toFixed(2) : '-';
 
     // Extras
     const extrasValEl = document.getElementById('extrasVal');
@@ -220,9 +235,6 @@
       if (reqEl) reqEl.textContent = `Need ${computedState.remainingRuns} off ${computedState.remainingBalls}b (RRR: ${(computedState.requiredRunRate || 0).toFixed(2)})`;
       if (highlightLine) {
         highlightLine.textContent = `${computedState.battingTeamName} need ${computedState.remainingRuns} run${computedState.remainingRuns === 1 ? '' : 's'} in ${computedState.remainingBalls} ball${computedState.remainingBalls === 1 ? '' : 's'}`;
-        highlightLine.style.background = 'rgba(217, 119, 6, 0.18)';
-        highlightLine.style.borderColor = '#D97706';
-        highlightLine.style.color = '#F59E0B';
       }
     } else {
       targetEl?.classList.add('hidden');
@@ -231,22 +243,45 @@
         const crr = computedState.currentRunRate || 0;
         const proj = crr > 0 ? Math.round(crr * rules.format.oversPerInnings) : computedState.totalRuns;
         highlightLine.textContent = `Projected Score: ${proj} (at current CRR ${crr.toFixed(2)})`;
-        highlightLine.style.background = 'rgba(154, 222, 104, 0.18)';
-        highlightLine.style.borderColor = 'rgba(154, 222, 104, 0.35)';
-        highlightLine.style.color = 'var(--brand-lime)';
       }
     }
 
-    // Strikers & Non-Striker
+    // Strikers & Non-Striker Stats Table
     const sStat = computedState.strikerId ? computedState.battingStats[computedState.strikerId] : null;
     const nsStat = computedState.nonStrikerId ? computedState.battingStats[computedState.nonStrikerId] : null;
-    document.getElementById('strikerName').textContent = sStat ? sStat.name : 'Select Striker *';
-    document.getElementById('strikerRuns').textContent = sStat ? sStat.runs : '0';
-    document.getElementById('strikerMeta').innerHTML = sStat ? `<strong id="strikerRuns">${sStat.runs}</strong> <span class="sc-stat-sub">(${sStat.balls}b • ${sStat.fours}x4 • ${sStat.sixes}x6 • SR ${sStat.strikeRate.toFixed(1)})</span>` : '<span class="sc-stat-sub">Tap to assign</span>';
 
-    document.getElementById('nonStrikerName').textContent = nsStat ? nsStat.name : (rules.localRules.lastManBatting ? 'Last Man Batting' : 'Select Non-Striker');
-    document.getElementById('nonStrikerRuns').textContent = nsStat ? nsStat.runs : '-';
-    document.getElementById('nonStrikerMeta').innerHTML = nsStat ? `<strong id="nonStrikerRuns">${nsStat.runs}</strong> <span class="sc-stat-sub">(${nsStat.balls}b • ${nsStat.fours}x4 • ${nsStat.sixes}x6 • SR ${nsStat.strikeRate.toFixed(1)})</span>` : '<span class="sc-stat-sub">-</span>';
+    const sNameEl = document.getElementById('strikerName');
+    if (sNameEl) sNameEl.textContent = sStat ? sStat.name : 'Select Striker';
+    const sStarEl = document.getElementById('strikerStar');
+    if (sStarEl) sStarEl.textContent = sStat ? '*' : '';
+    const sRunsEl = document.getElementById('strikerRuns');
+    if (sRunsEl) sRunsEl.textContent = sStat ? sStat.runs : '0';
+    const sBallsEl = document.getElementById('strikerBalls');
+    if (sBallsEl) sBallsEl.textContent = sStat ? sStat.balls : '0';
+    const sFoursEl = document.getElementById('strikerFours');
+    if (sFoursEl) sFoursEl.textContent = sStat ? sStat.fours : '0';
+    const sSixesEl = document.getElementById('strikerSixes');
+    if (sSixesEl) sSixesEl.textContent = sStat ? sStat.sixes : '0';
+    const sSREl = document.getElementById('strikerSR');
+    if (sSREl) sSREl.textContent = sStat ? sStat.strikeRate.toFixed(2) : '0.00';
+
+    const nsNameEl = document.getElementById('nonStrikerName');
+    if (nsNameEl) nsNameEl.textContent = nsStat ? nsStat.name : (rules.localRules.lastManBatting ? 'Last Man Batting' : 'Select Non-Striker');
+    const nsRunsEl = document.getElementById('nonStrikerRuns');
+    if (nsRunsEl) nsRunsEl.textContent = nsStat ? nsStat.runs : '0';
+    const nsBallsEl = document.getElementById('nonStrikerBalls');
+    if (nsBallsEl) nsBallsEl.textContent = nsStat ? nsStat.balls : '0';
+    const nsFoursEl = document.getElementById('nonStrikerFours');
+    if (nsFoursEl) nsFoursEl.textContent = nsStat ? nsStat.fours : '0';
+    const nsSixesEl = document.getElementById('nonStrikerSixes');
+    if (nsSixesEl) nsSixesEl.textContent = nsStat ? nsStat.sixes : '0';
+    const nsSREl = document.getElementById('nonStrikerSR');
+    if (nsSREl) nsSREl.textContent = nsStat ? nsStat.strikeRate.toFixed(2) : '0.00';
+
+    const sMeta = document.getElementById('strikerMeta');
+    if (sMeta) sMeta.innerHTML = sStat ? `<strong id="strikerRuns">${sStat.runs}</strong> <span class="sc-stat-sub">(${sStat.balls}b • ${sStat.fours}x4 • ${sStat.sixes}x6 • SR ${sStat.strikeRate.toFixed(1)})</span>` : '<span class="sc-stat-sub">Tap to assign</span>';
+    const nsMeta = document.getElementById('nonStrikerMeta');
+    if (nsMeta) nsMeta.innerHTML = nsStat ? `<strong id="nonStrikerRuns">${nsStat.runs}</strong> <span class="sc-stat-sub">(${nsStat.balls}b • ${nsStat.fours}x4 • ${nsStat.sixes}x6 • SR ${nsStat.strikeRate.toFixed(1)})</span>` : '<span class="sc-stat-sub">-</span>';
 
     const part = computedState.currentPartnership || { runs: 0, balls: 0 };
     const pValEl = document.getElementById('partnershipVal');
@@ -254,25 +289,39 @@
     const pTextEl = document.getElementById('partnershipText');
     if (pTextEl) pTextEl.textContent = `Partnership: ${part.runs} run(s) (${part.balls} balls)`;
 
-    // Bowler
+    // Bowler Stats Table
     const bw = computedState.currentBowlerId ? computedState.bowlingStats[computedState.currentBowlerId] : null;
-    document.getElementById('bowlerName').textContent = bw ? bw.name : 'Select Bowler';
-    document.getElementById('bowlerFigures').textContent = bw ? `${bw.wickets}-${bw.runs}` : '0-0';
-    document.getElementById('bowlerMeta').textContent = bw ? `(${bw.overs} ov • ${bw.maidens} M • Econ ${bw.economy.toFixed(2)})` : '(Select opening bowler)';
+    const bwNameEl = document.getElementById('bowlerName');
+    if (bwNameEl) bwNameEl.textContent = bw ? bw.name : 'Select Bowler';
+    const bwOversEl = document.getElementById('bowlerOvers');
+    if (bwOversEl) bwOversEl.textContent = bw ? bw.overs : '0.0';
+    const bwMaidensEl = document.getElementById('bowlerMaidens');
+    if (bwMaidensEl) bwMaidensEl.textContent = bw ? bw.maidens : '0';
+    const bwRunsEl = document.getElementById('bowlerRuns');
+    if (bwRunsEl) bwRunsEl.textContent = bw ? bw.runs : '0';
+    const bwWicketsEl = document.getElementById('bowlerWickets');
+    if (bwWicketsEl) bwWicketsEl.textContent = bw ? bw.wickets : '0';
+    const bwEREl = document.getElementById('bowlerER');
+    if (bwEREl) bwEREl.textContent = bw ? bw.economy.toFixed(2) : '0.00';
+
+    const bwFiguresEl = document.getElementById('bowlerFigures');
+    if (bwFiguresEl) bwFiguresEl.textContent = bw ? `${bw.wickets}-${bw.runs}` : '0-0';
+    const bwMetaEl = document.getElementById('bowlerMeta');
+    if (bwMetaEl) bwMetaEl.textContent = bw ? `(${bw.overs} ov • ${bw.maidens} M • Econ ${bw.economy.toFixed(2)})` : '(Select opening bowler)';
     const bwExtrasEl = document.getElementById('bowlerExtrasMeta');
     if (bwExtrasEl) bwExtrasEl.textContent = bw ? `Wides: ${bw.wides} • No-Balls: ${bw.noBalls}` : '';
 
     // Recent balls timeline (This over)
     const strip = document.getElementById('recentBallsStrip');
-    const recent = (computedState.recentBalls || []).slice(-18);
+    const recent = (computedState.recentBalls || []).slice(-12);
     const ballCountLabelEl = document.getElementById('ballCountLabel');
     if (ballCountLabelEl) ballCountLabelEl.textContent = `${computedState.legalBalls} legal balls`;
 
     if (!recent.length) {
-      strip.innerHTML = `<span class="text-sm text-muted">No deliveries bowled yet.</span>`;
+      strip.innerHTML = `<span class="text-sm text-muted">Yet to start</span>`;
     } else {
       strip.innerHTML = recent.map((b) => {
-        let cls = 'ball-chip';
+        let cls = 'sc-over-ball-chip';
         if (b.isWicket) cls += ' wicket-ball';
         else if (b.isBoundarySix) cls += ' boundary-6';
         else if (b.isBoundaryFour) cls += ' boundary-4';
@@ -867,27 +916,43 @@
   function bindScoringUI() {
     let activeToggleExtra = null;
 
-    // Toggle Chips Logic (§16)
+    const syncCheckboxes = (activeToggle) => {
+      document.querySelectorAll('.sc-toggle-chip[data-toggle]').forEach((chip) => {
+        const t = chip.dataset.toggle;
+        const cb = chip.querySelector('.sc-checkbox-input');
+        const isActive = t === activeToggle;
+        chip.classList.toggle('active', isActive);
+        if (cb) cb.checked = isActive;
+      });
+    };
+
+    // Toggle Chips / Checkboxes Logic matching photo
     document.querySelectorAll('.sc-toggle-chip[data-toggle]').forEach((chip) => {
-      chip.addEventListener('click', () => {
+      chip.addEventListener('click', (e) => {
+        if (e.target.tagName && e.target.tagName.toLowerCase() === 'input') {
+          e.stopPropagation();
+        } else {
+          e.preventDefault();
+        }
         const toggle = chip.dataset.toggle;
         if (toggle === 'wicket') {
+          syncCheckboxes(null);
+          activeToggleExtra = null;
           openWicketModal();
           return;
         }
         if (activeToggleExtra === toggle) {
           activeToggleExtra = null;
-          chip.classList.remove('active');
+          syncCheckboxes(null);
         } else {
           activeToggleExtra = toggle;
-          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
-          chip.classList.add('active');
+          syncCheckboxes(toggle);
           try { navigator.vibrate?.(10); } catch (_) {}
         }
       });
     });
 
-    // Runs buttons (0..6)
+    // Runs buttons (0..6 circular buttons)
     document.querySelectorAll('.score-btn[data-run]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const run = Number(btn.dataset.run);
@@ -896,21 +961,17 @@
           else navigator.vibrate?.(12);
         } catch (_) {}
 
-        if (activeToggleExtra === 'wide') {
-          activeToggleExtra = null;
-          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
+        const prevExtra = activeToggleExtra;
+        activeToggleExtra = null;
+        syncCheckboxes(null);
+
+        if (prevExtra === 'wide') {
           dispatchEvent({ extraType: 'wide', additionalExtraRuns: run, batRuns: 0 });
-        } else if (activeToggleExtra === 'no_ball') {
-          activeToggleExtra = null;
-          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
+        } else if (prevExtra === 'no_ball') {
           dispatchEvent({ extraType: 'no_ball', additionalExtraRuns: 0, batRuns: run });
-        } else if (activeToggleExtra === 'bye') {
-          activeToggleExtra = null;
-          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
+        } else if (prevExtra === 'bye') {
           dispatchEvent({ extraType: 'bye', additionalExtraRuns: run || 1, batRuns: 0 });
-        } else if (activeToggleExtra === 'leg_bye') {
-          activeToggleExtra = null;
-          document.querySelectorAll('.sc-toggle-chip').forEach((c) => c.classList.remove('active'));
+        } else if (prevExtra === 'leg_bye') {
           dispatchEvent({ extraType: 'leg_bye', additionalExtraRuns: run || 1, batRuns: 0 });
         } else {
           dispatchEvent({ extraType: 'none', batRuns: run });
@@ -928,6 +989,8 @@
     });
     document.getElementById('wicketBtn')?.addEventListener('click', openWicketModal);
     document.getElementById('undoBallBtn')?.addEventListener('click', undoLastBall);
+    document.getElementById('partnershipsBtn')?.addEventListener('click', openMatchSummaryModal);
+    document.getElementById('extrasBtn')?.addEventListener('click', () => openExtraModal('penalty'));
     document.getElementById('swapBatsmenBtn')?.addEventListener('click', () => {
       try { navigator.vibrate?.(12); } catch (_) {}
       dispatchEvent({ eventType: 'swap_batsmen' });
@@ -940,6 +1003,7 @@
     document.getElementById('strikerRow')?.addEventListener('click', () => openPlayersModal('change_striker'));
     document.getElementById('nonStrikerRow')?.addEventListener('click', () => openPlayersModal('openers'));
     document.getElementById('bowlerStrip')?.addEventListener('click', () => openPlayersModal('change_bowler'));
+    document.getElementById('bowlerRow')?.addEventListener('click', () => openPlayersModal('change_bowler'));
 
     // Outdoor Mode Toggle
     document.getElementById('outdoorModeBtn')?.addEventListener('click', (e) => {

@@ -46,131 +46,214 @@
 
       <!-- Active Match Scoring Screen -->
       <section id="activeScoringView" class="hidden">
-        <!-- Compact App Bar -->
-        <div class="scoring-header-bar" id="scoringAppbar">
-          <div class="sc-appbar-left">
-            <a href="/dashboard.html" class="sc-back-arrow" id="backOverviewBtn" aria-label="Back to Dashboard">←</a>
-            <div class="sc-title-wrap">
-              <span class="sc-match-title" id="scMatchTitle">Match</span>
-              <span class="badge badge-live" id="matchStatusBadge"><span class="live-dot"></span>LIVE</span>
-            </div>
+        <!-- Green App Bar Matching Photo -->
+        <div class="sc-app-topbar" id="scoringAppbar">
+          <div class="sc-topbar-left">
+            <a href="/dashboard.html" class="sc-topbar-back-btn" id="backOverviewBtn" aria-label="Back to Dashboard">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            </a>
+            <span class="sc-topbar-title" id="scMatchTitle">Match</span>
           </div>
-          <div class="sc-appbar-actions">
-            <button type="button" class="sc-appbar-icon-btn" id="openSummaryGraphBtn" title="Match Summary & Graph" aria-label="Match Summary & Graph"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg></button>
-            <button type="button" class="sc-appbar-icon-btn" id="openScorecardMiniBtn" title="Full Scorecard" aria-label="Full Scorecard"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></button>
-            <button type="button" class="sc-appbar-icon-btn" id="outdoorModeBtn" title="Outdoor Sunlight Mode" aria-label="Outdoor Mode"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg></button>
-            <button type="button" class="sc-appbar-icon-btn" id="shareMatchBtn" title="Share Match" aria-label="Share"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></button>
-            <button type="button" class="btn btn-primary btn-sm" id="matchControlsBtn">Controls</button>
+          <div class="sc-topbar-actions">
+            <button type="button" class="sc-topbar-icon-btn" id="openSummaryGraphBtn" title="Match Summary & Graph" aria-label="Match Summary & Graph">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+            </button>
+            <button type="button" class="sc-topbar-icon-btn sc-aspect-btn" id="openScorecardMiniBtn" title="Full Scorecard" aria-label="Full Scorecard">
+              <span class="sc-aspect-pill">1:3</span>
+            </button>
+            <button type="button" class="sc-appbar-icon-btn hidden" id="outdoorModeBtn"></button>
+            <button type="button" class="sc-appbar-icon-btn hidden" id="shareMatchBtn"></button>
+            <button type="button" class="btn btn-primary btn-sm hidden" id="matchControlsBtn">Controls</button>
+            <span class="badge badge-live hidden" id="matchStatusBadge"><span class="live-dot"></span>LIVE</span>
           </div>
         </div>
 
-        <!-- Scoreboard Hero Card -->
-        <div class="scoreboard-hero" id="scoreboardHero">
-          <div class="scoreboard-top-row">
-            <div>
-              <div class="batting-team-name">
-                <span id="batTeamTitle">Batting Team</span>
-                <span id="inningsBadge" class="sc-innings-badge">1st Innings</span>
+        <div class="sc-screen-body">
+          <!-- Card 1: Main Score Card -->
+          <div class="sc-card sc-main-score-card" id="scoreboardHero">
+            <div class="sc-main-top-row">
+              <div class="sc-team-inning-label">
+                <span id="batTeamTitle">Batting Team</span>, <span id="inningsBadge">1st inning</span>
+                <span class="hidden" id="bowlTeamSub"></span>
               </div>
-              <div class="bowling-team-sub" id="bowlTeamSub">vs Bowling Team</div>
-            </div>
-            <div style="text-align:right;">
-              <span class="main-score-digits" id="mainScoreDigits">0-0</span>
-              <span class="overs-digits" id="mainOversDigits">(0.0 / 6 ov)</span>
-            </div>
-          </div>
-          <div id="freeHitBanner" class="free-hit-banner hidden">⚡ FREE HIT NEXT BALL</div>
-          <div class="score-metrics-strip" id="scoreMetricsStrip">
-            <span id="crrText">CRR: 0.00</span>
-            <span id="targetText" class="hidden">Target: 0</span>
-            <span id="reqText" class="hidden">Need 0 off 0 balls (RRR: 0.00)</span>
-          </div>
-          <div class="sc-highlight-line" id="scHighlightLine">Projected: 0 (at CRR 0.00)</div>
-        </div>
-
-        <!-- Innings Break / Result Banner -->
-        <div id="inningsActionBanner" class="card mb-1 hidden" style="border:2px solid var(--brand-primary);background:var(--success-bg);padding:10px 14px;">
-          <div class="flex-between">
-            <strong id="inningsActionTitle">Innings Completed</strong>
-            <div class="flex-gap" id="inningsActionButtons"></div>
-          </div>
-        </div>
-
-        <!-- Batsmen Table & Current Bowler Strip -->
-        <div class="sc-crease-container">
-          <div class="sc-batters-strip">
-            <div class="sc-batter-row on-strike" id="strikerRow">
-              <div class="sc-batter-left">
-                <span class="sc-strike-star">*</span>
-                <span class="batter-name" id="strikerName">Striker</span>
-              </div>
-              <div class="sc-batter-stats" id="strikerMeta">
-                <strong id="strikerRuns">0</strong> <span class="sc-stat-sub">(0b 0x4 0x6 SR 0.0)</span>
+              <div class="sc-metrics-header-cols">
+                <span>CRR</span>
+                <span>Target</span>
+                <span>RR</span>
               </div>
             </div>
-            <div class="sc-batter-row" id="nonStrikerRow">
-              <div class="sc-batter-left">
-                <span class="sc-strike-star" style="visibility:hidden;">*</span>
-                <span class="batter-name" id="nonStrikerName">Non-Striker</span>
+
+            <div class="sc-main-center-row">
+              <div class="sc-score-overs-wrap">
+                <span class="sc-score-big" id="mainScoreDigits">0-0</span>
+                <span class="sc-overs-dim" id="mainOversDigits">(0.0)</span>
               </div>
-              <div class="sc-batter-stats" id="nonStrikerMeta">
-                <strong id="nonStrikerRuns">0</strong> <span class="sc-stat-sub">(0b 0x4 0x6 SR 0.0)</span>
+              <div class="sc-metrics-value-cols">
+                <span id="crrVal">0.00</span>
+                <span id="targetVal">-</span>
+                <span id="rrVal">-</span>
+              </div>
+            </div>
+
+            <div id="freeHitBanner" class="free-hit-banner hidden">⚡ FREE HIT NEXT BALL</div>
+
+            <div class="sc-main-bottom-row">
+              <div class="sc-equation-line" id="scHighlightLine">Projected Score: 0 (at current CRR 0.00)</div>
+            </div>
+
+            <!-- hidden metric fallbacks -->
+            <span id="crrText" class="hidden"></span>
+            <span id="targetText" class="hidden"></span>
+            <span id="reqText" class="hidden"></span>
+          </div>
+
+          <!-- Innings Break / Result Banner -->
+          <div id="inningsActionBanner" class="card mb-1 hidden" style="border:2px solid var(--brand-primary);background:var(--success-bg);padding:10px 14px;">
+            <div class="flex-between">
+              <strong id="inningsActionTitle">Innings Completed</strong>
+              <div class="flex-gap" id="inningsActionButtons"></div>
+            </div>
+          </div>
+
+          <!-- Card 2: Batsmen & Bowler Stats Card -->
+          <div class="sc-card sc-stats-table-card">
+            <table class="sc-stats-table">
+              <thead>
+                <tr class="sc-th-row">
+                  <th class="sc-th-name">Batsman</th>
+                  <th class="sc-th-stat">R</th>
+                  <th class="sc-th-stat">B</th>
+                  <th class="sc-th-stat">4s</th>
+                  <th class="sc-th-stat">6s</th>
+                  <th class="sc-th-stat">SR</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="strikerRow" class="sc-tr-player on-strike">
+                  <td class="sc-td-name">
+                    <span class="sc-name-green" id="strikerName">Striker</span><span class="sc-strike-star" id="strikerStar">*</span>
+                  </td>
+                  <td class="sc-td-stat" id="strikerRuns">0</td>
+                  <td class="sc-td-stat" id="strikerBalls">0</td>
+                  <td class="sc-td-stat" id="strikerFours">0</td>
+                  <td class="sc-td-stat" id="strikerSixes">0</td>
+                  <td class="sc-td-stat" id="strikerSR">0.00</td>
+                </tr>
+                <tr id="nonStrikerRow" class="sc-tr-player">
+                  <td class="sc-td-name">
+                    <span class="sc-name-green" id="nonStrikerName">Non-Striker</span>
+                  </td>
+                  <td class="sc-td-stat" id="nonStrikerRuns">0</td>
+                  <td class="sc-td-stat" id="nonStrikerBalls">0</td>
+                  <td class="sc-td-stat" id="nonStrikerFours">0</td>
+                  <td class="sc-td-stat" id="nonStrikerSixes">0</td>
+                  <td class="sc-td-stat" id="nonStrikerSR">0.00</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table class="sc-stats-table sc-bowler-table" id="bowlerStrip">
+              <thead>
+                <tr class="sc-th-row">
+                  <th class="sc-th-name">Bowler</th>
+                  <th class="sc-th-stat">O</th>
+                  <th class="sc-th-stat">M</th>
+                  <th class="sc-th-stat">R</th>
+                  <th class="sc-th-stat">W</th>
+                  <th class="sc-th-stat">ER</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr id="bowlerRow" class="sc-tr-player">
+                  <td class="sc-td-name">
+                    <span class="sc-name-green" id="bowlerName">Bowler</span>
+                  </td>
+                  <td class="sc-td-stat" id="bowlerOvers">0.0</td>
+                  <td class="sc-td-stat" id="bowlerMaidens">0</td>
+                  <td class="sc-td-stat" id="bowlerRuns">0</td>
+                  <td class="sc-td-stat" id="bowlerWickets">0</td>
+                  <td class="sc-td-stat" id="bowlerER">0.00</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- hidden legacy fallbacks -->
+            <div class="hidden">
+              <span id="strikerMeta"></span>
+              <span id="nonStrikerMeta"></span>
+              <span id="bowlerFigures"></span>
+              <span id="bowlerMeta"></span>
+            </div>
+          </div>
+
+          <!-- Card 3: This Over Card -->
+          <div class="sc-card sc-this-over-card">
+            <span class="sc-this-over-label">This over:</span>
+            <div class="sc-this-over-strip" id="recentBallsStrip"></div>
+          </div>
+
+          <!-- Card 4: Extras Checkboxes & Retire / Swap Batsman Card -->
+          <div class="sc-card sc-extras-actions-card">
+            <div class="sc-checkboxes-row" id="toggleChipsRow">
+              <label class="sc-checkbox-item sc-toggle-chip" id="chipWide" data-toggle="wide">
+                <input type="checkbox" id="checkWide" class="sc-checkbox-input" />
+                <span class="sc-checkbox-custom"></span>
+                <span class="sc-checkbox-text">Wide</span>
+              </label>
+              <label class="sc-checkbox-item sc-toggle-chip" id="chipNoBall" data-toggle="no_ball">
+                <input type="checkbox" id="checkNoBall" class="sc-checkbox-input" />
+                <span class="sc-checkbox-custom"></span>
+                <span class="sc-checkbox-text">No Ball</span>
+              </label>
+              <label class="sc-checkbox-item sc-toggle-chip" id="chipBye" data-toggle="bye">
+                <input type="checkbox" id="checkBye" class="sc-checkbox-input" />
+                <span class="sc-checkbox-custom"></span>
+                <span class="sc-checkbox-text">Byes</span>
+              </label>
+              <label class="sc-checkbox-item sc-toggle-chip" id="chipLegBye" data-toggle="leg_bye">
+                <input type="checkbox" id="checkLegBye" class="sc-checkbox-input" />
+                <span class="sc-checkbox-custom"></span>
+                <span class="sc-checkbox-text">Leg Byes</span>
+              </label>
+            </div>
+
+            <div class="sc-actions-row">
+              <label class="sc-checkbox-item sc-toggle-chip sc-chip-wicket" id="chipWicket" data-toggle="wicket">
+                <input type="checkbox" id="checkWicket" class="sc-checkbox-input" />
+                <span class="sc-checkbox-custom"></span>
+                <span class="sc-checkbox-text">Wicket</span>
+              </label>
+              <div class="sc-action-buttons-group">
+                <button type="button" class="sc-solid-green-btn" id="quickRetireBtn">Retire</button>
+                <button type="button" class="sc-solid-green-btn" id="swapBatsmenBtn">Swap Batsman</button>
               </div>
             </div>
           </div>
 
-          <div class="sc-bowler-strip" id="bowlerStrip">
-            <div class="sc-bowler-left">
-              <span class="sc-bowler-badge">BOWL</span>
-              <span class="batter-name" id="bowlerName">Bowler</span>
+          <!-- Card 5: Bottom Scoring Controls Grid -->
+          <div class="sc-bottom-controls-grid" id="scoringPadCard">
+            <div class="sc-left-buttons-column sc-thumb-left-col">
+              <button type="button" class="sc-solid-green-btn sc-pad-action-btn" id="undoBallBtn">Undo</button>
+              <button type="button" class="sc-solid-green-btn sc-pad-action-btn" id="partnershipsBtn">Partnerships</button>
+              <button type="button" class="sc-solid-green-btn sc-pad-action-btn" id="extrasBtn">Extras</button>
+              <div class="hidden">
+                <span id="partnershipVal">0 (0)</span>
+                <span id="extrasVal">0</span>
+              </div>
             </div>
-            <div class="sc-bowler-stats">
-              <strong id="bowlerFigures">0-0</strong>
-              <span class="sc-stat-sub" id="bowlerMeta">(0.0 ov • 0 M • Econ 0.00)</span>
+
+            <div class="sc-card sc-thumb-runs-pad">
+              <div class="sc-runs-circle-grid">
+                <button type="button" class="score-btn sc-circle-run-btn" data-run="0">0</button>
+                <button type="button" class="score-btn sc-circle-run-btn" data-run="1">1</button>
+                <button type="button" class="score-btn sc-circle-run-btn" data-run="2">2</button>
+                <button type="button" class="score-btn sc-circle-run-btn" data-run="3">3</button>
+                <button type="button" class="score-btn sc-circle-run-btn" data-run="4">4</button>
+                <button type="button" class="score-btn sc-circle-run-btn" data-run="5">5</button>
+                <button type="button" class="score-btn sc-circle-run-btn" data-run="6">6</button>
+                <button type="button" class="score-btn sc-circle-run-btn more-actions-btn" id="moreScoringActionsBtn">...</button>
+              </div>
             </div>
-          </div>
-        </div>
-
-        <!-- This Over Row -->
-        <div class="sc-this-over-row">
-          <div class="sc-this-over-label">This Over:</div>
-          <div class="recent-balls-strip" id="recentBallsStrip"></div>
-        </div>
-
-        <!-- Extras & Wicket Toggle Row -->
-        <div class="sc-toggle-chips-row" id="toggleChipsRow">
-          <button type="button" class="sc-toggle-chip" data-toggle="wide" id="chipWide">Wide</button>
-          <button type="button" class="sc-toggle-chip" data-toggle="no_ball" id="chipNoBall">No Ball</button>
-          <button type="button" class="sc-toggle-chip" data-toggle="bye" id="chipBye">Byes</button>
-          <button type="button" class="sc-toggle-chip" data-toggle="leg_bye" id="chipLegBye">Leg Byes</button>
-          <button type="button" class="sc-toggle-chip sc-chip-wicket" data-toggle="wicket" id="chipWicket">Wicket</button>
-          <button type="button" class="sc-chip-btn" id="swapBatsmenBtn" title="Swap Strike">⇄ Swap</button>
-          <button type="button" class="sc-chip-btn" id="quickRetireBtn" title="Retire Batsman">Retire</button>
-        </div>
-
-        <!-- Bottom Control Area fixed in thumb reach -->
-        <div class="sc-thumb-controls-wrap" id="scoringPadCard">
-          <div class="sc-thumb-left-col">
-            <button type="button" class="ctrl-btn danger-outline sc-undo-btn" id="undoBallBtn">↶ Undo</button>
-            <div class="sc-thumb-metric-box">
-              <span class="sc-thumb-metric-lbl">P'ship</span>
-              <strong class="sc-thumb-metric-val" id="partnershipVal">0 (0)</strong>
-            </div>
-            <div class="sc-thumb-metric-box">
-              <span class="sc-thumb-metric-lbl">Extras</span>
-              <strong class="sc-thumb-metric-val" id="extrasVal">0</strong>
-            </div>
-          </div>
-
-          <div class="sc-thumb-runs-pad">
-            <button type="button" class="score-btn" data-run="0">0<span>Dot</span></button>
-            <button type="button" class="score-btn" data-run="1">1<span>Single</span></button>
-            <button type="button" class="score-btn" data-run="2">2<span>Two</span></button>
-            <button type="button" class="score-btn" data-run="3">3<span>Three</span></button>
-            <button type="button" class="score-btn btn-four" data-run="4">4<span>FOUR</span></button>
-            <button type="button" class="score-btn" data-run="5">5<span>Five</span></button>
-            <button type="button" class="score-btn btn-six" data-run="6">6<span>SIX</span></button>
-            <button type="button" class="score-btn more-actions-btn" id="moreScoringActionsBtn">⋯<span>More</span></button>
           </div>
         </div>
 

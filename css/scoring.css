@@ -723,6 +723,474 @@ body.outdoor-mode * {
 }
 
 /* Full Screen 100dvh Fit on Mobile */
+/* ==========================================================================
+   §16 Modern Cricket Scorecard (Exact Match to User Reference Screenshot)
+   ========================================================================== */
+.sc-app-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #208B4E;
+  color: #FFFFFF;
+  padding: 10px 14px;
+  min-height: 52px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+.sc-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.sc-topbar-back-btn {
+  color: #FFFFFF;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+}
+.sc-topbar-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+.sc-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sc-topbar-icon-btn {
+  background: transparent;
+  border: none;
+  color: #FFFFFF;
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sc-aspect-btn {
+  padding: 0;
+}
+.sc-aspect-pill {
+  background: #FFFFFF;
+  color: #208B4E;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+/* Body container holding cards */
+.sc-screen-body {
+  background: #F1F3F5;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-height: calc(100vh - 52px);
+}
+[data-theme="dark"] .sc-screen-body {
+  background: #0F172A;
+}
+
+/* White card base */
+.sc-card {
+  background: #FFFFFF;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+[data-theme="dark"] .sc-card {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+/* Card 1: Main Score Card */
+.sc-main-score-card {
+  padding: 10px 14px 10px;
+}
+.sc-main-top-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.sc-team-inning-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1F2937;
+}
+[data-theme="dark"] .sc-team-inning-label {
+  color: #F3F4F6;
+}
+.sc-metrics-header-cols {
+  display: grid;
+  grid-template-columns: 48px 56px 48px;
+  text-align: right;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #6B7280;
+}
+.sc-main-center-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 3px;
+}
+.sc-score-overs-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.sc-score-big {
+  font-size: 2.2rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #111827;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="dark"] .sc-score-big {
+  color: #FFFFFF;
+}
+.sc-overs-dim {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #4B5563;
+  margin-left: 2px;
+}
+[data-theme="dark"] .sc-overs-dim {
+  color: #94A3B8;
+}
+.sc-metrics-value-cols {
+  display: grid;
+  grid-template-columns: 48px 56px 48px;
+  text-align: right;
+  gap: 6px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="dark"] .sc-metrics-value-cols {
+  color: #F8FAFC;
+}
+.sc-main-bottom-row {
+  margin-top: 6px;
+}
+.sc-equation-line {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #208B4E;
+}
+[data-theme="dark"] .sc-equation-line {
+  color: #4ADE80;
+}
+
+/* Card 2: Stats Table Card */
+.sc-stats-table-card {
+  padding: 8px 12px;
+}
+.sc-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.sc-th-row {
+  border-bottom: 1px solid #F3F4F6;
+}
+[data-theme="dark"] .sc-th-row {
+  border-color: #334155;
+}
+.sc-th-name {
+  text-align: left;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6B7280;
+  padding: 4px 0;
+}
+.sc-th-stat {
+  text-align: right;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #6B7280;
+  padding: 4px 2px;
+  width: 36px;
+}
+.sc-tr-player {
+  cursor: pointer;
+  border-bottom: 1px solid #F9FAFB;
+}
+[data-theme="dark"] .sc-tr-player {
+  border-color: #1E293B;
+}
+.sc-tr-player.on-strike .sc-name-green {
+  font-weight: 900;
+}
+.sc-td-name {
+  text-align: left;
+  padding: 5px 0;
+}
+.sc-name-green {
+  color: #208B4E;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+[data-theme="dark"] .sc-name-green {
+  color: #4ADE80;
+}
+.sc-strike-star {
+  color: #208B4E;
+  font-weight: 900;
+  margin-left: 2px;
+}
+.sc-td-stat {
+  text-align: right;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #111827;
+  padding: 5px 2px;
+  font-variant-numeric: tabular-nums;
+}
+[data-theme="dark"] .sc-td-stat {
+  color: #E2E8F0;
+}
+.sc-bowler-table {
+  margin-top: 6px;
+  border-top: 1px solid #F3F4F6;
+  padding-top: 4px;
+}
+[data-theme="dark"] .sc-bowler-table {
+  border-color: #334155;
+}
+
+/* Card 3: This Over Card */
+.sc-this-over-card {
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sc-this-over-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+}
+[data-theme="dark"] .sc-this-over-label {
+  color: #F8FAFC;
+}
+.sc-this-over-strip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 2px 0;
+}
+.sc-over-ball-chip {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 1.5px solid #D1D5DB;
+  color: #111827;
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+[data-theme="dark"] .sc-over-ball-chip {
+  background: #0F172A;
+  border-color: #475569;
+  color: #F1F5F9;
+}
+.sc-over-ball-chip.boundary-4 {
+  border-color: #1565C0;
+  color: #1565C0;
+}
+.sc-over-ball-chip.boundary-6 {
+  border-color: #208B4E;
+  color: #208B4E;
+}
+.sc-over-ball-chip.wicket-ball {
+  border-color: #DC2626;
+  color: #DC2626;
+  background: #FEE2E2;
+}
+.sc-over-ball-chip.extra-ball {
+  border-color: #D97706;
+  color: #D97706;
+}
+
+/* Card 4: Extras & Wickets Checkboxes */
+.sc-extras-actions-card {
+  padding: 8px 12px;
+}
+.sc-checkboxes-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+.sc-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.sc-checkbox-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1F2937;
+}
+[data-theme="dark"] .sc-checkbox-item {
+  color: #F3F4F6;
+}
+.sc-checkbox-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #4B5563;
+  border-radius: 3px;
+  background: #FFFFFF;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  outline: none;
+  transition: all 0.15s ease;
+}
+[data-theme="dark"] .sc-checkbox-input {
+  background: #1E293B;
+  border-color: #94A3B8;
+}
+.sc-checkbox-input:checked {
+  background: #208B4E;
+  border-color: #208B4E;
+}
+.sc-checkbox-input:checked::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid #FFFFFF;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+.sc-checkbox-item.active .sc-checkbox-input {
+  background: #208B4E;
+  border-color: #208B4E;
+}
+.sc-checkbox-item.active .sc-checkbox-input::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid #FFFFFF;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+.sc-action-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sc-solid-green-btn {
+  background: #208B4E;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, background 0.15s;
+}
+.sc-solid-green-btn:active {
+  background: #1B7441;
+  transform: scale(0.97);
+}
+
+/* Card 5: Bottom Scoring Controls Grid */
+.sc-bottom-controls-grid {
+  display: grid;
+  grid-template-columns: 104px 1fr;
+  gap: 8px;
+}
+.sc-left-buttons-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: space-between;
+}
+.sc-pad-action-btn {
+  width: 100%;
+  height: 42px;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+.sc-thumb-runs-pad {
+  padding: 6px 8px;
+}
+.sc-runs-circle-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  align-items: center;
+  justify-items: center;
+}
+.sc-circle-run-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid #208B4E;
+  color: #111827;
+  font-size: 1.35rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.1s, background 0.1s;
+  padding: 0;
+}
+[data-theme="dark"] .sc-circle-run-btn {
+  background: #1E293B;
+  color: #FFFFFF;
+  border-color: #208B4E;
+}
+.sc-circle-run-btn:active {
+  background: #E8F5E9;
+  transform: scale(0.95);
+}
+[data-theme="dark"] .sc-circle-run-btn:active {
+  background: rgba(32, 139, 78, 0.3);
+}
+
 @media (max-width: 768px) {
   body.scoring-active {
     height: 100dvh;
@@ -744,24 +1212,9 @@ body.outdoor-mode * {
     display: flex !important;
     flex-direction: column;
     height: 100dvh;
-    padding: env(safe-area-inset-top, 6px) 8px env(safe-area-inset-bottom, 8px);
+    padding: 0;
     overflow: hidden;
-    justify-content: space-between;
-  }
-  body.scoring-active .scoreboard-hero {
-    padding: 10px 12px;
-    margin-bottom: 6px;
-    border-radius: var(--radius-md);
-  }
-  body.scoring-active .main-score-digits {
-    font-size: 2.1rem;
-  }
-  body.scoring-active .overs-digits {
-    font-size: 1rem;
-  }
-  body.scoring-active .scoring-header-bar {
-    padding: 6px 8px;
-    margin-bottom: 6px;
+    justify-content: flex-start;
   }
   .sc-desktop-panel {
     display: none !important;
