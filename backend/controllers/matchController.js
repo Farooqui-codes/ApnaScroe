@@ -186,6 +186,9 @@ async function createMatch(req, res, next) {
     if ((!teamAId && !teamAName) || (!teamBId && !teamBName)) {
       return res.status(400).json({ success: false, message: 'Both Team A and Team B are required.' });
     }
+    if (String(teamAName || '').trim().length > 50 || String(teamBName || '').trim().length > 50) {
+      return res.status(400).json({ success: false, message: 'Team names cannot exceed 50 characters.' });
+    }
     if (teamAId && teamBId && String(teamAId) === String(teamBId)) {
       return res.status(400).json({ success: false, message: 'Team A and Team B must be different teams.' });
     }

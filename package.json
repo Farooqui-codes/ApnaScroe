@@ -11,7 +11,7 @@
     "dev": "node --watch backend/server.js",
     "seed": "node backend/utils/seedSampleData.js",
     "migrate:db": "node backend/scripts/migrateSchema.js",
-    "test": "node --test backend/tests/scoringEngine.test.js backend/tests/rulesAndSync.test.js backend/tests/guestAuthAndMigrationUnit.test.js",
+    "test": "node --test backend/tests/scoringEngine.test.js backend/tests/completeScenarios.test.js backend/tests/rulesAndSync.test.js backend/tests/guestAuthAndMigrationUnit.test.js",
     "test:api": "node --test backend/tests/api.test.js",
     "test:e2e": "node --test backend/tests/guestAndMigration.test.js backend/tests/proAndPayments.test.js backend/tests/profile.test.js",
     "test:all": "node --test backend/tests/scoringEngine.test.js backend/tests/rulesAndSync.test.js backend/tests/guestAuthAndMigrationUnit.test.js backend/tests/api.test.js"

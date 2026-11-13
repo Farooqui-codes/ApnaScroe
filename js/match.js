@@ -191,10 +191,20 @@
   }
 
   function parsePlayerNames(rawText) {
-    return String(rawText || '')
+    const list = String(rawText || '')
       .split(/[\n,]+/)
       .map((s) => s.trim())
       .filter(Boolean);
+    const seen = new Set();
+    const deduped = [];
+    for (const name of list) {
+      const lower = name.toLowerCase();
+      if (!seen.has(lower)) {
+        seen.add(lower);
+        deduped.push(name);
+      }
+    }
+    return deduped;
   }
 
   function refreshCaptainDropdowns() {
@@ -230,6 +240,9 @@
     if (step > 1) {
       if (!nameA || !nameB) {
         return ApnaUI.showToast('Please enter both Team A and Team B names.', 'error');
+      }
+      if (nameA.length > 50 || nameB.length > 50) {
+        return ApnaUI.showToast('Team names cannot exceed 50 characters.', 'error');
       }
       if (nameA.toLowerCase() === nameB.toLowerCase()) {
         return ApnaUI.showToast('Team A and Team B names must be different.', 'error');

@@ -806,6 +806,13 @@
         ) {
           return false;
         }
+        if (rules.format.maxOversPerBowler > 0) {
+          const bw = computedState.bowlingStats && computedState.bowlingStats[String(p.playerId)];
+          const bpo = rules.format.ballsPerOver || 6;
+          if (bw && bw.legalBalls >= rules.format.maxOversPerBowler * bpo) {
+            return false;
+          }
+        }
         return true;
       });
       body.innerHTML = `
@@ -1183,7 +1190,23 @@
 
   async function undoLastBall() {
     const lastIdx = activeEvents.map((e) => !e.isVoided).lastIndexOf(true);
-    if (lastIdx < 0) return ApnaUI.showToast('Nothing left to undo.', 'warning');
+    if (lastIdx < 0) {
+      if (activeInnings && activeInnings.inningsNumber > 1) {
+        if (confirm('No deliveries in this innings yet. Revert back to the 1st innings?')) {
+          const prevInnings = inningsList.find((i) => i.inningsNumber === activeInnings.inningsNumber - 1);
+          if (prevInnings) {
+            activeInnings = prevInnings;
+            const localKey = matchDoc._id || matchDoc.clientMatchId;
+            const events = await ApnaOffline.getLocalEvents(localKey, activeInnings.inningsNumber);
+            activeEvents = events || [];
+            recomputeLocalState();
+            renderAll();
+            return ApnaUI.showToast('Reverted to 1st Innings.');
+          }
+        }
+      }
+      return ApnaUI.showToast('Nothing left to undo.', 'warning');
+    }
     if (!confirm('Undo the last scoring action?')) return;
 
     const targetEv = activeEvents[lastIdx];

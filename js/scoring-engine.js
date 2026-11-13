@@ -408,6 +408,25 @@
     }
     if (!state.currentBowlerId) {
       errors.push('Select a current bowler before scoring.');
+    } else {
+      const bpo = rules.format.ballsPerOver || 6;
+      const bwStat = state.bowlingStats && state.bowlingStats[state.currentBowlerId];
+      if (rules.format.maxOversPerBowler > 0 && bwStat) {
+        const maxLegal = rules.format.maxOversPerBowler * bpo;
+        if (bwStat.legalBalls >= maxLegal && state.ballsInCurrentOver === 0) {
+          errors.push(`Bowler has already completed their maximum allowed ${rules.format.maxOversPerBowler} over(s).`);
+        }
+      }
+      if (
+        rules.format.noConsecutiveOversBySameBowler &&
+        state.completedOvers > 0 &&
+        state.ballsInCurrentOver === 0 &&
+        state.lastCompletedOverBowlerId &&
+        String(state.currentBowlerId) === String(state.lastCompletedOverBowlerId) &&
+        (!state.bowlingSquad || state.bowlingSquad.length > 1)
+      ) {
+        errors.push('A bowler cannot bowl two consecutive overs.');
+      }
     }
 
     const extraType = input.extraType || 'none'; // none | wide | no_ball | bye | leg_bye | penalty | custom_extra
@@ -550,6 +569,8 @@
       status: 'live', // live | paused | completed | abandoned
       rules,
       playersMap,
+      battingSquad: battingList,
+      bowlingSquad: bowlingList,
       battingOrder: [],
       battingStats: {},
       bowlingOrder: [],
@@ -565,6 +586,7 @@
       completedOvers: 0,
       currentOverRunsConcededByBowler: 0,
       currentOverLegalBalls: 0,
+      currentBowlerLegalBallsInOver: 0,
       isFreeHit: false,
       needsBowlerChange: false,
       needsNewBatsman: false,
@@ -697,6 +719,7 @@
         state.currentBowlerId = String(event.bowlerId);
         ensureBowler(state, state.currentBowlerId, event.bowlerName);
         state.needsBowlerChange = false;
+        state.currentBowlerLegalBallsInOver = 0;
       }
       return state;
     }
@@ -995,6 +1018,7 @@
       state.legalBalls += 1;
       state.ballsInCurrentOver += 1;
       state.currentOverLegalBalls += 1;
+      state.currentBowlerLegalBallsInOver = (state.currentBowlerLegalBallsInOver || 0) + 1;
     }
 
     const ballOverLabel = formatOvers(Math.max(0, state.legalBalls - (isLegalDelivery ? 1 : 0)), bpo);
@@ -1102,10 +1126,11 @@
       overCompletedNow = true;
       state.completedOvers += 1;
       state.ballsInCurrentOver = 0;
-      if (bowler && state.currentOverRunsConcededByBowler === 0 && state.currentOverLegalBalls >= bpo) {
+      if (bowler && state.currentOverRunsConcededByBowler === 0 && (state.currentBowlerLegalBallsInOver || 0) >= bpo) {
         bowler.maidens += 1;
       }
       state.currentOverLegalBalls = 0;
+      state.currentBowlerLegalBallsInOver = 0;
       state.currentOverRunsConcededByBowler = 0;
       state.lastCompletedOverBowlerId = state.currentBowlerId;
 
@@ -1115,8 +1140,16 @@
           state.strikerId = state.nonStrikerId;
           state.nonStrikerId = tmp;
         } else if (state.needsNewBatsman && state.dismissedSlot) {
-          // If wicket fell on last ball of over, swap the incoming slot so the surviving batter takes non-striker/striker appropriately
-          state.dismissedSlot = state.dismissedSlot === 'striker' ? 'non_striker' : 'striker';
+          // If wicket fell on last ball of over, rotate surviving batter and incoming slot
+          if (state.dismissedSlot === 'striker' && state.nonStrikerId) {
+            state.strikerId = state.nonStrikerId;
+            state.nonStrikerId = null;
+            state.dismissedSlot = 'non_striker';
+          } else if (state.dismissedSlot === 'non_striker' && state.strikerId) {
+            state.nonStrikerId = state.strikerId;
+            state.strikerId = null;
+            state.dismissedSlot = 'striker';
+          }
         }
       }
     }
@@ -1263,10 +1296,21 @@
    * Computes match result given 1st innings and 2nd innings final states.
    */
   function evaluateMatchResult(innings1, innings2, rules) {
-    if (!innings1 || !innings2) return null;
+    if (!innings1) return null;
+    if (innings1.status === 'abandoned' || innings2?.status === 'abandoned') {
+      return {
+        status: 'abandoned',
+        isTie: false,
+        winnerTeamId: null,
+        winnerTeamName: null,
+        marginText: 'Match Abandoned (No Result)'
+      };
+    }
+    if (!innings2) return null;
     const r1 = innings1.totalRuns || 0;
     const r2 = innings2.totalRuns || 0;
-    const maxWickets = (rules && rules.format && rules.format.maxWickets) || 10;
+    const defaultMaxW = (rules && rules.format && rules.format.playersPerTeam) ? Math.max(1, rules.format.playersPerTeam - 1) : 10;
+    const maxWickets = (rules && rules.format && rules.format.maxWickets) || defaultMaxW;
 
     if (r2 > r1) {
       const wicketsRemaining = Math.max(1, maxWickets - (innings2.wickets || 0));
