@@ -31,6 +31,14 @@
 
     await loadUserMatches();
     ApnaAnimations.animateCards('.choice-card');
+
+    if (window.location.hash === '#aboutSection') {
+      const aboutEl = document.getElementById('aboutSection');
+      if (aboutEl) {
+        aboutEl.open = true;
+        aboutEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
   });
 
   async function loadUserMatches() {

@@ -100,7 +100,7 @@
       sessionStorage.setItem('apna_preloader_seen', '1');
       window.addEventListener('apna:server-waking', function(){
         var t = document.getElementById('apnaPreText');
-        if (t) t.textContent = 'Server is waking up, please wait a moment...';
+        if (t) t.textContent = 'Server jaag raha hai, thoda wait karein...';
       });
       var hide = function(){ p.classList.add('done'); setTimeout(function(){ p.remove(); }, 380); };
       window.addEventListener('load', function(){ setTimeout(hide, 350); });

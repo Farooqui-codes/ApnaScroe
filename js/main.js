@@ -192,11 +192,11 @@
             <button class="icon-btn desktop-sidebar-toggle" id="sidebarCollapseBtn" aria-label="Toggle sidebar">${root.ApnaIcons.icon('menu', 18)}</button>
             ${
               activePage !== 'dashboard'
-                ? `<button type="button" class="icon-btn mobile-back-btn" id="mobileBackBtn" aria-label="Go Back">${root.ApnaIcons.icon('arrowLeft', 20)}</button>`
-                : `<button type="button" class="icon-btn topbar-mobile-brand" id="openDrawerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">${root.ApnaIcons.icon('menu', 18)}</button>`
+                ? `<button type="button" class="icon-btn mobile-back-btn" id="mobileBackBtn" aria-label="Go Back">${root.ApnaIcons.icon('chevronLeft', 22)}</button>`
+                : ''
             }
             <a href="/dashboard.html" class="topbar-mobile-brand">
-              <img src="/assets/icons/apnascore-icon.png" alt="ApnaScore" style="width:32px;height:32px;border-radius:8px;object-fit:contain;" />
+              <img src="/assets/icons/apnascore-icon.png" alt="ApnaScore" style="width:30px;height:30px;border-radius:8px;object-fit:contain;" />
             </a>
             <span class="topbar-page-title">${pageTitle}</span>
           </div>
@@ -207,7 +207,7 @@
               <span class="sync-label-text">Online</span>
             </button>
             <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark mode"></button>
-            <button type="button" class="icon-btn hide-on-desktop" id="openDrawerBtnAlt" aria-label="Open menu" aria-controls="mobileDrawer">${root.ApnaIcons.icon('menu', 18)}</button>
+            <button type="button" class="icon-btn hide-on-desktop mobile-menu-toggle" id="openDrawerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">${root.ApnaIcons.icon('menu', 20)}</button>
             ${
               user
                 ? `<div class="profile-menu-wrap">
@@ -321,7 +321,6 @@
     const drawer = document.getElementById('mobileDrawer');
     const backdrop = document.getElementById('mobileDrawerBackdrop');
     const openDrawerBtn = document.getElementById('openDrawerBtn');
-    const openDrawerBtnAlt = document.getElementById('openDrawerBtnAlt');
     const closeDrawerBtn = document.getElementById('closeDrawerBtn');
     const mobileBackBtn = document.getElementById('mobileBackBtn');
 
@@ -339,19 +338,28 @@
       drawer.classList.toggle('open', open);
       backdrop?.classList.toggle('open', open);
       openDrawerBtn?.setAttribute('aria-expanded', open ? 'true' : 'false');
-      openDrawerBtnAlt?.setAttribute('aria-expanded', open ? 'true' : 'false');
       if (open) {
         setTimeout(() => closeDrawerBtn?.focus(), 60);
       } else {
-        (openDrawerBtn || openDrawerBtnAlt)?.focus();
+        openDrawerBtn?.focus();
       }
     };
     openDrawerBtn?.addEventListener('click', () => toggleDrawer(true));
-    openDrawerBtnAlt?.addEventListener('click', () => toggleDrawer(true));
     closeDrawerBtn?.addEventListener('click', () => toggleDrawer(false));
     backdrop?.addEventListener('click', () => toggleDrawer(false));
     drawer?.querySelectorAll('a.nav-item').forEach((link) => {
       link.addEventListener('click', () => toggleDrawer(false));
+    });
+
+    // Auto-expand About App when requested from drawer
+    document.getElementById('drawerAboutBtn')?.addEventListener('click', (e) => {
+      toggleDrawer(false);
+      const aboutEl = document.getElementById('aboutSection');
+      if (aboutEl) {
+        e.preventDefault();
+        aboutEl.open = true;
+        aboutEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
 
     // Native feel haptics on bottom navigation tabs
