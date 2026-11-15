@@ -541,6 +541,26 @@ async function main() {
     `addBtn: ${addNewCheck}`
   );
 
+  // --- 5. TESTING TOURNAMENT CREATION IN GUEST MODE ---
+  console.log('\n--- 5. TESTING TOURNAMENT CREATION IN GUEST MODE ---');
+  await navigateAndWait(`http://127.0.0.1:${serverPort}/tournament.html`, '#openCreateTourBtn');
+  await new Promise((r) => setTimeout(r, 1000));
+
+  // Click #openCreateTourBtn
+  await evalCode(`document.getElementById('openCreateTourBtn').click()`);
+  await new Promise((r) => setTimeout(r, 600));
+
+  const tourModalCheck = await evalCode(`(() => {
+    const modalOpen = document.getElementById('createTourModal')?.classList.contains('open');
+    const guestPromptOpen = document.getElementById('apnaGuestModalBackdrop')?.classList.contains('open');
+    return { modalOpen, guestPromptOpen };
+  })()`);
+
+  logCheck('Guest user clicking Create Tournament opens wizard directly without Account Required prompt',
+    tourModalCheck.modalOpen === true && !tourModalCheck.guestPromptOpen,
+    JSON.stringify(tourModalCheck)
+  );
+
   // Summary of checks
   console.log('\n=========================================');
   const allPassed = results.every(r => r.passed);

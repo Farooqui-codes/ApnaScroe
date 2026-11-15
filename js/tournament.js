@@ -60,10 +60,11 @@
     } catch (_) {}
   }
 
-  function openCreateModal() {
+  async function openCreateModal() {
     if (!ApnaAuth.isAuthenticatedOrGuest()) {
-      ApnaAuth.requireAuth();
-      return;
+      try {
+        await ApnaAuth.continueAsGuest(null);
+      } catch (_) {}
     }
     goTourStep(1);
     document.getElementById('createTourModal').classList.add('open');
