@@ -23,7 +23,7 @@ const tournamentSchema = new mongoose.Schema(
     registrationDeadline: { type: Date, default: null },
     entryFee: { type: Number, min: 0, default: 0 },
     prizeMoney: { type: String, trim: true, default: '' },
-    maxTeams: { type: Number, min: 2, max: 64, default: 8 },
+    maxTeams: { type: Number, default: 0 }, // 0 or null means unlimited
     oversPerMatch: { type: Number, min: 1, max: 50, default: 8 },
     ballType: { type: String, default: 'tennis' },
     format: {

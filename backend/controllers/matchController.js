@@ -4,6 +4,7 @@ const Innings = require('../models/Innings');
 const Delivery = require('../models/Delivery');
 const Team = require('../models/Team');
 const Player = require('../models/Player');
+const Tournament = require('../models/Tournament');
 const TournamentFixture = require('../models/TournamentFixture');
 const Award = require('../models/Award');
 const engine = require('../services/scoringEngine');
@@ -175,12 +176,23 @@ async function createMatch(req, res, next) {
 
     const isGuest = Boolean(req.guest && !req.user);
 
-    if (isGuest && (tournamentId || fixtureId || isPublic === true)) {
+    if (isGuest && isPublic === true) {
       return res.status(403).json({
         success: false,
         requiresAccount: true,
-        message: 'Create a free account to publish your match and manage tournaments.'
+        message: 'Create a free account to publish your match.'
       });
+    }
+
+    if (isGuest && tournamentId) {
+      const tour = await Tournament.findById(tournamentId);
+      if (!tour || tour.ownerType !== 'guest' || tour.guestId !== req.guest.guestId) {
+        return res.status(403).json({
+          success: false,
+          requiresAccount: true,
+          message: 'Create a free account to publish your match and manage tournaments.'
+        });
+      }
     }
 
     if ((!teamAId && !teamAName) || (!teamBId && !teamBName)) {
@@ -562,6 +574,12 @@ async function updateMatchControl(req, res, next) {
         }
       } else {
         match.status = 'completed';
+      }
+      if (req.body.winnerTeamId || req.body.marginText) {
+        match.result = Object.assign({}, match.result || {}, {
+          winnerTeamId: req.body.winnerTeamId || match.result?.winnerTeamId || null,
+          marginText: req.body.marginText || match.result?.marginText || ''
+        });
       }
       if (playerOfMatchName || playerOfMatchId) {
         match.result.playerOfMatchId = playerOfMatchId || null;

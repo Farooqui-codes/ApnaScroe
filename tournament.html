@@ -60,8 +60,9 @@
             <div class="flex-gap">
               <span class="badge badge-neutral hidden" id="tdPlanBadge"></span>
               <button type="button" class="btn btn-lime btn-sm hidden" id="tdUpgradeProBtn"></button>
+              <button type="button" class="btn btn-primary btn-sm" id="tdStartTourBtn">▶ Start Tournament</button>
               <a id="tdShareBtn" target="_blank" class="btn btn-secondary btn-sm">Public Page</a>
-              <button type="button" class="btn btn-primary btn-sm" id="tdProPdfBtn">Download PDF</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="tdProPdfBtn">Download PDF</button>
               <a id="tdPdfBtn" target="_blank" class="btn btn-secondary btn-sm hidden">Basic PDF</a>
             </div>
           </div>
@@ -120,7 +121,15 @@
 
         <div class="tw-panel hidden" data-twp="2">
           <div class="form-grid-3">
-            <div class="form-group"><label class="form-label">Number of Teams</label><input class="form-control" id="ctMaxTeams" type="number" min="2" max="128" value="8" /></div>
+            <div class="form-group">
+              <div class="flex-between" style="margin-bottom:4px;">
+                <label class="form-label" style="margin:0;">Number of Teams</label>
+                <label class="text-sm" style="cursor:pointer; display:flex; align-items:center; gap:4px; font-weight:600; color:var(--brand-primary);">
+                  <input type="checkbox" id="ctUnlimitedTeams" checked /> Unlimited
+                </label>
+              </div>
+              <input class="form-control" id="ctMaxTeams" type="number" min="2" value="" placeholder="Unlimited Teams" disabled />
+            </div>
             <div class="form-group"><label class="form-label">Overs per Match</label><input class="form-control" id="ctOvers" type="number" min="1" max="50" value="8" /></div>
             <div class="form-group"><label class="form-label">Tournament Format</label>
               <select class="form-control" id="ctFormat">
@@ -138,7 +147,7 @@
           </div>
           <div class="flex-between mt-2">
             <button type="button" class="btn btn-secondary" onclick="TourWiz.go(1)">← Back</button>
-            <button type="button" class="btn btn-primary" onclick="TourWiz.go(3)">Next: Rules →</button>
+            <button type="button" class="btn btn-primary" onclick="TourWiz.go(3)">Next: Rules & Teams →</button>
           </div>
         </div>
 
@@ -165,6 +174,14 @@
           <div class="form-group">
             <label class="form-label">Add Existing Teams (Optional)</label>
             <select class="form-control" id="ctTeamsMulti" multiple style="min-height:80px;"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Quick Add Teams by Name (Optional)</label>
+            <div class="flex-gap">
+              <input class="form-control" id="ctQuickTeamInput" placeholder="Type team name and click + Add (e.g. Rampur Warriors)" />
+              <button type="button" class="btn btn-secondary btn-sm" id="ctQuickAddTeamBtn" style="white-space:nowrap;">+ Add Team</button>
+            </div>
+            <div id="ctQuickTeamsList" class="flex-gap mt-1" style="flex-wrap:wrap; gap:6px;"></div>
           </div>
           <div class="switch-row mb-2">
             <label for="ctPublic">Publicly Visible Tournament</label>

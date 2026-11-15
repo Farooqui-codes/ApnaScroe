@@ -9,6 +9,7 @@
   let currentTournament = null;
   let currentFixtures = [];
   let currentPoints = [];
+  let wizardQuickTeams = [];
 
   document.addEventListener('DOMContentLoaded', async () => {
     ApnaUI.initShell({ activePage: 'tournaments', pageTitle: 'Tournaments' });
@@ -66,33 +67,62 @@
         await ApnaAuth.continueAsGuest(null);
       } catch (_) {}
     }
+    wizardQuickTeams = [];
+    renderWizardQuickTeams();
     goTourStep(1);
     document.getElementById('createTourModal').classList.add('open');
   }
 
-  function goTourStep(step) {
-    if (step > 1) {
-      const name = document.getElementById('ctName').value.trim();
-      const village = document.getElementById('ctVillage').value.trim();
-      const start = document.getElementById('ctStart').value;
-      if (!name || !village || !start) {
-        ApnaUI.showToast('Please enter Tournament Name, Location, and Start Date first.', 'error');
-        step = 1;
-      }
-    }
-    document.querySelectorAll('.tw-panel').forEach((p) => {
-      p.classList.toggle('hidden', Number(p.dataset.twp) !== step);
-    });
-    document.querySelectorAll('#tourWizSteps .wizard-step-pill').forEach((pill) => {
-      const s = Number(pill.dataset.tw);
-      pill.classList.toggle('active', s === step);
-      pill.classList.toggle('done', s < step);
-    });
+  function renderWizardQuickTeams() {
+    const list = document.getElementById('ctQuickTeamsList');
+    if (!list) return;
+    list.innerHTML = wizardQuickTeams.map((name, i) => `
+      <span class="badge badge-neutral" style="padding:4px 8px; display:inline-flex; align-items:center; gap:6px;">
+        ${ApnaUI.escapeHtml(name)}
+        <button type="button" style="background:none; border:none; cursor:pointer; font-weight:bold; color:var(--text-danger);" onclick="window.removeWizardTeam(${i})">✕</button>
+      </span>
+    `).join('');
   }
+
+  window.removeWizardTeam = (idx) => {
+    wizardQuickTeams.splice(idx, 1);
+    renderWizardQuickTeams();
+  };
 
   function bindListControls() {
     document.getElementById('openCreateTourBtn').addEventListener('click', openCreateModal);
     document.getElementById('tourSearchInput').addEventListener('input', loadTournaments);
+
+    const unlimCheck = document.getElementById('ctUnlimitedTeams');
+    const maxTeamsInp = document.getElementById('ctMaxTeams');
+    if (unlimCheck && maxTeamsInp) {
+      unlimCheck.addEventListener('change', () => {
+        maxTeamsInp.disabled = unlimCheck.checked;
+        maxTeamsInp.value = unlimCheck.checked ? '' : '8';
+        maxTeamsInp.placeholder = unlimCheck.checked ? 'Unlimited Teams' : 'e.g. 8';
+      });
+    }
+
+    const quickTeamInp = document.getElementById('ctQuickTeamInput');
+    const quickAddBtn = document.getElementById('ctQuickAddTeamBtn');
+    const addQuickTeamFromInput = () => {
+      const val = quickTeamInp?.value.trim();
+      if (!val) return;
+      if (wizardQuickTeams.includes(val)) {
+        return ApnaUI.showToast('Team name already added.', 'warning');
+      }
+      wizardQuickTeams.push(val);
+      quickTeamInp.value = '';
+      renderWizardQuickTeams();
+    };
+
+    quickAddBtn?.addEventListener('click', addQuickTeamFromInput);
+    quickTeamInp?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addQuickTeamFromInput();
+      }
+    });
 
     document.querySelectorAll('#tourWizSteps .wizard-step-pill').forEach((pill) => {
       pill.addEventListener('click', () => goTourStep(Number(pill.dataset.tw)));
@@ -125,6 +155,7 @@
         const selectedTeams = Array.from(document.getElementById('ctTeamsMulti').selectedOptions).map((o) => o.value);
         const presetId = document.getElementById('ctRulePreset').value;
         const baseRules = ApnaScoringEngine.getPresetById(presetId);
+        const isUnlimited = document.getElementById('ctUnlimitedTeams')?.checked ?? false;
         const res = await ApnaAPI.post('/api/tournaments', {
           name,
           village,
@@ -134,11 +165,13 @@
           endDate,
           entryFee: Number(document.getElementById('ctFee').value || 0),
           prizeMoney: document.getElementById('ctPrize').value.trim(),
-          maxTeams: Number(document.getElementById('ctMaxTeams').value || 4),
+          unlimitedTeams: isUnlimited,
+          maxTeams: isUnlimited ? 0 : Number(document.getElementById('ctMaxTeams').value || 8),
           rules: baseRules,
           pointsConfig: { win: 2, loss: 0, tie: 1, noResult: 1, tieBreaker: document.getElementById('ctTieBreaker').value },
           isPublic: document.getElementById('ctPublic').checked,
-          teamIds: selectedTeams
+          teamIds: selectedTeams,
+          teamNames: wizardQuickTeams
         });
         document.getElementById('createTourModal').classList.remove('open');
         ApnaUI.showToast('Tournament created!');
@@ -183,12 +216,14 @@
           </div>
           <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
             <div class="flex-between text-sm">
-              <span class="text-muted">Teams: ${(t.registeredTeams || []).length}/${t.maxTeams}</span>
-              <span class="badge badge-success">${ApnaUI.escapeHtml(t.status.toUpperCase())}</span>
+              <span class="text-muted">Teams: ${(t.registeredTeams || []).length}${!t.maxTeams || t.maxTeams === 0 ? ' (Unlimited)' : `/${t.maxTeams}`}</span>
+              <span class="badge ${t.status === 'ongoing' ? 'badge-success' : (t.status === 'completed' ? 'badge-neutral' : 'badge-lime')}">${ApnaUI.escapeHtml(t.status.toUpperCase())}</span>
             </div>
             ${t.winnerTeamId ? `<div class="text-sm" style="color:var(--text-brand);font-weight:700;">Winner: ${ApnaUI.escapeHtml(t.winnerTeamId.name)}</div>` : ''}
-            <div class="flex-gap mt-1">
-              <a href="/tournament.html?id=${t._id}" class="btn btn-primary btn-sm">Open Tournament</a>
+            <div class="flex-gap mt-1" style="flex-wrap:wrap;">
+              ${(t.status === 'upcoming' || t.status === 'registration_open') ? `<button type="button" class="btn btn-primary btn-sm" onclick="TourStartQuick('${t._id}', event)">▶ Start</button>` : ''}
+              ${t.status === 'ongoing' ? `<a href="/match-create.html?tournamentId=${t._id}" class="btn btn-lime btn-sm">⚡ Start Match</a>` : ''}
+              <a href="/tournament.html?id=${t._id}" class="btn btn-secondary btn-sm">Open Tournament</a>
               ${t.plan !== 'pro' ? `<button type="button" class="btn btn-lime btn-sm" onclick="TourUpgrade('${t._id}','${ApnaUI.escapeHtml(t.name)}')">Upgrade Pro</button>` : ''}
             </div>
           </div>
@@ -205,14 +240,52 @@
     }
   };
 
+  window.TourStartQuick = async (tourId, e) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await ApnaAPI.post(`/api/tournaments/${tourId}/start`, {});
+      ApnaUI.showToast(res.message || 'Tournament started successfully!');
+      window.location.href = `/tournament.html?id=${tourId}`;
+    } catch (err) {
+      ApnaUI.showToast(err.message || 'Could not start tournament. Please check teams.', 'error');
+      window.location.href = `/tournament.html?id=${tourId}`;
+    }
+  };
+
+  function switchDetailTab(tabKey) {
+    document.querySelectorAll('#tourDetailTabs .tab-btn').forEach((b) => {
+      b.classList.toggle('active', b.dataset.ttab === tabKey);
+    });
+    ['overview', 'teams', 'fees', 'fixtures', 'points', 'live', 'results', 'settings'].forEach((k) => {
+      document.getElementById(`tPanel-${k}`)?.classList.toggle('hidden', k !== tabKey);
+    });
+  }
+
+  async function doStartTournament(tourId) {
+    const t = currentTournament;
+    const approved = (t?.registeredTeams || []).filter((r) => r.status === 'approved');
+    if (approved.length < 2) {
+      ApnaUI.showToast('Please add at least 2 teams before starting the tournament.', 'error');
+      switchDetailTab('teams');
+      return;
+    }
+    try {
+      const res = await ApnaAPI.post(`/api/tournaments/${tourId}/start`, {});
+      ApnaUI.showToast(res.message || 'Tournament started successfully!');
+      if (window.ApnaAnimations && ApnaAnimations.celebrate) {
+        ApnaAnimations.celebrate('MATCH TIME!', 'six');
+      }
+      await loadTournamentDetail(tourId);
+      switchDetailTab('fixtures');
+    } catch (err) {
+      ApnaUI.showToast(err.message || 'Failed to start tournament', 'error');
+    }
+  }
+
   function bindDetailTabs() {
     document.querySelectorAll('#tourDetailTabs .tab-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        document.querySelectorAll('#tourDetailTabs .tab-btn').forEach((b) => b.classList.remove('active'));
-        btn.classList.add('active');
-        ['overview', 'teams', 'fees', 'fixtures', 'points', 'live', 'results', 'settings'].forEach((k) => {
-          document.getElementById(`tPanel-${k}`)?.classList.toggle('hidden', k !== btn.dataset.ttab);
-        });
+        switchDetailTab(btn.dataset.ttab);
       });
     });
   }
@@ -238,6 +311,23 @@
       const upgBtn = document.getElementById('tdUpgradeProBtn');
       if (planBadge) planBadge.classList.add('hidden');
       if (upgBtn) upgBtn.classList.add('hidden');
+
+      const startTourBtn = document.getElementById('tdStartTourBtn');
+      if (startTourBtn) {
+        if (t.status === 'upcoming' || t.status === 'registration_open') {
+          startTourBtn.classList.remove('hidden');
+          startTourBtn.textContent = '▶ Start Tournament';
+          startTourBtn.className = 'btn btn-primary btn-sm';
+          startTourBtn.onclick = () => doStartTournament(t._id);
+        } else if (t.status === 'ongoing') {
+          startTourBtn.classList.remove('hidden');
+          startTourBtn.textContent = '⚡ Start Match';
+          startTourBtn.className = 'btn btn-lime btn-sm';
+          startTourBtn.onclick = () => { window.location.href = `/match-create.html?tournamentId=${t._id}`; };
+        } else {
+          startTourBtn.classList.add('hidden');
+        }
+      }
 
       document.getElementById('tdProPdfBtn').onclick = async () => {
         try {
@@ -281,13 +371,49 @@
     const liveCount = matches.filter((m) => ['live', 'paused', 'innings_break'].includes(m.status)).length;
     const doneCount = matches.filter((m) => ['completed', 'tied'].includes(m.status)).length;
     const pubUrl = `${window.location.origin}/public-tournament.html?id=${t.shareCode || t._id}`;
+    const teamsCountDisplay = !t.maxTeams || t.maxTeams === 0 ? `${(t.registeredTeams || []).length} (Unlimited)` : `${(t.registeredTeams || []).length} / ${t.maxTeams}`;
+    const isUpcoming = t.status === 'upcoming' || t.status === 'registration_open';
+    const isOngoing = t.status === 'ongoing';
+
     document.getElementById('tPanel-overview').innerHTML = `
+      ${isUpcoming ? `
+        <div class="card mb-2" style="background: linear-gradient(135deg, rgba(32,139,78,0.12), rgba(15,56,34,0.04)); border: 1.5px solid var(--brand-primary); padding: 16px; border-radius: var(--radius-md);">
+          <div class="flex-between" style="flex-wrap: wrap; gap: 12px;">
+            <div>
+              <div class="badge badge-neutral mb-1">Status: UPCOMING</div>
+              <h3 style="margin: 0 0 4px; color: var(--brand-primary); font-size: 1.15rem;">Ready to Kick Off Tournament?</h3>
+              <p class="text-sm text-muted" style="margin: 0;">Add your teams, then click Start Tournament to auto-generate fixtures and begin live match scoring.</p>
+            </div>
+            <div class="flex-gap">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="TourWiz.switchTab('teams')">+ Add Teams</button>
+              <button type="button" class="btn btn-primary" id="ovStartTourBtn">▶ Start Tournament</button>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
+      ${isOngoing ? `
+        <div class="card mb-2" style="background: linear-gradient(135deg, rgba(32,139,78,0.1), rgba(15,56,34,0.02)); border: 1.5px solid var(--brand-primary); padding: 14px; border-radius: var(--radius-md);">
+          <div class="flex-between" style="flex-wrap: wrap; gap: 10px;">
+            <div>
+              <span class="badge badge-success mb-1">🔴 LIVE / ONGOING</span>
+              <h4 style="margin: 0 0 2px; color: var(--brand-primary);">Tournament is Live!</h4>
+              <p class="text-sm text-muted" style="margin: 0;">Select a fixture to score or start an ad-hoc match immediately.</p>
+            </div>
+            <div class="flex-gap">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="TourWiz.switchTab('fixtures')">View Schedule</button>
+              <a href="/match-create.html?tournamentId=${t._id}" class="btn btn-primary btn-sm">⚡ Start Match</a>
+            </div>
+          </div>
+        </div>
+      ` : ''}
+
       <div class="card-header">
         <h3 class="card-title">Tournament Overview</h3>
-        <span class="badge ${t.plan === 'pro' ? 'badge-success' : 'badge-neutral'}">${t.plan === 'pro' ? 'PRO ACTIVE' : 'FREE (Max 4 Teams)'}</span>
+        <span class="badge ${t.plan === 'pro' ? 'badge-success' : 'badge-neutral'}">${t.plan === 'pro' ? 'PRO ACTIVE' : 'UNLIMITED TEAMS ENABLED'}</span>
       </div>
       <div class="kpi-grid">
-        <div class="kpi-card"><span class="kpi-label">Registered Teams</span><span class="kpi-value">${(t.registeredTeams || []).length} / ${t.maxTeams}</span></div>
+        <div class="kpi-card"><span class="kpi-label">Registered Teams</span><span class="kpi-value">${teamsCountDisplay}</span></div>
         <div class="kpi-card"><span class="kpi-label">Fixtures</span><span class="kpi-value">${fixtures.length}</span></div>
         <div class="kpi-card"><span class="kpi-label">Live Matches</span><span class="kpi-value">${liveCount}</span></div>
         <div class="kpi-card"><span class="kpi-label">Completed</span><span class="kpi-value">${doneCount}</span></div>
@@ -303,6 +429,12 @@
       </div>
       ${t.winnerTeamId ? `<div class="card" style="background:var(--success-bg);"><strong>Champion: ${ApnaUI.escapeHtml(t.winnerTeamId.name)}</strong></div>` : ''}
     `;
+
+    const ovStartBtn = document.getElementById('ovStartTourBtn');
+    if (ovStartBtn) {
+      ovStartBtn.onclick = () => doStartTournament(t._id);
+    }
+
     document.getElementById('ovCopyLinkBtn').onclick = () => {
       navigator.clipboard?.writeText(pubUrl).catch(() => {});
       ApnaUI.showToast('Tournament link copied!');
@@ -313,19 +445,46 @@
     const el = document.getElementById('tPanel-teams');
     const regIds = new Set((t.registeredTeams || []).map((r) => String(r.teamId?._id || r.teamId)));
     const available = allTeams.filter((team) => !regIds.has(String(team._id)));
+    const teamsCountDisplay = !t.maxTeams || t.maxTeams === 0 ? `${(t.registeredTeams || []).length} (Unlimited)` : `${(t.registeredTeams || []).length} / ${t.maxTeams}`;
 
     el.innerHTML = `
       <div class="card-header">
-        <h3 class="card-title">Teams (${(t.registeredTeams || []).length} / ${t.maxTeams})</h3>
-        <a href="/team.html?action=create" class="btn btn-secondary btn-sm">+ Create New Team</a>
+        <h3 class="card-title">Teams (${teamsCountDisplay})</h3>
+        <span class="badge badge-success">Unlimited Teams Allowed</span>
       </div>
-      <div class="flex-gap mb-2">
-        <select class="form-control" id="regTeamSelect" style="max-width:280px;">
-          ${available.map((tm) => `<option value="${tm._id}">${ApnaUI.escapeHtml(tm.name)} (${ApnaUI.escapeHtml(tm.village)})</option>`).join('') || '<option value="">No available teams</option>'}
-        </select>
-        <input class="form-control" id="regGroupInput" value="Group A" style="max-width:130px;" />
-        <button type="button" class="btn btn-primary btn-sm" id="regTeamBtn">+ Add Team</button>
+
+      <!-- Quick Add New Team By Name -->
+      <div class="card mb-2" style="background:var(--bg-surface-alt);">
+        <strong class="text-sm">Quick Add New Team</strong>
+        <div class="flex-gap mt-1" style="flex-wrap:wrap;">
+          <input class="form-control" id="newTeamNameInput" placeholder="Enter team name (e.g. Rampur Warriors)" style="flex:2; min-width:180px;" />
+          <input class="form-control" id="newTeamVillageInput" placeholder="Village / City" value="${ApnaUI.escapeHtml(t.village || '')}" style="flex:1; min-width:130px;" />
+          <input class="form-control" id="newTeamGroupInput" value="Group A" style="max-width:110px;" />
+          <button type="button" class="btn btn-primary btn-sm" id="quickCreateTeamBtn" style="white-space:nowrap;">+ Create & Add</button>
+        </div>
       </div>
+
+      <!-- Select From Existing Saved Teams -->
+      <div class="card mb-2" style="background:var(--bg-surface-alt);">
+        <strong class="text-sm">Add From Existing Saved Teams</strong>
+        <div class="flex-gap mt-1">
+          <select class="form-control" id="regTeamSelect" style="flex:1;">
+            ${available.map((tm) => `<option value="${tm._id}">${ApnaUI.escapeHtml(tm.name)} (${ApnaUI.escapeHtml(tm.village)})</option>`).join('') || '<option value="">No other saved teams available</option>'}
+          </select>
+          <input class="form-control" id="regGroupInput" value="Group A" style="max-width:110px;" />
+          <button type="button" class="btn btn-secondary btn-sm" id="regTeamBtn" ${!available.length ? 'disabled' : ''}>+ Add Selected</button>
+        </div>
+      </div>
+
+      <!-- Bulk Add Teams -->
+      <details class="card mb-2" style="background:var(--bg-surface-alt);">
+        <summary style="cursor:pointer; font-weight:700; font-size:0.9rem; color:var(--text-brand);">+ Bulk Add Multiple Teams (Comma-separated)</summary>
+        <div class="mt-2">
+          <textarea class="form-control" id="bulkTeamsTextarea" rows="2" placeholder="e.g. Rampur XI, Bazaar Tigers, Village Blasters, Super Kings"></textarea>
+          <button type="button" class="btn btn-secondary btn-sm mt-1" id="bulkAddTeamsBtn">Add All Teams</button>
+        </div>
+      </details>
+
       <div>
         ${(t.registeredTeams || []).map((r) => {
           const tm = r.teamId || {};
@@ -333,7 +492,7 @@
             <div class="fixture-card">
               <div>
                 <strong>${ApnaUI.escapeHtml(tm.name || 'Team')}</strong>
-                <span class="text-sm text-muted"> • ${ApnaUI.escapeHtml(r.groupName)} • ${ApnaUI.escapeHtml(r.status.toUpperCase())}</span>
+                <span class="text-sm text-muted"> • ${ApnaUI.escapeHtml(r.groupName || 'Group A')} • ${ApnaUI.escapeHtml((r.status || 'approved').toUpperCase())}</span>
                 ${r.captainName ? `<div class="text-sm text-muted">Captain: ${ApnaUI.escapeHtml(r.captainName)} ${r.captainPhone ? `(${ApnaUI.escapeHtml(r.captainPhone)})` : ''}</div>` : ''}
               </div>
               <div class="flex-gap">
@@ -341,13 +500,32 @@
               </div>
             </div>
           `;
-        }).join('') || '<div class="empty-state">No teams added to this tournament yet.</div>'}
+        }).join('') || '<div class="empty-state">No teams added to this tournament yet. Add teams above!</div>'}
       </div>
     `;
 
+    document.getElementById('quickCreateTeamBtn').onclick = async () => {
+      const name = document.getElementById('newTeamNameInput').value.trim();
+      const village = document.getElementById('newTeamVillageInput').value.trim();
+      const groupName = document.getElementById('newTeamGroupInput').value.trim() || 'Group A';
+      if (!name) return ApnaUI.showToast('Please enter a team name.', 'error');
+      try {
+        await ApnaAPI.post(`/api/tournaments/${t._id}/register-team`, {
+          teamName: name,
+          village: village || t.village,
+          groupName
+        });
+        ApnaUI.showToast(`Team "${name}" added!`);
+        await loadTeamsForSelect();
+        await loadTournamentDetail(t._id);
+      } catch (err) {
+        ApnaUI.showToast(err.message || 'Failed to add team', 'error');
+      }
+    };
+
     document.getElementById('regTeamBtn').onclick = async () => {
       const teamId = document.getElementById('regTeamSelect').value;
-      if (!teamId) return ApnaUI.showToast('Create or select a team first.', 'error');
+      if (!teamId) return ApnaUI.showToast('Select a team first.', 'error');
       try {
         await ApnaAPI.post(`/api/tournaments/${t._id}/register-team`, {
           teamId,
@@ -356,8 +534,29 @@
         ApnaUI.showToast('Team added.');
         await loadTournamentDetail(t._id);
       } catch (err) {
-        handleProError(err, t, 'More Than 4 Teams');
+        ApnaUI.showToast(err.message || 'Failed to add team', 'error');
       }
+    };
+
+    document.getElementById('bulkAddTeamsBtn').onclick = async () => {
+      const text = document.getElementById('bulkTeamsTextarea').value.trim();
+      if (!text) return ApnaUI.showToast('Enter team names separated by commas.', 'error');
+      const names = text.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+      if (!names.length) return;
+      let count = 0;
+      for (const tName of names) {
+        try {
+          await ApnaAPI.post(`/api/tournaments/${t._id}/register-team`, {
+            teamName: tName,
+            village: t.village,
+            groupName: 'Group A'
+          });
+          count++;
+        } catch (_) {}
+      }
+      ApnaUI.showToast(`Added ${count} team(s)!`);
+      await loadTeamsForSelect();
+      await loadTournamentDetail(t._id);
     };
   }
 
@@ -708,5 +907,10 @@
     bindMedia('tourSponsorUploadInp', 'sponsor');
   }
 
-  root.TourWiz = { go: goTourStep, openCreate: openCreateModal };
+  root.TourWiz = {
+    go: goTourStep,
+    openCreate: openCreateModal,
+    switchTab: switchDetailTab,
+    startTournament: doStartTournament
+  };
 }(window));

@@ -124,8 +124,14 @@ async function createTournament(req, res, next) {
       });
     }
 
-    const requestedMaxTeams = Number(maxTeams || 16);
+    const isUnlimited = req.body.unlimitedTeams === true ||
+      maxTeams === 'unlimited' ||
+      maxTeams === 0 ||
+      maxTeams === '0' ||
+      !maxTeams;
+    const requestedMaxTeams = isUnlimited ? 0 : Math.max(0, Number(maxTeams) || 0);
     const requestedFormat = format || 'knockout';
+    const initialStatus = req.body.status || 'upcoming';
 
     const { rules: validatedRules } = engine.validateAndNormalizeRules(
       Object.assign({}, rules || {}, {
@@ -136,19 +142,44 @@ async function createTournament(req, res, next) {
       })
     );
 
-    const registeredTeams = Array.isArray(teamIds)
-      ? teamIds.map((id, idx) => ({
-          teamId: id,
-          groupName: requestedFormat === 'group_stage' ? (idx % 2 === 0 ? 'Group A' : 'Group B') : 'Group A',
-          status: 'approved'
-        }))
-      : [];
-
     const isGuest = Boolean(req.guest);
     const organizerNameVal =
       organizerName ||
       (req.user ? req.user.name : (req.guest ? req.guest.name || 'Guest Organizer' : 'Organizer'));
     const organizerIdVal = req.user ? req.user._id : null;
+
+    const registeredTeams = [];
+    if (Array.isArray(teamIds)) {
+      teamIds.forEach((id, idx) => {
+        registeredTeams.push({
+          teamId: id,
+          groupName: requestedFormat === 'group_stage' ? (idx % 2 === 0 ? 'Group A' : 'Group B') : 'Group A',
+          status: 'approved'
+        });
+      });
+    }
+
+    if (Array.isArray(req.body.teamNames)) {
+      for (let idx = 0; idx < req.body.teamNames.length; idx++) {
+        const rawName = String(req.body.teamNames[idx] || '').trim();
+        if (!rawName) continue;
+        const shortName = rawName.split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 4) || 'TEAM';
+        const team = await Team.create({
+          ownerType: isGuest ? 'guest' : 'user',
+          guestId: isGuest ? req.guest.guestId : null,
+          userId: req.user ? req.user._id : null,
+          name: rawName,
+          shortName,
+          village: String(village).trim(),
+          managerId: req.user ? req.user._id : null
+        });
+        registeredTeams.push({
+          teamId: team._id,
+          groupName: requestedFormat === 'group_stage' ? (registeredTeams.length % 2 === 0 ? 'Group A' : 'Group B') : 'Group A',
+          status: 'approved'
+        });
+      }
+    }
 
     const tournament = await Tournament.create({
       name: String(name).trim(),
@@ -169,7 +200,7 @@ async function createTournament(req, res, next) {
       ballType: ballType || 'tennis',
       format: requestedFormat,
       isPublic: isPublic !== false,
-      status: 'ongoing',
+      status: initialStatus,
       rulesSnapshot: validatedRules,
       pointsConfig: pointsConfig || { win: 2, loss: 0, tie: 1, noResult: 1, tieBreaker: 'nrr' },
       registeredTeams,
@@ -209,15 +240,78 @@ async function updateTournament(req, res, next) {
   }
 }
 
+async function startTournament(req, res, next) {
+  try {
+    const tournament = req.tournament;
+    const approved = (tournament.registeredTeams || []).filter((r) => r.status === 'approved');
+    if (approved.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least 2 approved teams are required to start the tournament.'
+      });
+    }
+
+    tournament.status = 'ongoing';
+    await tournament.save();
+
+    const existingFixturesCount = await TournamentFixture.countDocuments({ tournamentId: tournament._id });
+    let fixtures = [];
+    if (existingFixturesCount === 0) {
+      fixtures = await tournamentService.generateFixturesForTournament(tournament._id);
+    } else {
+      fixtures = await TournamentFixture.find({ tournamentId: tournament._id }).sort({ roundOrder: 1, matchNumber: 1 });
+    }
+
+    await tournamentService.rebuildPointsTable(tournament._id);
+    await logAudit({ req, action: 'TOURNAMENT_STARTED', entityType: 'Tournament', entityId: tournament._id, details: { name: tournament.name } });
+
+    res.json({
+      success: true,
+      message: 'Tournament started successfully!',
+      tournament,
+      fixtures
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function registerTeam(req, res, next) {
   try {
     const tournament = await Tournament.findById(req.params.id);
     if (!tournament) return res.status(404).json({ success: false, message: 'Tournament not found.' });
 
-    const { teamId, groupName } = req.body;
-    if (!teamId) return res.status(400).json({ success: false, message: 'teamId is required.' });
+    let { teamId, teamName, village, groupName } = req.body;
+    if (!teamId && !teamName) {
+      return res.status(400).json({ success: false, message: 'teamId or teamName is required.' });
+    }
 
-    const team = await Team.findById(teamId);
+    if (tournament.maxTeams > 0 && tournament.registeredTeams.length >= tournament.maxTeams) {
+      return res.status(400).json({
+        success: false,
+        message: `Tournament team limit of ${tournament.maxTeams} reached. You can change tournament to unlimited teams in settings.`
+      });
+    }
+
+    let team;
+    if (teamId) {
+      team = await Team.findById(teamId);
+    } else if (teamName) {
+      const trimmedName = String(teamName).trim();
+      const isGuest = Boolean(req.guest && !req.user);
+      const shortName = trimmedName.split(/\s+/).map((w) => w[0]).join('').toUpperCase().slice(0, 4) || 'TEAM';
+      team = await Team.create({
+        ownerType: isGuest ? 'guest' : 'user',
+        guestId: isGuest ? req.guest.guestId : null,
+        userId: req.user ? req.user._id : null,
+        name: trimmedName,
+        shortName,
+        village: village ? String(village).trim() : tournament.village,
+        managerId: req.user ? req.user._id : null
+      });
+      teamId = team._id;
+    }
+
     if (!team) return res.status(404).json({ success: false, message: 'Team not found.' });
 
     const existing = tournament.registeredTeams.find((r) => String(r.teamId) === String(teamId));
@@ -229,7 +323,7 @@ async function registerTeam(req, res, next) {
       ? (tournament.ownerType === 'guest' && tournament.guestId === req.guest.guestId)
       : (req.user && (req.user.role === 'super_admin' || String(tournament.organizerId) === String(req.user._id)));
     tournament.registeredTeams.push({
-      teamId,
+      teamId: team._id,
       groupName: groupName || 'Group A',
       status: isOrganizer ? 'approved' : 'pending',
       feeStatus: tournament.entryFee > 0 ? 'pending' : 'waived'
@@ -237,7 +331,10 @@ async function registerTeam(req, res, next) {
     await tournament.save();
     await tournamentService.rebuildPointsTable(tournament._id);
 
-    res.json({ success: true, tournament });
+    const updated = await Tournament.findById(tournament._id)
+      .populate('registeredTeams.teamId', 'name shortName village logoUrl');
+
+    res.json({ success: true, tournament: updated, newTeam: team });
   } catch (err) {
     next(err);
   }
@@ -481,6 +578,7 @@ module.exports = {
   listTournaments,
   getTournament,
   createTournament,
+  startTournament,
   updateTournament,
   registerTeam,
   approveTeam,

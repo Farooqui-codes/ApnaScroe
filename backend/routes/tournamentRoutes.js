@@ -10,6 +10,7 @@ router.get('/', optionalAuth, tourCtrl.listTournaments);
 router.get('/:id', tourCtrl.getTournament);
 router.post('/', authenticateOrGuest, tourCtrl.createTournament);
 router.put('/:id', authenticateOrGuest, canManageTournament, tourCtrl.updateTournament);
+router.post('/:id/start', authenticateOrGuest, canManageTournament, tourCtrl.startTournament);
 router.post('/:id/register-team', authenticateOrGuest, tourCtrl.registerTeam);
 router.post('/:id/approve-team', authenticateOrGuest, canManageTournament, tourCtrl.approveTeam);
 router.put('/:id/entry-fees/:teamId', authenticateOrGuest, canManageTournament, tourCtrl.updateEntryFee);

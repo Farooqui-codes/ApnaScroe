@@ -53,14 +53,26 @@ async function generateFixturesForTournament(tournamentId) {
   const fmt = tournament.format;
 
   if (fmt === 'knockout' || fmt === 'double_elimination') {
-    const roundName = teams.length <= 2 ? 'Final' : teams.length <= 4 ? 'Semi-Final' : 'Quarter-Final';
+    const numTeams = teams.length;
+    const r1Name = numTeams <= 2 ? 'Final' : numTeams <= 4 ? 'Semi-Final' : numTeams <= 8 ? 'Quarter-Final' : numTeams <= 16 ? 'Round of 16' : 'Round 1';
     for (let i = 0; i < teams.length; i += 2) {
       if (teams[i + 1]) {
-        makeFixture(teams[i], teams[i + 1], roundName, 1, 'Knockout');
+        makeFixture(teams[i], teams[i + 1], r1Name, 1, 'Knockout');
+      } else {
+        makeFixture(teams[i], null, `${r1Name} (Bye)`, 1, 'Knockout');
       }
     }
-    if (teams.length > 2) {
-      makeFixture(null, null, 'Final', 2, 'Knockout');
+    let remainingMatches = Math.ceil(numTeams / 2);
+    let roundOrder = 2;
+    while (remainingMatches > 1) {
+      const nextMatches = Math.ceil(remainingMatches / 2);
+      const nextRoundName = nextMatches === 1 ? 'Final' : nextMatches === 2 ? 'Semi-Final' : nextMatches <= 4 ? 'Quarter-Final' : `Round ${roundOrder}`;
+      for (let m = 0; m < nextMatches; m++) {
+        const title = nextMatches === 1 ? 'Final' : `${nextRoundName} ${m + 1}`;
+        makeFixture(null, null, title, roundOrder, 'Knockout');
+      }
+      remainingMatches = nextMatches;
+      roundOrder++;
     }
   } else if (fmt === 'group_stage') {
     const groups = {};

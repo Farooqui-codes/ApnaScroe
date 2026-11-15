@@ -62,6 +62,34 @@
       }
       userTeams = merged;
 
+      let tourData = null;
+      if (urlTournamentId) {
+        try {
+          const res = await ApnaAPI.get(`/api/tournaments/${urlTournamentId}`);
+          tourData = res?.tournament;
+          if (tourData) {
+            const noticeEl = document.getElementById('tournamentMatchNotice');
+            if (noticeEl) {
+              noticeEl.textContent = `Tournament Match: ${tourData.name} (${tourData.village})`;
+              noticeEl.classList.remove('hidden');
+            }
+            // Add tournament teams to userTeams if not present
+            (tourData.registeredTeams || []).forEach((reg) => {
+              const tm = reg.teamId;
+              if (tm && !merged.some((t) => String(t._id) === String(tm._id))) {
+                merged.push(tm);
+              }
+            });
+            // If tournament has specific overs
+            if (tourData.oversPerMatch) {
+              document.getElementById('customOversInput').value = tourData.oversPerMatch;
+            }
+          }
+        } catch (_) {}
+      }
+
+      userTeams = merged;
+
       const dl = document.getElementById('existingTeamsDatalist');
       dl.innerHTML = userTeams.map((t) => `<option value="${ApnaUI.escapeHtml(t.name)}"></option>`).join('');
 
@@ -72,6 +100,14 @@
       if (preselectedTeamBId) {
         const tB = userTeams.find((t) => String(t._id) === String(preselectedTeamBId));
         if (tB) document.getElementById('teamBNameInput').value = tB.name;
+      }
+
+      // If no teams preselected yet but tournament has registered teams, prefill first two
+      if (tourData && !document.getElementById('teamANameInput').value && (tourData.registeredTeams || []).length >= 2) {
+        const t1 = tourData.registeredTeams[0]?.teamId;
+        const t2 = tourData.registeredTeams[1]?.teamId;
+        if (t1) document.getElementById('teamANameInput').value = t1.name || '';
+        if (t2) document.getElementById('teamBNameInput').value = t2.name || '';
       }
 
       if (setRes.preferences && setRes.preferences.defaultScoring && setRes.preferences.defaultScoring.rules) {
