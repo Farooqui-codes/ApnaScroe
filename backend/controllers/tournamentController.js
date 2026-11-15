@@ -17,8 +17,23 @@ async function listTournaments(req, res, next) {
     const { status, village, search, mine } = req.query;
     const query = {};
     if (mine === '1') {
-      if (req.user) query.organizerId = req.user._id;
-      else return res.json({ success: true, tournaments: [] });
+      if (req.user) {
+        query.$or = [{ organizerId: req.user._id }, { ownerType: 'user', userId: req.user._id }];
+      } else if (req.guest) {
+        query.ownerType = 'guest';
+        query.guestId = req.guest.guestId;
+      } else {
+        return res.json({ success: true, tournaments: [] });
+      }
+    } else {
+      if (req.guest) {
+        query.$or = [
+          { ownerType: { $ne: 'guest' } },
+          { ownerType: 'guest', guestId: req.guest.guestId }
+        ];
+      } else if (!req.user) {
+        query.ownerType = { $ne: 'guest' };
+      }
     }
     if (status) query.status = status;
     if (village) query.village = new RegExp(String(village), 'i');
@@ -129,12 +144,20 @@ async function createTournament(req, res, next) {
         }))
       : [];
 
+    const isGuest = Boolean(req.guest);
+    const organizerNameVal =
+      organizerName ||
+      (req.user ? req.user.name : (req.guest ? req.guest.name || 'Guest Organizer' : 'Organizer'));
+    const organizerIdVal = req.user ? req.user._id : null;
+
     const tournament = await Tournament.create({
       name: String(name).trim(),
       season: season || String(new Date().getFullYear()),
       village: String(village).trim(),
-      organizerName: organizerName || req.user.name,
-      organizerId: req.user._id,
+      organizerName: organizerNameVal,
+      organizerId: organizerIdVal,
+      ownerType: isGuest ? 'guest' : 'user',
+      guestId: isGuest ? req.guest.guestId : null,
       plan: 'free',
       startDate: new Date(startDate),
       endDate: new Date(endDate),
@@ -202,7 +225,9 @@ async function registerTeam(req, res, next) {
       return res.status(409).json({ success: false, message: 'Team is already registered in this tournament.' });
     }
 
-    const isOrganizer = req.user.role === 'super_admin' || String(tournament.organizerId) === String(req.user._id);
+    const isOrganizer = req.guest
+      ? (tournament.ownerType === 'guest' && tournament.guestId === req.guest.guestId)
+      : (req.user && (req.user.role === 'super_admin' || String(tournament.organizerId) === String(req.user._id)));
     tournament.registeredTeams.push({
       teamId,
       groupName: groupName || 'Group A',

@@ -1,23 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const tourCtrl = require('../controllers/tournamentController');
-const { authenticate, optionalAuth } = require('../middleware/auth');
-const { requireRole, canManageTournament } = require('../middleware/rbac');
+const { authenticateOrGuest, optionalAuth } = require('../middleware/auth');
+const { canManageTournament } = require('../middleware/rbac');
 const { requireProTournament } = require('../middleware/proAccess');
 const { uploadImage } = require('../middleware/upload');
 
 router.get('/', optionalAuth, tourCtrl.listTournaments);
 router.get('/:id', tourCtrl.getTournament);
-router.post('/', authenticate, tourCtrl.createTournament);
-router.put('/:id', authenticate, canManageTournament, tourCtrl.updateTournament);
-router.post('/:id/register-team', authenticate, tourCtrl.registerTeam);
-router.post('/:id/approve-team', authenticate, canManageTournament, tourCtrl.approveTeam);
-router.put('/:id/entry-fees/:teamId', authenticate, canManageTournament, tourCtrl.updateEntryFee);
-router.post('/:id/fixtures/generate', authenticate, canManageTournament, tourCtrl.generateFixtures);
-router.post('/:id/fixtures/manual', authenticate, canManageTournament, tourCtrl.addManualFixture);
-router.put('/:id/fixtures/:fixtureId', authenticate, canManageTournament, tourCtrl.updateFixture);
-router.post('/:id/winner', authenticate, canManageTournament, tourCtrl.announceWinner);
-router.post('/:id/media', authenticate, canManageTournament, uploadImage.single('image'), tourCtrl.uploadTournamentMedia);
-router.get('/:id/pro-pdf', authenticate, canManageTournament, tourCtrl.downloadProPDF);
+router.post('/', authenticateOrGuest, tourCtrl.createTournament);
+router.put('/:id', authenticateOrGuest, canManageTournament, tourCtrl.updateTournament);
+router.post('/:id/register-team', authenticateOrGuest, tourCtrl.registerTeam);
+router.post('/:id/approve-team', authenticateOrGuest, canManageTournament, tourCtrl.approveTeam);
+router.put('/:id/entry-fees/:teamId', authenticateOrGuest, canManageTournament, tourCtrl.updateEntryFee);
+router.post('/:id/fixtures/generate', authenticateOrGuest, canManageTournament, tourCtrl.generateFixtures);
+router.post('/:id/fixtures/manual', authenticateOrGuest, canManageTournament, tourCtrl.addManualFixture);
+router.put('/:id/fixtures/:fixtureId', authenticateOrGuest, canManageTournament, tourCtrl.updateFixture);
+router.post('/:id/winner', authenticateOrGuest, canManageTournament, tourCtrl.announceWinner);
+router.post('/:id/media', authenticateOrGuest, canManageTournament, uploadImage.single('image'), tourCtrl.uploadTournamentMedia);
+router.get('/:id/pro-pdf', authenticateOrGuest, canManageTournament, tourCtrl.downloadProPDF);
 
 module.exports = router;

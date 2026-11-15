@@ -6,6 +6,7 @@ const Match = require('../models/Match');
 const Team = require('../models/Team');
 const Player = require('../models/Player');
 const ScoringRule = require('../models/ScoringRule');
+const Tournament = require('../models/Tournament');
 const { hashSessionToken, resolveGuestFromRequest } = require('../middleware/auth');
 const migrationService = require('../services/migrationService');
 const { logAudit } = require('../utils/logger');
@@ -77,11 +78,12 @@ async function getGuestSession(req, res, next) {
       return res.status(401).json({ success: false, message: 'Invalid or expired guest session.' });
     }
 
-    const [matches, teams, players, rules] = await Promise.all([
+    const [matches, teams, players, rules, tournaments] = await Promise.all([
       Match.countDocuments({ ownerType: 'guest', guestId: guest.guestId }),
       Team.countDocuments({ ownerType: 'guest', guestId: guest.guestId }),
       Player.countDocuments({ ownerType: 'guest', guestId: guest.guestId }),
-      ScoringRule.countDocuments({ ownerType: 'guest', guestId: guest.guestId })
+      ScoringRule.countDocuments({ ownerType: 'guest', guestId: guest.guestId }),
+      Tournament.countDocuments({ ownerType: 'guest', guestId: guest.guestId })
     ]);
 
     res.json({
@@ -94,7 +96,7 @@ async function getGuestSession(req, res, next) {
         expiresAt: guest.expiresAt,
         lastActiveAt: guest.lastActiveAt
       },
-      counts: { matches, teams, players, customRules: rules }
+      counts: { matches, teams, players, customRules: rules, tournaments }
     });
   } catch (err) {
     next(err);

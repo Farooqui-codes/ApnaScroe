@@ -61,11 +61,7 @@
   }
 
   function openCreateModal() {
-    if (!ApnaAuth.isLoggedIn()) {
-      if (window.ApnaMigrate) {
-        ApnaMigrate.showRestrictionPrompt('Create a free account to publish your match and manage tournaments.');
-        return;
-      }
+    if (!ApnaAuth.isAuthenticatedOrGuest()) {
       ApnaAuth.requireAuth();
       return;
     }

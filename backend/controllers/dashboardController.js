@@ -40,7 +40,7 @@ async function getDashboardSummary(req, res, next) {
       : { $or: [{ userId: req.user._id }, { createdBy: req.user._id }] };
 
     const tourOwnerFilter = req.guest
-      ? { _id: null }
+      ? { ownerType: 'guest', guestId: req.guest.guestId, status: { $in: ['upcoming', 'registration_open', 'ongoing'] } }
       : { organizerId: req.user._id, status: { $in: ['upcoming', 'registration_open', 'ongoing'] } };
 
     const [

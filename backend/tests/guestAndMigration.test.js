@@ -75,10 +75,11 @@ describe('Guest Access & Guest-to-Account Migration (MongoDB + HTTP E2E)', () =>
     const badTokenRes = await api('GET', '/api/guest/session', null, { 'X-Guest-Id': g1Res.data.guestId, 'X-Guest-Token': 'forged_token' });
     assert.equal(badTokenRes.status, 401);
 
-    // Guest A tries to create a public tournament -> friendly 403 restriction
-    const tourDenied = await api('POST', '/api/tournaments', { name: 'Public Cup', village: 'Rampur', startDate: new Date(), endDate: new Date() }, g1Headers);
-    assert.equal(tourDenied.status, 401);
-    assert.equal(tourDenied.data.requiresAccount, true);
+    // Guest A creates a tournament
+    const tourCreated = await api('POST', '/api/tournaments', { name: 'Public Cup', village: 'Rampur', startDate: new Date(), endDate: new Date() }, g1Headers);
+    assert.equal(tourCreated.status, 201);
+    assert.equal(tourCreated.data.tournament.ownerType, 'guest');
+    assert.equal(tourCreated.data.tournament.guestId, g1Res.data.guestId);
 
     // Guest A creates two teams, players, and a custom rule preset
     const tA = await api('POST', '/api/teams', { name: 'Gaon Strikers', village: 'Rampur' }, g1Headers);

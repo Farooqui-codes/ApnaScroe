@@ -61,11 +61,15 @@ async function canScoreMatch(req, res, next) {
 
     let isTournamentOrganizer = false;
     if (match.tournamentId) {
-      const tour = await Tournament.findById(match.tournamentId).select('organizerId assignedScorers');
+      const tour = await Tournament.findById(match.tournamentId).select('organizerId assignedScorers ownerType guestId');
       if (tour) {
-        isTournamentOrganizer =
-          String(tour.organizerId) === uid ||
-          (tour.assignedScorers || []).some((id) => String(id) === uid);
+        if (req.guest && tour.ownerType === 'guest' && tour.guestId === req.guest.guestId) {
+          isTournamentOrganizer = true;
+        } else if (req.user) {
+          isTournamentOrganizer =
+            String(tour.organizerId) === uid ||
+            (tour.assignedScorers || []).some((id) => String(id) === uid);
+        }
       }
     }
 
@@ -85,15 +89,25 @@ async function canScoreMatch(req, res, next) {
 
 async function canManageTournament(req, res, next) {
   try {
-    if (!req.user) {
-      return res.status(403).json({
+    if (!req.user && !req.guest) {
+      return res.status(401).json({
         success: false,
-        requiresAccount: true,
-        message: 'Create a free account to publish your match and manage tournaments.'
+        message: 'Authentication or guest session required.'
       });
     }
     const tour = await Tournament.findById(req.params.id || req.params.tournamentId);
     if (!tour) return res.status(404).json({ success: false, message: 'Tournament not found.' });
+
+    if (req.guest) {
+      if (tour.ownerType === 'guest' && tour.guestId === req.guest.guestId) {
+        req.tournament = tour;
+        return next();
+      }
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to modify this tournament.'
+      });
+    }
 
     const uid = String(req.user._id);
     if (req.user.role === 'super_admin' || String(tour.organizerId) === uid) {

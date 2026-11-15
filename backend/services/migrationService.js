@@ -9,6 +9,7 @@ const Team = require('../models/Team');
 const Player = require('../models/Player');
 const Scorecard = require('../models/Scorecard');
 const ScoringRule = require('../models/ScoringRule');
+const Tournament = require('../models/Tournament');
 const AuditLog = require('../models/AuditLog');
 const engine = require('./scoringEngine');
 const syncService = require('./syncService');
@@ -263,6 +264,18 @@ async function migrateGuestToUser({
     }
 
     if (onAfterStep) await onAfterStep('rules', { job, idMappings, counts });
+
+    // ------------------------------------------------------------------
+    // STEP 3.5: Migrate Tournaments
+    // ------------------------------------------------------------------
+    const serverTournaments = await Tournament.find({ ownerType: 'guest', guestId });
+    for (const st of serverTournaments) {
+      st.ownerType = 'user';
+      st.guestId = null;
+      st.organizerId = targetUser._id;
+      await st.save();
+      counts.tournaments = (counts.tournaments || 0) + 1;
+    }
 
     // ------------------------------------------------------------------
     // STEP 4: Migrate Matches, Innings, Deliveries & Scorecards

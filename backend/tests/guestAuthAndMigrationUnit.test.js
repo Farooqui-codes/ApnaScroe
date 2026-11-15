@@ -77,7 +77,7 @@ describe('Guest Session Security, Token Hashing & Isolation Checks', () => {
     }
   });
 
-  it('blocks Guest from tournament creation with requiresAccount: true and allows scoring', () => {
+  it('blocks unauthenticated guest from requireRole endpoints with requiresAccount: true and allows scoring', () => {
     const tourGuard = requireRole('organizer');
     let statusCode = 0;
     let payload = null;
