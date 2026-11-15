@@ -58,11 +58,11 @@
               <h2 class="card-title" id="tdTitle">Tournament</h2>
             </div>
             <div class="flex-gap">
-              <span class="badge badge-neutral" id="tdPlanBadge">FREE</span>
-              <button type="button" class="btn btn-lime btn-sm hidden" id="tdUpgradeProBtn">Upgrade to Pro</button>
+              <span class="badge badge-neutral hidden" id="tdPlanBadge"></span>
+              <button type="button" class="btn btn-lime btn-sm hidden" id="tdUpgradeProBtn"></button>
               <a id="tdShareBtn" target="_blank" class="btn btn-secondary btn-sm">Public Page</a>
-              <a id="tdPdfBtn" target="_blank" class="btn btn-secondary btn-sm">Basic PDF</a>
-              <button type="button" class="btn btn-primary btn-sm" id="tdProPdfBtn">Pro PDF</button>
+              <button type="button" class="btn btn-primary btn-sm" id="tdProPdfBtn">Download PDF</button>
+              <a id="tdPdfBtn" target="_blank" class="btn btn-secondary btn-sm hidden">Basic PDF</a>
             </div>
           </div>
           <p class="text-sm text-muted mt-1" id="tdMeta"></p>
@@ -71,7 +71,7 @@
         <div class="tabs-bar" id="tourDetailTabs">
           <button type="button" class="tab-btn active" data-ttab="overview">Overview</button>
           <button type="button" class="tab-btn" data-ttab="teams">Teams</button>
-          <button type="button" class="tab-btn" data-ttab="fees">Entry Fees (Pro)</button>
+          <button type="button" class="tab-btn" data-ttab="fees">Entry Fees</button>
           <button type="button" class="tab-btn" data-ttab="fixtures">Fixtures</button>
           <button type="button" class="tab-btn" data-ttab="points">Points Table</button>
           <button type="button" class="tab-btn" data-ttab="live">Live Matches</button>
@@ -120,7 +120,7 @@
 
         <div class="tw-panel hidden" data-twp="2">
           <div class="form-grid-3">
-            <div class="form-group"><label class="form-label">Number of Teams (Free: max 4)</label><input class="form-control" id="ctMaxTeams" type="number" min="2" max="64" value="4" /></div>
+            <div class="form-group"><label class="form-label">Number of Teams</label><input class="form-control" id="ctMaxTeams" type="number" min="2" max="128" value="8" /></div>
             <div class="form-group"><label class="form-label">Overs per Match</label><input class="form-control" id="ctOvers" type="number" min="1" max="50" value="8" /></div>
             <div class="form-group"><label class="form-label">Tournament Format</label>
               <select class="form-control" id="ctFormat">

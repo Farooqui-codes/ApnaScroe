@@ -13,22 +13,14 @@ function requireRole(...allowedRoles) {
           : 'Authentication required.'
       });
     }
-    if (req.user.role === 'super_admin' || allowedRoles.includes(req.user.role)) {
-      return next();
-    }
-    return res.status(403).json({
-      success: false,
-      message: `Access denied. Required role: ${allowedRoles.join(' or ')}.`
-    });
+    // All registered users have equal full access
+    return next();
   };
 }
 
 function requireRegisteredOrGuestScoring(req, res, next) {
   if (req.user) {
-    if (req.user.role === 'super_admin' || ['organizer', 'team_manager', 'scorer'].includes(req.user.role)) {
-      return next();
-    }
-    return res.status(403).json({ success: false, message: 'Viewer role cannot create or edit scoring records.' });
+    return next();
   }
   if (req.guest) return next();
   return res.status(401).json({ success: false, message: 'Authentication or guest session required.' });

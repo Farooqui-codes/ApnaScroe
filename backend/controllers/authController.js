@@ -32,11 +32,7 @@ async function register(req, res, next) {
     }
 
     const totalUsers = await User.countDocuments();
-    const allowedSelfRoles = ['organizer', 'team_manager', 'scorer', 'viewer'];
-    let assignedRole = allowedSelfRoles.includes(role) ? role : 'scorer';
-    if (totalUsers === 0 && role === 'super_admin') {
-      assignedRole = 'super_admin';
-    }
+    let assignedRole = (totalUsers === 0 && role === 'super_admin') ? 'super_admin' : 'organizer';
 
     const passwordHash = await bcrypt.hash(String(password), 10);
     const user = await User.create({

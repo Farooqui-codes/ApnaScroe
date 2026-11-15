@@ -239,20 +239,8 @@
 
       const planBadge = document.getElementById('tdPlanBadge');
       const upgBtn = document.getElementById('tdUpgradeProBtn');
-      const isPro = t.plan === 'pro';
-      if (planBadge) {
-        planBadge.textContent = isPro ? 'PRO' : 'FREE';
-        planBadge.className = `badge ${isPro ? 'badge-success' : 'badge-neutral'}`;
-      }
-      if (upgBtn) {
-        upgBtn.classList.toggle('hidden', isPro);
-        upgBtn.onclick = () => ApnaPro.showUpgradeModal({
-          tournamentId: t._id,
-          tournamentName: t.name,
-          feature: 'Tournament Manager Pro',
-          onSuccess: () => loadTournamentDetail(t._id)
-        });
-      }
+      if (planBadge) planBadge.classList.add('hidden');
+      if (upgBtn) upgBtn.classList.add('hidden');
 
       document.getElementById('tdProPdfBtn').onclick = async () => {
         try {
@@ -389,7 +377,6 @@
     el.innerHTML = `
       <div class="card-header">
         <h3 class="card-title">Entry Fee Tracker (INR ${feePerTeam}/team)</h3>
-        ${!isPro ? `<button type="button" class="btn btn-lime btn-sm" onclick="TourUpgrade('${t._id}','${ApnaUI.escapeHtml(t.name)}')">Unlock with Pro</button>` : ''}
       </div>
       <div class="kpi-grid mb-2">
         <div class="kpi-card"><span class="kpi-label">Expected</span><span class="kpi-value">INR ${totalExpected}</span></div>

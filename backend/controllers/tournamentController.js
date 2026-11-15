@@ -109,37 +109,8 @@ async function createTournament(req, res, next) {
       });
     }
 
-    const userHasMonthlyPro = hasProAccess(null, req.user);
-    const requestedMaxTeams = Number(maxTeams || 4);
+    const requestedMaxTeams = Number(maxTeams || 16);
     const requestedFormat = format || 'knockout';
-
-    if (!userHasMonthlyPro) {
-      const existingCount = await Tournament.countDocuments({ organizerId: req.user._id });
-      if (existingCount >= FREE_LIMITS.maxTournaments) {
-        return res.status(403).json({
-          success: false,
-          requiresPro: true,
-          feature: 'Multiple Tournaments',
-          message: `Free tier allows ${FREE_LIMITS.maxTournaments} tournament. Upgrade to Tournament Manager Pro for unlimited tournaments.`
-        });
-      }
-      if (requestedMaxTeams > FREE_LIMITS.maxTeamsPerTournament) {
-        return res.status(403).json({
-          success: false,
-          requiresPro: true,
-          feature: 'More Than 4 Teams',
-          message: `Free tier allows up to ${FREE_LIMITS.maxTeamsPerTournament} teams per tournament. Upgrade to Pro for up to 64 teams.`
-        });
-      }
-      if (!FREE_LIMITS.allowedFormats.includes(requestedFormat)) {
-        return res.status(403).json({
-          success: false,
-          requiresPro: true,
-          feature: 'Group + Knockout Format',
-          message: 'Group Stage & League + Knockout formats require Tournament Manager Pro.'
-        });
-      }
-    }
 
     const { rules: validatedRules } = engine.validateAndNormalizeRules(
       Object.assign({}, rules || {}, {
@@ -151,7 +122,7 @@ async function createTournament(req, res, next) {
     );
 
     const registeredTeams = Array.isArray(teamIds)
-      ? teamIds.slice(0, userHasMonthlyPro ? 64 : FREE_LIMITS.maxTeamsPerTournament).map((id, idx) => ({
+      ? teamIds.map((id, idx) => ({
           teamId: id,
           groupName: requestedFormat === 'group_stage' ? (idx % 2 === 0 ? 'Group A' : 'Group B') : 'Group A',
           status: 'approved'
@@ -164,7 +135,7 @@ async function createTournament(req, res, next) {
       village: String(village).trim(),
       organizerName: organizerName || req.user.name,
       organizerId: req.user._id,
-      plan: userHasMonthlyPro ? 'pro' : 'free',
+      plan: 'free',
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       registrationDeadline: registrationDeadline ? new Date(registrationDeadline) : null,
@@ -229,17 +200,6 @@ async function registerTeam(req, res, next) {
     const existing = tournament.registeredTeams.find((r) => String(r.teamId) === String(teamId));
     if (existing) {
       return res.status(409).json({ success: false, message: 'Team is already registered in this tournament.' });
-    }
-
-    const activeCount = tournament.registeredTeams.filter((r) => r.status !== 'rejected').length;
-    if (!hasProAccess(tournament, req.user) && activeCount >= FREE_LIMITS.maxTeamsPerTournament) {
-      return res.status(403).json({
-        success: false,
-        requiresPro: true,
-        feature: 'More Than 4 Teams',
-        tournamentId: tournament._id,
-        message: `Free tier allows up to ${FREE_LIMITS.maxTeamsPerTournament} teams per tournament. Upgrade to Pro to add more teams.`
-      });
     }
 
     const isOrganizer = req.user.role === 'super_admin' || String(tournament.organizerId) === String(req.user._id);

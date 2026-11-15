@@ -446,6 +446,8 @@
         tapLocked = false;
         ApnaUI.showToast(val.errors.join(' '), 'error');
         if (!computedState.strikerId || !computedState.currentBowlerId) openPlayersModal('openers');
+        else if (computedState.needsNewBatsman) setTimeout(() => openPlayersModal('new_batsman'), 60);
+        else if (computedState.needsBowlerChange) setTimeout(() => openPlayersModal('change_bowler'), 60);
         return;
       }
     }
@@ -485,10 +487,13 @@
       if (!err.isOffline) ApnaUI.showToast(err.message, 'warning');
     }
 
-    // Prompt incoming batsman or new bowler automatically
+    // Prompt incoming batsman or new bowler automatically upon wicket or over completion
     if (computedState.status === 'live') {
-      if (computedState.needsNewBatsman) openPlayersModal('new_batsman');
-      else if (computedState.needsBowlerChange) openPlayersModal('change_bowler');
+      if (computedState.needsNewBatsman) {
+        setTimeout(() => openPlayersModal('new_batsman'), 160);
+      } else if (computedState.needsBowlerChange) {
+        setTimeout(() => openPlayersModal('change_bowler'), 160);
+      }
     }
   }
 
@@ -810,7 +815,7 @@
         });
       };
     } else if (mode === 'new_batsman') {
-      title.textContent = 'Select or Enter Next Batsman';
+      title.textContent = 'Wicket! Select or Enter Next Batsman';
       const available = batSquad.filter((p) => {
         const st = computedState.battingStats[String(p.playerId)];
         const isCurrent = String(p.playerId) === String(computedState.strikerId) || String(p.playerId) === String(computedState.nonStrikerId);
@@ -844,7 +849,7 @@
         });
       };
     } else if (mode === 'change_bowler') {
-      title.textContent = 'Select or Enter Next Bowler';
+      title.textContent = 'Over Complete! Select Next Bowler';
       const rules = matchDoc.rulesSnapshot;
       const filtered = bowlSquad.filter((p) => {
         if (

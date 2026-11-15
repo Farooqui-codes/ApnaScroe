@@ -17,7 +17,6 @@
     { id: 'scorecards', label: 'Scorecards', href: '/scorecard.html', icon: 'fileText', section: 'Records' },
     { id: 'statistics', label: 'Statistics', href: '/statistics.html', icon: 'barChart', section: 'Records' },
     { id: 'leaderboards', label: 'Leaderboards', href: '/leaderboards.html', icon: 'award', section: 'Records' },
-    { id: 'pricing', label: 'Pro Pricing', href: '/pricing.html', icon: 'award', section: 'Account' },
     { id: 'settings', label: 'Settings', href: '/settings.html', icon: 'settings', section: 'Account' },
     { id: 'profile', label: 'Profile', href: '/profile.html', icon: 'user', section: 'Account' }
   ];
@@ -92,12 +91,6 @@
       <div class="drawer-main-links">
         <a href="/dashboard.html" class="nav-item ${activeId === 'dashboard' ? 'active' : ''}">
           ${root.ApnaIcons.icon('home', 20)}<span class="nav-label">Home</span>
-        </a>
-        <a href="/tournament.html?upgrade=1" class="nav-item">
-          ${root.ApnaIcons.icon('award', 20)}<span class="nav-label">Pro Upgrade</span>
-        </a>
-        <a href="/pricing.html" class="nav-item ${activeId === 'pricing' ? 'active' : ''}">
-          ${root.ApnaIcons.icon('award', 20)}<span class="nav-label">Pricing</span>
         </a>
         <a href="/settings.html" class="nav-item ${activeId === 'settings' ? 'active' : ''}">
           ${root.ApnaIcons.icon('settings', 20)}<span class="nav-label">Settings</span>

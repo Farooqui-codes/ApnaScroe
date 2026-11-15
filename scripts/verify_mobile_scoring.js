@@ -292,10 +292,8 @@ async function main() {
     drawerCheck.statusText === 'Online' || drawerCheck.statusText === 'Offline',
     `status: ${drawerCheck.statusText}`
   );
-  logCheck('Drawer links order includes Home, Pro, Pricing, Settings, Profile, Install App, Feedback, About App',
+  logCheck('Drawer links order includes Home, Settings, Profile, Install App, Feedback, About App',
     drawerCheck.items.some(i => i.includes('Home')) &&
-    drawerCheck.items.some(i => i.includes('Pro')) &&
-    drawerCheck.items.some(i => i.includes('Pricing')) &&
     drawerCheck.items.some(i => i.includes('Settings')) &&
     drawerCheck.items.some(i => i.includes('Profile')) &&
     drawerCheck.items.some(i => i.includes('Install App')) &&

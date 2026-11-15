@@ -3,9 +3,9 @@
  * Change plan prices, active billing mode, or Free tier limits here.
  */
 const FREE_LIMITS = {
-  maxTournaments: 1,
-  maxTeamsPerTournament: 4,
-  allowedFormats: ['knockout', 'league', 'round_robin']
+  maxTournaments: 999999,
+  maxTeamsPerTournament: 999999,
+  allowedFormats: ['knockout', 'league', 'round_robin', 'group_stage', 'league_knockout', 'ipl_playoffs', 'super_six']
 };
 
 const PRO_PLANS = {
@@ -36,10 +36,8 @@ const PRO_PLANS = {
 const ACTIVE_PLAN_MODE = process.env.PRO_PLAN_MODE || 'both';
 
 function hasProAccess(tournament, user) {
-  if (user && user.role === 'super_admin') return true;
-  if (tournament && tournament.plan === 'pro') return true;
-  if (user && user.proExpiresAt && new Date(user.proExpiresAt) > new Date()) return true;
-  return false;
+  // All features, formats, and unlimited teams are unlocked for everyone
+  return true;
 }
 
 module.exports = {
