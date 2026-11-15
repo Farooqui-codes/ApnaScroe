@@ -13,8 +13,19 @@ function requireRole(...allowedRoles) {
           : 'Authentication required.'
       });
     }
-    // All registered users have equal full access
-    return next();
+
+    if (
+      req.user.role === 'super_admin' ||
+      allowedRoles.length === 0 ||
+      allowedRoles.includes(req.user.role)
+    ) {
+      return next();
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: `Access denied. Requires one of roles: ${allowedRoles.join(', ')}`
+    });
   };
 }
 
