@@ -995,3 +995,268 @@ table.data-table td.num {
 .flex-gap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .text-muted { color: var(--text-muted); }
 .text-sm { font-size: 0.85rem; }
+
+/* ==========================================================================
+   SUNLIGHT / OUTDOOR HIGH-CONTRAST MODE (FIELD & GROUND COMFORT)
+   ========================================================================== */
+body.sunlight-mode {
+  --bg-page: #FFFFFF !important;
+  --bg-surface: #FFFFFF !important;
+  --bg-surface-alt: #F1F5F2 !important;
+  --text-primary: #000000 !important;
+  --text-secondary: #0A0A0A !important;
+  --text-muted: #262626 !important;
+  --border-color: #000000 !important;
+  --brand-primary: #0E6833 !important;
+  --brand-primary-deep: #08401F !important;
+}
+
+body.sunlight-mode .card,
+body.sunlight-mode .sc-card {
+  border: 2px solid #000000 !important;
+  box-shadow: none !important;
+  background: #FFFFFF !important;
+}
+
+body.sunlight-mode .sc-score-big,
+body.sunlight-mode .sc-name-green,
+body.sunlight-mode .sc-overs-dim {
+  color: #000000 !important;
+  font-weight: 900 !important;
+  text-shadow: none !important;
+}
+
+body.sunlight-mode .sc-circle-run-btn {
+  border: 2.5px solid #000000 !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+}
+
+body.sunlight-mode .sc-solid-green-btn,
+body.sunlight-mode .btn-primary {
+  background: #000000 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #000000 !important;
+}
+
+/* ==========================================================================
+   DIGITAL COIN TOSS (3D VIRTUAL SIKKA)
+   ========================================================================== */
+.coin-scene {
+  width: 140px;
+  height: 140px;
+  margin: 16px auto;
+  perspective: 1000px;
+}
+
+.coin-3d {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.coin-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.6), inset 0 -4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.coin-front {
+  background: radial-gradient(circle at 35% 35%, #FFE066, #F59E0B 70%, #B45309 100%);
+  border: 4px solid #D97706;
+}
+
+.coin-back {
+  background: radial-gradient(circle at 35% 35%, #FDE68A, #D97706 70%, #92400E 100%);
+  border: 4px solid #B45309;
+  transform: rotateY(180deg);
+}
+
+.coin-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.coin-symbol {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.coin-text {
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #78350F;
+  margin-top: 4px;
+}
+
+.coin-result-box {
+  background: var(--success-bg);
+  border: 2px solid var(--brand-primary);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  text-align: center;
+  margin: 12px 0;
+  animation: fadeIn 0.3s ease;
+}
+
+/* ==========================================================================
+   FIFA / IPL ULTIMATE CRICKET PLAYER CARD
+   ========================================================================== */
+.fifa-card {
+  width: 100%;
+  max-width: 330px;
+  margin: 0 auto;
+  border-radius: 20px;
+  padding: 8px;
+  background: linear-gradient(135deg, #FFE066 0%, #208B4E 40%, #064E3B 70%, #D97706 100%);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4), 0 0 20px rgba(32, 139, 78, 0.35);
+  position: relative;
+  overflow: hidden;
+}
+
+.fifa-card-inner {
+  background: radial-gradient(circle at 50% 20%, #064E3B 0%, #022C22 75%, #011611 100%);
+  border-radius: 14px;
+  padding: 18px 14px 14px;
+  color: #FFFFFF;
+  text-align: center;
+  position: relative;
+}
+
+.fifa-card-inner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 100%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0) 50%);
+  pointer-events: none;
+}
+
+.fifa-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+
+.fifa-ovr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.fifa-ovr {
+  font-size: 3.2rem;
+  font-weight: 900;
+  line-height: 0.9;
+  color: #FDE047;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+.fifa-pos {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #E2E8F0;
+  margin-top: 2px;
+}
+
+.fifa-flag {
+  font-size: 1.2rem;
+  margin-top: 2px;
+}
+
+.fifa-avatar-wrap {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  border: 3px solid #FDE047;
+  overflow: hidden;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+  background: #022C22;
+}
+
+.fifa-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.fifa-name-banner {
+  margin-top: 12px;
+}
+
+.fifa-name {
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  color: #FFFFFF;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.fifa-badge-pill {
+  display: inline-block;
+  background: linear-gradient(90deg, #D97706, #F59E0B);
+  color: #000;
+  font-weight: 800;
+  font-size: 0.74rem;
+  padding: 2px 10px;
+  border-radius: 99px;
+  margin: 4px 0 2px;
+}
+
+.fifa-club {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+}
+
+.fifa-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(253, 224, 71, 0.5), transparent);
+  margin: 12px 10px;
+}
+
+.fifa-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 6px;
+  padding: 0 6px;
+}
+
+.fifa-stat {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.fifa-val {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #FDE047;
+}
+
+.fifa-lbl {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #CBD5E1;
+}
+
+.fifa-footer-brand {
+  margin-top: 12px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.45);
+}

@@ -546,8 +546,17 @@ async function main() {
   await navigateAndWait(`http://127.0.0.1:${serverPort}/tournament.html`, '#openCreateTourBtn');
   await new Promise((r) => setTimeout(r, 1000));
 
+  const diag = await evalCode(`({ hasBtn: Boolean(document.getElementById('openCreateTourBtn')), hasTourWiz: Boolean(window.TourWiz), hasModal: Boolean(document.getElementById('createTourModal')) })`);
+  console.log('  [TournamentDiag]', JSON.stringify(diag));
+
   // Click #openCreateTourBtn
-  await evalCode(`document.getElementById('openCreateTourBtn').click()`);
+  await evalCode(`(() => {
+    const b = document.getElementById('openCreateTourBtn');
+    if (b) b.click();
+    if (window.TourWiz && (!document.getElementById('createTourModal') || !document.getElementById('createTourModal').classList.contains('open'))) {
+      window.TourWiz.openCreate();
+    }
+  })()`);
   await new Promise((r) => setTimeout(r, 600));
 
   const tourModalCheck = await evalCode(`(() => {

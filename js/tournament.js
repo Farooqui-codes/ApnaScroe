@@ -20,15 +20,15 @@
     document.getElementById('ctStart').value = today;
     document.getElementById('ctEnd').value = today;
 
-    await loadTeamsForSelect();
-
     if (id) {
       document.getElementById('tournamentListView').classList.add('hidden');
       document.getElementById('tournamentDetailView').classList.remove('hidden');
       bindDetailTabs();
+      await loadTeamsForSelect();
       await loadTournamentDetail(id);
     } else {
       bindListControls();
+      await loadTeamsForSelect();
       await loadTournaments();
       if (params.get('action') === 'create') openCreateModal();
     }
@@ -61,16 +61,24 @@
     } catch (_) {}
   }
 
-  async function openCreateModal() {
-    if (!ApnaAuth.isAuthenticatedOrGuest()) {
-      try {
-        await ApnaAuth.continueAsGuest(null);
-      } catch (_) {}
-    }
+  function goTourStep(stepNum) {
+    const step = Number(stepNum) || 1;
+    document.querySelectorAll('#tourWizSteps .wizard-step-pill').forEach((pill) => {
+      pill.classList.toggle('active', Number(pill.dataset.tw) === step);
+    });
+    document.querySelectorAll('#createTourModal .tw-panel').forEach((panel) => {
+      panel.classList.toggle('hidden', Number(panel.dataset.twp) !== step);
+    });
+  }
+
+  function openCreateModal() {
     wizardQuickTeams = [];
     renderWizardQuickTeams();
     goTourStep(1);
     document.getElementById('createTourModal').classList.add('open');
+    if (!ApnaAuth.isAuthenticatedOrGuest()) {
+      ApnaAuth.continueAsGuest(null).catch(() => {});
+    }
   }
 
   function renderWizardQuickTeams() {

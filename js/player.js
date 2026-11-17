@@ -97,7 +97,8 @@
         grid.innerHTML = `<div class="empty-state">No players found. Click "+ Add Player" to register one!</div>`;
         return;
       }
-      grid.innerHTML = list.map((p) => `
+      window._lastPlayerList = list;
+      grid.innerHTML = list.map((p, idx) => `
         <div class="card">
           <div class="flex-between">
             <div class="flex-gap">
@@ -114,8 +115,9 @@
             <span>Wkts: <strong>${p.stats?.wickets || 0}</strong></span>
             <span>SR: <strong>${(p.stats?.strikeRate || 0).toFixed(1)}</strong></span>
           </div>
-          <div class="mt-2">
+          <div class="flex-gap mt-2">
             <a href="/player.html?id=${p._id}" class="btn btn-secondary btn-sm">View Profile</a>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.viewPlayerCardFromList && window.viewPlayerCardFromList(${idx})">🃏 Card</button>
           </div>
         </div>
       `).join('');
@@ -123,6 +125,33 @@
       grid.innerHTML = `<div class="empty-state">${ApnaUI.escapeHtml(err.message)}</div>`;
     }
   }
+
+  window.viewPlayerCardFromList = function(idx) {
+    const p = window._lastPlayerList && window._lastPlayerList[idx];
+    if (!p || !window.ApnaPlayerCard) return;
+    const st = p.stats || {};
+    window.ApnaPlayerCard.showModal({
+      name: p.name,
+      team: (p.teams && p.teams[0] && p.teams[0].name) || p.village || 'Gaon XI',
+      role: p.role,
+      jerseyNumber: p.jerseyNumber,
+      photoUrl: p.photoUrl,
+      village: p.village,
+      stats: st
+    }, {
+      runs: st.runs || 0,
+      balls: st.balls || 0,
+      fours: st.fours || 0,
+      sixes: st.sixes || 0,
+      strikeRate: st.strikeRate || 0,
+      overs: Math.floor((st.ballsBowled || 0) / 6) + '.' + ((st.ballsBowled || 0) % 6),
+      maidens: st.maidens || 0,
+      runsConceded: st.runsConceded || 0,
+      wickets: st.wickets || 0,
+      economy: st.economy || 0,
+      catches: st.catches || 0
+    });
+  };
 
   async function loadPlayerDetail(id) {
     try {
@@ -137,8 +166,38 @@
           <h2 style="margin:0;">${ApnaUI.escapeHtml(p.name)} ${p.jerseyNumber !== null && p.jerseyNumber !== undefined ? `#${p.jerseyNumber}` : ''}</h2>
           <div class="text-sm text-muted">${ApnaUI.escapeHtml(p.village)} • ${ApnaUI.escapeHtml(p.role)} • ${ApnaUI.escapeHtml(p.battingStyle)} • ${ApnaUI.escapeHtml(p.bowlingStyle)}</div>
           <div class="text-sm mt-1">Teams: ${(p.teams || []).map((t) => `<a href="/team.html?id=${t._id}" class="badge badge-success">${ApnaUI.escapeHtml(t.name)}</a>`).join(' ') || 'Unassigned'}</div>
+          <div class="mt-2">
+            <button type="button" class="btn btn-primary btn-sm" id="btnViewPlayerCard">🃏 View Ultimate Player Card</button>
+          </div>
         </div>
       `;
+
+      const cardBtn = document.getElementById('btnViewPlayerCard');
+      if (cardBtn && window.ApnaPlayerCard) {
+        cardBtn.addEventListener('click', () => {
+          window.ApnaPlayerCard.showModal({
+            name: p.name,
+            team: (p.teams && p.teams[0] && p.teams[0].name) || p.village || 'Gaon XI',
+            role: p.role,
+            jerseyNumber: p.jerseyNumber,
+            photoUrl: p.photoUrl,
+            village: p.village,
+            stats: st
+          }, {
+            runs: st.runs || 0,
+            balls: st.balls || 0,
+            fours: st.fours || 0,
+            sixes: st.sixes || 0,
+            strikeRate: st.strikeRate || 0,
+            overs: Math.floor((st.ballsBowled || 0) / 6) + '.' + ((st.ballsBowled || 0) % 6),
+            maidens: st.maidens || 0,
+            runsConceded: st.runsConceded || 0,
+            wickets: st.wickets || 0,
+            economy: st.economy || 0,
+            catches: st.catches || 0
+          });
+        });
+      }
 
       document.getElementById('playerCareerStatsGrid').innerHTML = `
         <div class="card">

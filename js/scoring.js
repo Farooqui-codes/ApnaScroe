@@ -30,6 +30,13 @@
     document.body.classList.add('scoring-active');
     document.getElementById('activeScoringView').classList.remove('hidden');
 
+    if (window.ApnaGround) {
+      window.ApnaGround.init();
+      const isSun = document.body.classList.contains('sunlight-mode');
+      const btn = document.getElementById('toggleSunlightBtn');
+      if (btn) btn.textContent = isSun ? '🌙' : '☀️';
+    }
+
     if (localStorage.getItem('apnascore_outdoor_mode') === '1') {
       document.body.classList.add('outdoor-mode');
       const ob = document.getElementById('outdoorModeBtn');
@@ -971,14 +978,21 @@
         syncCheckboxes(null);
 
         if (prevExtra === 'wide') {
+          window.ApnaAudio?.play('extra');
           dispatchEvent({ extraType: 'wide', additionalExtraRuns: run, batRuns: 0 });
         } else if (prevExtra === 'no_ball') {
+          window.ApnaAudio?.play('extra');
           dispatchEvent({ extraType: 'no_ball', additionalExtraRuns: 0, batRuns: run });
         } else if (prevExtra === 'bye') {
+          window.ApnaAudio?.play('crack');
           dispatchEvent({ extraType: 'bye', additionalExtraRuns: run || 1, batRuns: 0 });
         } else if (prevExtra === 'leg_bye') {
+          window.ApnaAudio?.play('crack');
           dispatchEvent({ extraType: 'leg_bye', additionalExtraRuns: run || 1, batRuns: 0 });
         } else {
+          if (run === 6) window.ApnaAudio?.play('six');
+          else if (run === 4) window.ApnaAudio?.play('four');
+          else window.ApnaAudio?.play('crack');
           dispatchEvent({ extraType: 'none', batRuns: run });
         }
       });
@@ -1018,6 +1032,44 @@
       e.currentTarget.textContent = isOn ? '☀ Outdoor: ON' : '☀ Outdoor Mode';
       e.currentTarget.classList.toggle('btn-lime', isOn);
       e.currentTarget.classList.toggle('btn-secondary', !isOn);
+    });
+
+    // Ground Experience & Audio Buttons
+    document.getElementById('toggleSunlightBtn')?.addEventListener('click', () => {
+      const isSun = window.ApnaGround?.toggleSunlightMode();
+      const btn = document.getElementById('toggleSunlightBtn');
+      if (btn) btn.textContent = isSun ? '🌙' : '☀️';
+    });
+
+    document.getElementById('toggleSoundBtn')?.addEventListener('click', () => {
+      const isSnd = window.ApnaAudio?.toggleSound();
+      const btn = document.getElementById('toggleSoundBtn');
+      if (btn) btn.textContent = isSnd ? '🔊' : '🔇';
+      ApnaUI.showToast(isSnd ? '🔊 Audio sound ON' : '🔇 Audio sound MUTED', 'info');
+    });
+
+    document.getElementById('quickShareWaBtn')?.addEventListener('click', triggerWhatsAppScoreText);
+    document.getElementById('whatsappStoryPosterBtn')?.addEventListener('click', triggerStoryPoster);
+    document.getElementById('whatsappTextShareBtn')?.addEventListener('click', triggerWhatsAppScoreText);
+    document.getElementById('mcStoryPosterBtn')?.addEventListener('click', () => {
+      closeModal('matchControlModal');
+      triggerStoryPoster();
+    });
+    document.getElementById('mcWaTextBtn')?.addEventListener('click', () => {
+      closeModal('matchControlModal');
+      triggerWhatsAppScoreText();
+    });
+    document.getElementById('mcFlipCoinBtn')?.addEventListener('click', () => {
+      closeModal('matchControlModal');
+      if (window.ApnaToss) {
+        window.ApnaToss.showModal({
+          teamAName: matchDoc?.teamA?.name || 'Team A',
+          teamBName: matchDoc?.teamB?.name || 'Team B',
+          onComplete: ({ winnerName, decision }) => {
+            ApnaUI.showToast(`${winnerName} won toss & chose ${decision}!`, 'success');
+          }
+        });
+      }
     });
 
     // Summary & Scorecard Modal Opener
@@ -1386,7 +1438,12 @@
 
     const localKey = matchDoc._id || matchDoc.clientMatchId;
     if (action === 'complete') {
-      const potm = prompt('Enter Player of the Match name (optional):', '');
+      const calcMom = window.ApnaMOM?.calculate(matchDoc, inningsList, activeEvents);
+      const defaultPotm = calcMom ? calcMom.playerName : '';
+      const promptMsg = calcMom
+        ? `Player of the Match (Auto-calculated: ${calcMom.playerName} with ${calcMom.points} Impact Pts - ${calcMom.summary}):`
+        : 'Enter Player of the Match name (optional):';
+      const potm = prompt(promptMsg, defaultPotm);
       if (potm === null) return;
       try {
         if (navigator.onLine && !String(localKey).startsWith('cm_')) {
@@ -1399,6 +1456,7 @@
           renderAll();
         }
         ApnaUI.showToast('Match completed!');
+        setTimeout(() => triggerStoryPoster(), 600);
       } catch (err) {
         ApnaUI.showToast(err.message, 'error');
       }
@@ -1546,6 +1604,56 @@
 
   function closeModal(id) {
     document.getElementById(id)?.classList.remove('open');
+  }
+
+  function triggerStoryPoster() {
+    if (!matchDoc || !window.ApnaPoster) return;
+    const mom = window.ApnaMOM?.calculate(matchDoc, inningsList, activeEvents);
+    const scoreA = inningsList[0] ? `${inningsList[0].totalRuns || 0}/${inningsList[0].totalWickets || 0}` : `${computedState.totalRuns || 0}/${computedState.totalWickets || 0}`;
+    const oversA = inningsList[0] ? `${inningsList[0].completedOvers || 0}.${inningsList[0].ballsInCurrentOver || 0} ov` : `${computedState.completedOvers || 0}.${computedState.ballsInCurrentOver || 0} ov`;
+    const scoreB = inningsList[1] ? `${inningsList[1].totalRuns || 0}/${inningsList[1].totalWickets || 0}` : (activeInnings?.inningsNumber === 2 ? `${computedState.totalRuns || 0}/${computedState.totalWickets || 0}` : '-');
+    const oversB = inningsList[1] ? `${inningsList[1].completedOvers || 0}.${inningsList[1].ballsInCurrentOver || 0} ov` : (activeInnings?.inningsNumber === 2 ? `${computedState.completedOvers || 0}.${computedState.ballsInCurrentOver || 0} ov` : '-');
+
+    let bestBat = null;
+    let bestBowl = null;
+    Object.values(computedState.battingStats || {}).forEach((b) => {
+      if (!bestBat || b.runs > bestBat.runs) bestBat = b;
+    });
+    Object.values(computedState.bowlerFigures || {}).forEach((bw) => {
+      if (!bestBowl || bw.wickets > bestBowl.wickets) bestBowl = bw;
+    });
+
+    const topBatStr = bestBat ? `${bestBat.name}: ${bestBat.runs} (${bestBat.balls}b, ${bestBat.fours}x4, ${bestBat.sixes}x6)` : 'Match in Progress';
+    const topBowlStr = bestBowl ? `${bestBowl.name}: ${bestBowl.wickets}/${bestBowl.runsConceded} (${bestBowl.overs} ov)` : '-';
+
+    window.ApnaPoster.generateCanvas(matchDoc, {
+      scoreA,
+      oversA,
+      scoreB,
+      oversB,
+      topBat: topBatStr,
+      topBowl: topBowlStr,
+      momName: mom?.playerName || bestBat?.name || 'Top Player',
+      momPoints: mom ? `${mom.points} Impact Pts` : 'Key Player',
+      resultText: matchDoc.result?.note || (computedState.status === 'completed' ? 'Match Finished' : 'Live Match Update')
+    }).then((canvas) => {
+      window.ApnaPoster.showModal(canvas, matchDoc.title || 'ApnaScore Match');
+    });
+  }
+
+  function triggerWhatsAppScoreText() {
+    if (!matchDoc || !window.ApnaWhatsApp) return;
+    const txt = window.ApnaWhatsApp.buildText(matchDoc, {
+      score: `${computedState.totalRuns || 0}/${computedState.totalWickets || 0}`,
+      overs: `${computedState.completedOvers || 0}.${computedState.ballsInCurrentOver || 0}`,
+      battingTeam: computedState.battingTeamName || matchDoc.teamA?.name,
+      equation: document.getElementById('scHighlightLine')?.textContent || '',
+      striker: computedState.strikerId ? computedState.battingStats[computedState.strikerId] : null,
+      nonStriker: computedState.nonStrikerId ? computedState.battingStats[computedState.nonStrikerId] : null,
+      bowler: computedState.currentBowlerId ? computedState.bowlerFigures[computedState.currentBowlerId] : null
+    });
+    window.ApnaWhatsApp.copy(txt, 'Score copied! Opening WhatsApp...');
+    window.ApnaWhatsApp.share(txt);
   }
 
   root.ScoringUI = {

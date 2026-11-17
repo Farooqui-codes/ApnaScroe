@@ -185,6 +185,22 @@
     document.getElementById('tossBatBtn').addEventListener('click', () => selectTossDecision('bat'));
     document.getElementById('tossBowlBtn').addEventListener('click', () => selectTossDecision('bowl'));
 
+    document.getElementById('btnFlipSikkaModal')?.addEventListener('click', () => {
+      const nameA = document.getElementById('teamANameInput').value.trim() || 'Team A';
+      const nameB = document.getElementById('teamBNameInput').value.trim() || 'Team B';
+      if (window.ApnaToss) {
+        window.ApnaToss.showModal({
+          teamAName: nameA,
+          teamBName: nameB,
+          onComplete: ({ winnerSide, decision }) => {
+            selectTossWinner(winnerSide);
+            selectTossDecision(decision);
+            ApnaUI.showToast(`${winnerSide === 'A' ? nameA : nameB} chose ${decision === 'bat' ? 'Batting' : 'Bowling'} first!`, 'success');
+          }
+        });
+      }
+    });
+
     // Advanced rules controls
     document.getElementById('ballTypeSelect').addEventListener('change', (e) => {
       currentRules.format.ballType = e.target.value;

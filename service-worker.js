@@ -1,4 +1,4 @@
-const CACHE_NAME = 'apnascore-shell-v12';
+const CACHE_NAME = 'apnascore-shell-v13';
 
 const APP_SHELL_ASSETS = [
   '/',
@@ -23,6 +23,7 @@ const APP_SHELL_ASSETS = [
   '/pricing.html',
   '/policies.html',
   '/js/pro-upgrade.js',
+  '/js/cricket-ground-tools.js',
   '/css/style.css',
   '/css/responsive.css',
   '/css/dashboard.css',

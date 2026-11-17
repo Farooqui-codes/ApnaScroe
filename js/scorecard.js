@@ -108,6 +108,61 @@
           : window.location.href;
         waBtn.href = `https://wa.me/?text=${encodeURIComponent(`🏏 ${match.title}\n${innSummary}\n${resTxt}\nScorecard: ${shareUrl}`)}`;
       }
+
+      // WhatsApp Story Poster & WhatsApp Score Text
+      const storyBtn = document.getElementById('storyPosterBtn');
+      if (storyBtn) {
+        storyBtn.onclick = () => {
+          if (!window.ApnaPoster) return;
+          const mom = window.ApnaMOM?.calculate(match, innings, match.deliveries || []);
+          const scoreA = innings[0] ? `${innings[0].totalRuns || 0}/${innings[0].wickets || 0}` : '0/0';
+          const oversA = innings[0] ? `${innings[0].oversString || '0.0'} ov` : '0.0 ov';
+          const scoreB = innings[1] ? `${innings[1].totalRuns || 0}/${innings[1].wickets || 0}` : '-';
+          const oversB = innings[1] ? `${innings[1].oversString || '0.0'} ov` : '-';
+
+          let bestBat = null;
+          let bestBowl = null;
+          innings.forEach((inn) => {
+            const st = inn.computedState || {};
+            Object.values(st.battingStats || {}).forEach((b) => {
+              if (!bestBat || b.runs > bestBat.runs) bestBat = b;
+            });
+            Object.values(st.bowlingStats || {}).forEach((bw) => {
+              if (!bestBowl || bw.wickets > bestBowl.wickets) bestBowl = bw;
+            });
+          });
+
+          window.ApnaPoster.generateCanvas(match, {
+            scoreA,
+            oversA,
+            scoreB,
+            oversB,
+            topBat: bestBat ? `${bestBat.name}: ${bestBat.runs} (${bestBat.balls}b, ${bestBat.fours}x4, ${bestBat.sixes}x6)` : 'Cricket Match',
+            topBowl: bestBowl ? `${bestBowl.name}: ${bestBowl.wickets}/${bestBowl.runs} (${bestBowl.overs} ov)` : '-',
+            momName: match.result?.playerOfMatchName || mom?.playerName || bestBat?.name || 'Star Player',
+            momPoints: mom ? `${mom.points} Impact Pts` : 'Key Player',
+            resultText: (match.result && match.result.marginText) || 'Match Scorecard'
+          }).then((canvas) => {
+            window.ApnaPoster.showModal(canvas, match.title);
+          });
+        };
+      }
+
+      const waScoreBtn = document.getElementById('waScoreBtn');
+      if (waScoreBtn) {
+        waScoreBtn.onclick = () => {
+          if (!window.ApnaWhatsApp) return;
+          const lastInn = innings[innings.length - 1] || innings[0] || {};
+          const txt = window.ApnaWhatsApp.buildText(match, {
+            score: `${lastInn.totalRuns || 0}/${lastInn.wickets || 0}`,
+            overs: `${lastInn.oversString || '0.0'}`,
+            battingTeam: lastInn.battingTeamName || match.teamA?.name,
+            equation: (match.result && match.result.marginText) || ''
+          });
+          window.ApnaWhatsApp.copy(txt, 'Score text copied! Opening WhatsApp...');
+          window.ApnaWhatsApp.share(txt);
+        };
+      }
     } catch (err) {
       document.getElementById('scorecardRenderRoot').innerHTML = `<div class="card empty-state">${ApnaUI.escapeHtml(err.message)}</div>`;
     }
@@ -115,6 +170,9 @@
 
   function renderScorecard(match, inningsList) {
     const root = document.getElementById('scorecardRenderRoot');
+    const mom = window.ApnaMOM?.calculate(match, inningsList, match.deliveries || []);
+    const potmName = match.result?.playerOfMatchName || mom?.playerName;
+
     const headerHtml = `
       <div class="card mb-2" style="border-top:5px solid var(--brand-primary);">
         <div class="flex-between">
@@ -129,7 +187,16 @@
         </div>
         ${match.toss && match.toss.winnerTeamName ? `<p class="text-sm mt-1"><strong>Toss:</strong> ${ApnaUI.escapeHtml(match.toss.winnerTeamName)} won and elected to ${ApnaUI.escapeHtml(match.toss.decision)}</p>` : ''}
         <p style="font-weight:800;color:var(--text-brand);margin:6px 0 0;">${ApnaUI.escapeHtml((match.result && match.result.marginText) || '')}</p>
-        ${match.result && match.result.playerOfMatchName ? `<p class="text-sm mt-1">🏅 <strong>Player of the Match:</strong> ${ApnaUI.escapeHtml(match.result.playerOfMatchName)}</p>` : ''}
+        ${potmName ? `
+          <div class="mt-2" style="background:var(--success-bg);border:1px solid var(--brand-primary);border-radius:var(--radius-sm);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div>
+              <span style="font-size:0.72rem;font-weight:800;text-transform:uppercase;color:var(--brand-primary);letter-spacing:0.04em;">⭐ MAN OF THE MATCH</span>
+              <div style="font-size:1.05rem;font-weight:800;color:var(--text-primary);">${ApnaUI.escapeHtml(potmName)} ${mom ? `<span class="badge badge-lime" style="font-size:0.75rem;">${mom.points} Impact Pts</span>` : ''}</div>
+              ${mom ? `<div class="text-sm text-muted">${ApnaUI.escapeHtml(mom.summary)}</div>` : ''}
+            </div>
+            <button type="button" class="btn btn-lime btn-sm" id="viewMomCardBtn" data-pname="${ApnaUI.escapeHtml(potmName)}">🃏 View Player Card</button>
+          </div>
+        ` : ''}
       </div>
     `;
 
@@ -138,11 +205,11 @@
       const ext = inn.extrasBreakdown || st.extrasBreakdown || {};
       const batRows = (st.battingOrder || []).map((pid) => {
         const b = st.battingStats[pid] || {};
-        return `<tr><td><strong>${ApnaUI.escapeHtml(b.name)}</strong><br><span class="text-sm text-muted">${ApnaUI.escapeHtml(b.dismissalText)}</span></td><td class="num"><strong>${b.runs}</strong></td><td class="num">${b.balls}</td><td class="num">${b.fours}</td><td class="num">${b.sixes}</td><td class="num">${(b.strikeRate || 0).toFixed(1)}</td></tr>`;
+        return `<tr><td><strong class="player-card-click" style="cursor:pointer;color:var(--brand-primary);" data-pname="${ApnaUI.escapeHtml(b.name)}" data-runs="${b.runs}" data-sr="${b.strikeRate || 0}" data-sixes="${b.sixes || 0}">${ApnaUI.escapeHtml(b.name)}</strong><br><span class="text-sm text-muted">${ApnaUI.escapeHtml(b.dismissalText)}</span></td><td class="num"><strong>${b.runs}</strong></td><td class="num">${b.balls}</td><td class="num">${b.fours}</td><td class="num">${b.sixes}</td><td class="num">${(b.strikeRate || 0).toFixed(1)}</td></tr>`;
       }).join('');
       const bowlRows = (st.bowlingOrder || []).map((pid) => {
         const bw = st.bowlingStats[pid] || {};
-        return `<tr><td><strong>${ApnaUI.escapeHtml(bw.name)}</strong></td><td class="num">${bw.overs}</td><td class="num">${bw.maidens}</td><td class="num">${bw.runs}</td><td class="num"><strong>${bw.wickets}</strong></td><td class="num">${(bw.economy || 0).toFixed(2)}</td></tr>`;
+        return `<tr><td><strong class="player-card-click" style="cursor:pointer;color:var(--brand-primary);" data-pname="${ApnaUI.escapeHtml(bw.name)}" data-wkts="${bw.wickets}" data-eco="${bw.economy || 0}">${ApnaUI.escapeHtml(bw.name)}</strong></td><td class="num">${bw.overs}</td><td class="num">${bw.maidens}</td><td class="num">${bw.runs}</td><td class="num"><strong>${bw.wickets}</strong></td><td class="num">${(bw.economy || 0).toFixed(2)}</td></tr>`;
       }).join('');
       const fow = (st.fallOfWickets || []).map((f) => `${f.wicketNumber}-${f.score} (${f.playerName}, ${f.overs} ov)`).join(' • ');
 
@@ -154,7 +221,7 @@
           </div>
           <div class="table-wrap mb-2">
             <table class="data-table">
-              <thead><tr><th>Batsman</th><th class="num">R</th><th class="num">B</th><th class="num">4s</th><th class="num">6s</th><th class="num">SR</th></tr></thead>
+              <thead><tr><th>Batsman (tap for card)</th><th class="num">R</th><th class="num">B</th><th class="num">4s</th><th class="num">6s</th><th class="num">SR</th></tr></thead>
               <tbody>${batRows || '<tr><td colspan="6">No batting records</td></tr>'}</tbody>
             </table>
           </div>
@@ -162,7 +229,7 @@
           ${fow ? `<p class="text-sm"><strong>Fall of Wickets:</strong> ${ApnaUI.escapeHtml(fow)}</p>` : ''}
           <div class="table-wrap mt-2">
             <table class="data-table">
-              <thead><tr><th>Bowler</th><th class="num">O</th><th class="num">M</th><th class="num">R</th><th class="num">W</th><th class="num">Econ</th></tr></thead>
+              <thead><tr><th>Bowler (tap for card)</th><th class="num">O</th><th class="num">M</th><th class="num">R</th><th class="num">W</th><th class="num">Econ</th></tr></thead>
               <tbody>${bowlRows || '<tr><td colspan="6">No bowling records</td></tr>'}</tbody>
             </table>
           </div>
@@ -171,5 +238,26 @@
     }).join('');
 
     root.innerHTML = headerHtml + inningsHtml;
+
+    // Attach Player Card click triggers
+    document.querySelectorAll('.player-card-click').forEach((el) => {
+      el.addEventListener('click', () => {
+        if (!window.ApnaPlayerCard) return;
+        const name = el.dataset.pname;
+        const runs = Number(el.dataset.runs || 0);
+        const sr = Number(el.dataset.sr || 120);
+        const sixes = Number(el.dataset.sixes || 0);
+        const wickets = Number(el.dataset.wkts || 0);
+        const economy = Number(el.dataset.eco || 7.5);
+        window.ApnaPlayerCard.showModal({ name, village: match.village || 'Local Village' }, { runs, strikeRate: sr, sixes, wickets, economy });
+      });
+    });
+
+    document.getElementById('viewMomCardBtn')?.addEventListener('click', () => {
+      if (!window.ApnaPlayerCard) return;
+      const name = potmName;
+      window.ApnaPlayerCard.showModal({ name, village: match.village || 'Match Hero' }, { runs: mom?.runs || 45, wickets: mom?.wickets || 2, strikeRate: 155, sixes: 3 });
+    });
+  }
   }
 }());
