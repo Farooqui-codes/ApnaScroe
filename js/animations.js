@@ -470,6 +470,37 @@
     onScroll();
   }
 
+  function animateCounter(el, target, suffix = '') {
+    if (!el) return;
+    const numTarget = Number(target) || 0;
+    el.setAttribute('data-countup', numTarget);
+    el.setAttribute('data-suffix', suffix);
+    if (isReduced() || isLowEnd()) {
+      el.textContent = `${numTarget.toLocaleString()}${suffix}`;
+      return;
+    }
+    const currentVal = parseInt(el.textContent.replace(/[^0-9]/g, ''), 10) || 0;
+    const obj = { val: currentVal };
+    if (root.gsap) {
+      gsap.to(obj, {
+        val: numTarget,
+        duration: 1.1,
+        ease: 'power2.out',
+        onUpdate: () => { el.textContent = `${Math.round(obj.val).toLocaleString()}${suffix}`; }
+      });
+    } else {
+      const start = performance.now();
+      const dur = 900;
+      const step = (now) => {
+        const p = Math.min(1, (now - start) / dur);
+        const v = Math.round(currentVal + (numTarget - currentVal) * (1 - Math.pow(1 - p, 3)));
+        el.textContent = `${v.toLocaleString()}${suffix}`;
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', initScrollAndMicroInteractions);
 
   root.ApnaAnimations = {
@@ -478,6 +509,7 @@
     celebrate,
     pulseScore,
     shake,
-    preloadLottie
+    preloadLottie,
+    animateCounter
   };
 }(window));

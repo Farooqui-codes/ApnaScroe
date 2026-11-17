@@ -21,6 +21,31 @@ const publicRegLimiter = rateLimit({
   message: { success: false, message: 'Too many registration requests. Please wait a few minutes.' }
 });
 
+router.get('/platform-stats', async (req, res, next) => {
+  try {
+    const [matchesCount, tournamentsCount, usersCount, teamsCount, playersCount] = await Promise.all([
+      Match.countDocuments({}),
+      Tournament.countDocuments({}),
+      User.countDocuments({}),
+      Team.countDocuments({}),
+      Player.countDocuments({})
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        matches: matchesCount,
+        tournaments: tournamentsCount,
+        users: usersCount,
+        teams: teamsCount,
+        players: playersCount
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/matches/:idOrCode', async (req, res, next) => {
   try {
     const val = req.params.idOrCode;

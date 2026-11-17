@@ -1,6 +1,34 @@
 const statsService = require('../services/statsService');
 const Tournament = require('../models/Tournament');
 const Team = require('../models/Team');
+const Match = require('../models/Match');
+const User = require('../models/User');
+const Player = require('../models/Player');
+
+async function getPlatformStats(req, res, next) {
+  try {
+    const [matchesCount, tournamentsCount, usersCount, teamsCount, playersCount] = await Promise.all([
+      Match.countDocuments({}),
+      Tournament.countDocuments({}),
+      User.countDocuments({}),
+      Team.countDocuments({}),
+      Player.countDocuments({})
+    ]);
+
+    res.json({
+      success: true,
+      stats: {
+        matches: matchesCount,
+        tournaments: tournamentsCount,
+        users: usersCount,
+        teams: teamsCount,
+        players: playersCount
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
 
 async function getLeaderboards(req, res, next) {
   try {
@@ -28,4 +56,4 @@ async function getLeaderboards(req, res, next) {
   }
 }
 
-module.exports = { getLeaderboards };
+module.exports = { getLeaderboards, getPlatformStats };
