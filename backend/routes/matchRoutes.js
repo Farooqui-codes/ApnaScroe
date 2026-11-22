@@ -6,8 +6,8 @@ const { authenticateOrGuest, optionalAuth } = require('../middleware/auth');
 const { requireRegisteredOrGuestScoring, canScoreMatch } = require('../middleware/rbac');
 
 router.get('/', optionalAuth, matchCtrl.listMatches);
-router.get('/:id', optionalAuth, matchCtrl.getMatch);
 router.get('/:matchId/pdf', optionalAuth, scCtrl.downloadMatchPDF);
+router.get('/:id', optionalAuth, matchCtrl.getMatch);
 router.post('/', authenticateOrGuest, requireRegisteredOrGuestScoring, matchCtrl.createMatch);
 router.post('/:id/second-innings', authenticateOrGuest, canScoreMatch, matchCtrl.startSecondInnings);
 router.post('/:id/super-over', authenticateOrGuest, canScoreMatch, matchCtrl.startSuperOver);
