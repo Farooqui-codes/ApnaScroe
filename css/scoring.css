@@ -764,17 +764,30 @@ body.outdoor-mode * {
 .sc-topbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 .sc-topbar-icon-btn {
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
   color: #FFFFFF;
   cursor: pointer;
-  padding: 4px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.05rem;
+  transition: all 0.15s ease;
+  padding: 0;
+  box-sizing: border-box;
+}
+.sc-topbar-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.45);
+}
+.sc-topbar-icon-btn:active {
+  transform: scale(0.95);
 }
 .sc-aspect-btn {
   padding: 0;

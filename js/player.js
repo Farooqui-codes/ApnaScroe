@@ -117,7 +117,7 @@
           </div>
           <div class="flex-gap mt-2">
             <a href="/player.html?id=${p._id}" class="btn btn-secondary btn-sm">View Profile</a>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="window.viewPlayerCardFromList && window.viewPlayerCardFromList(${idx})">🃏 Card</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.viewPlayerCardFromList && window.viewPlayerCardFromList(${idx})"><i class="fa-solid fa-id-card"></i> Card</button>
           </div>
         </div>
       `).join('');
@@ -167,7 +167,7 @@
           <div class="text-sm text-muted">${ApnaUI.escapeHtml(p.village)} • ${ApnaUI.escapeHtml(p.role)} • ${ApnaUI.escapeHtml(p.battingStyle)} • ${ApnaUI.escapeHtml(p.bowlingStyle)}</div>
           <div class="text-sm mt-1">Teams: ${(p.teams || []).map((t) => `<a href="/team.html?id=${t._id}" class="badge badge-success">${ApnaUI.escapeHtml(t.name)}</a>`).join(' ') || 'Unassigned'}</div>
           <div class="mt-2">
-            <button type="button" class="btn btn-primary btn-sm" id="btnViewPlayerCard">🃏 View Ultimate Player Card</button>
+            <button type="button" class="btn btn-primary btn-sm" id="btnViewPlayerCard"><i class="fa-solid fa-id-card"></i> View Ultimate Player Card</button>
           </div>
         </div>
       `;

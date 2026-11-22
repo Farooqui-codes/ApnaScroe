@@ -22,6 +22,7 @@
   <meta name="twitter:image" content="/assets/images/apnascore-og-preview.jpg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
   <link rel="manifest" href="/manifest.json" />
+  <link rel="stylesheet" href="/css/fontawesome.min.css" />
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/responsive.css" />
   <link rel="stylesheet" href="/css/dashboard.css" />
@@ -50,25 +51,25 @@
         <div class="sc-app-topbar" id="scoringAppbar">
           <div class="sc-topbar-left">
             <a href="/dashboard.html" class="sc-topbar-back-btn" id="backOverviewBtn" aria-label="Back to Dashboard">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              <i class="fa-solid fa-arrow-left"></i>
             </a>
             <span class="sc-topbar-title" id="scMatchTitle">Match</span>
           </div>
           <div class="sc-topbar-actions">
             <button type="button" class="sc-topbar-icon-btn" id="toggleSunlightBtn" title="Sunlight Mode (High Contrast)" aria-label="Sunlight Mode">
-              ☀️
+              <i class="fa-solid fa-sun"></i>
             </button>
             <button type="button" class="sc-topbar-icon-btn" id="toggleSoundBtn" title="Audio Sound Feedback" aria-label="Toggle Sound">
-              🔊
+              <i class="fa-solid fa-volume-high"></i>
             </button>
             <button type="button" class="sc-topbar-icon-btn" id="quickShareWaBtn" title="Share on WhatsApp" aria-label="Share on WhatsApp">
-              📲
+              <i class="fa-brands fa-whatsapp"></i>
             </button>
             <button type="button" class="sc-topbar-icon-btn" id="openSummaryGraphBtn" title="Match Summary & Graph" aria-label="Match Summary & Graph">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+              <i class="fa-solid fa-chart-line"></i>
             </button>
             <button type="button" class="sc-topbar-icon-btn sc-aspect-btn" id="openScorecardMiniBtn" title="Full Scorecard" aria-label="Full Scorecard">
-              <span class="sc-aspect-pill">1:3</span>
+              <i class="fa-solid fa-table-list"></i>
             </button>
             <button type="button" class="sc-appbar-icon-btn hidden" id="outdoorModeBtn"></button>
             <button type="button" class="sc-appbar-icon-btn hidden" id="shareMatchBtn"></button>
@@ -429,9 +430,9 @@
         <button type="button" class="icon-btn" onclick="ScoringUI.closeModal('matchControlModal')">✕</button>
       </div>
       <div class="form-grid-2" id="matchControlButtonsGrid">
-        <button type="button" class="btn btn-lime" id="mcStoryPosterBtn">📸 Match Story Poster</button>
-        <button type="button" class="btn btn-primary" id="mcWaTextBtn">📲 WhatsApp Score Text</button>
-        <button type="button" class="btn btn-secondary" id="mcFlipCoinBtn">🪙 Virtual Sikka (Toss)</button>
+        <button type="button" class="btn btn-lime" id="mcStoryPosterBtn"><i class="fa-solid fa-camera"></i> Match Story Poster</button>
+        <button type="button" class="btn btn-primary" id="mcWaTextBtn"><i class="fa-brands fa-whatsapp"></i> WhatsApp Score Text</button>
+        <button type="button" class="btn btn-secondary" id="mcFlipCoinBtn"><i class="fa-solid fa-coins"></i> Virtual Sikka (Toss)</button>
         <button type="button" class="btn btn-secondary" data-mc="bye">Bye Runs</button>
         <button type="button" class="btn btn-secondary" data-mc="leg_bye">Leg Bye Runs</button>
         <button type="button" class="btn btn-secondary" data-mc="overthrow">Overthrow Runs</button>
@@ -465,8 +466,8 @@
       <img id="shareQrImg" alt="Match QR Code" style="width:200px;height:200px;margin:0 auto 12px;border:1px solid var(--border-color);border-radius:12px;" />
       <input class="form-control mb-2" id="sharePublicUrlInput" readonly />
       <div class="flex-gap" style="justify-content:center;margin-top:10px;">
-        <button type="button" class="btn btn-lime" id="whatsappStoryPosterBtn">📸 Story Poster</button>
-        <button type="button" class="btn btn-primary" id="whatsappTextShareBtn">📲 WhatsApp Text</button>
+        <button type="button" class="btn btn-lime" id="whatsappStoryPosterBtn"><i class="fa-solid fa-camera"></i> Story Poster</button>
+        <button type="button" class="btn btn-primary" id="whatsappTextShareBtn"><i class="fa-brands fa-whatsapp"></i> WhatsApp Text</button>
         <button type="button" class="btn btn-secondary" id="copyShareLinkBtn">Copy Link</button>
         <a id="openScorecardPdfBtn" class="btn btn-secondary">Scorecard & PDF</a>
         <a id="whatsappShareBtn" target="_blank" rel="noopener" class="hidden"></a>

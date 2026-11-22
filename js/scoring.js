@@ -34,7 +34,7 @@
       window.ApnaGround.init();
       const isSun = document.body.classList.contains('sunlight-mode');
       const btn = document.getElementById('toggleSunlightBtn');
-      if (btn) btn.textContent = isSun ? '🌙' : '☀️';
+      if (btn) btn.innerHTML = isSun ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
     }
 
     if (localStorage.getItem('apnascore_outdoor_mode') === '1') {
@@ -1038,14 +1038,14 @@
     document.getElementById('toggleSunlightBtn')?.addEventListener('click', () => {
       const isSun = window.ApnaGround?.toggleSunlightMode();
       const btn = document.getElementById('toggleSunlightBtn');
-      if (btn) btn.textContent = isSun ? '🌙' : '☀️';
+      if (btn) btn.innerHTML = isSun ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
     });
 
     document.getElementById('toggleSoundBtn')?.addEventListener('click', () => {
       const isSnd = window.ApnaAudio?.toggleSound();
       const btn = document.getElementById('toggleSoundBtn');
-      if (btn) btn.textContent = isSnd ? '🔊' : '🔇';
-      ApnaUI.showToast(isSnd ? '🔊 Audio sound ON' : '🔇 Audio sound MUTED', 'info');
+      if (btn) btn.innerHTML = isSnd ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
+      ApnaUI.showToast(isSnd ? 'Audio sound ON' : 'Audio sound MUTED', 'info');
     });
 
     document.getElementById('quickShareWaBtn')?.addEventListener('click', triggerWhatsAppScoreText);

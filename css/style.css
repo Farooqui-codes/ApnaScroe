@@ -1,3 +1,5 @@
+@import url('./fontawesome.min.css');
+
 /* ==========================================================================
    ApnaScore Design System – Official Brand Palette & Tokens
    Primary: #208B4E | Lime: #9ADE68 | Soft Mint: #E2F1E6
@@ -283,9 +285,10 @@ body.sidebar-collapsed .main-area {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 16px;
   gap: 12px;
   z-index: 80;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .topbar-left {
@@ -293,6 +296,28 @@ body.sidebar-collapsed .main-area {
   align-items: center;
   gap: 10px;
   min-width: 0;
+}
+
+.topbar-left .icon-btn {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.topbar-left .icon-btn:hover {
+  background: var(--brand-soft-mint);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
 }
 
 .topbar-mobile-brand {
@@ -315,6 +340,81 @@ body.sidebar-collapsed .main-area {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+/* Uniform action elements in topbar */
+.topbar-actions > button,
+.topbar-actions > a,
+.topbar-actions .sync-pill,
+.topbar-actions .topbar-guest-pill,
+.topbar-actions .profile-trigger-btn {
+  height: 36px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0 12px;
+  margin: 0;
+}
+
+.topbar-actions .icon-btn {
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.topbar-actions .icon-btn:hover {
+  background: var(--brand-soft-mint);
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.topbar-actions .sync-pill {
+  gap: 6px;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.topbar-actions .topbar-guest-pill {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #FCD34D;
+  text-decoration: none;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+.topbar-actions .topbar-guest-pill:hover {
+  background: #FDE68A;
+  border-color: #F59E0B;
+}
+[data-theme="dark"] .topbar-actions .topbar-guest-pill {
+  background: #78350F;
+  color: #FDE68A;
+  border-color: #B45309;
+}
+[data-theme="dark"] .topbar-actions .topbar-guest-pill:hover {
+  background: #92400E;
+}
+
+.topbar-actions .profile-trigger-btn {
+  padding: 0 10px 0 6px;
+  gap: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface-alt);
+}
+.topbar-actions .profile-trigger-btn .avatar-initials {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 0.72rem;
 }
 
 .page-content {

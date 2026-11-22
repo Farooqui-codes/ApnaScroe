@@ -194,7 +194,7 @@
               <div style="font-size:1.05rem;font-weight:800;color:var(--text-primary);">${ApnaUI.escapeHtml(potmName)} ${mom ? `<span class="badge badge-lime" style="font-size:0.75rem;">${mom.points} Impact Pts</span>` : ''}</div>
               ${mom ? `<div class="text-sm text-muted">${ApnaUI.escapeHtml(mom.summary)}</div>` : ''}
             </div>
-            <button type="button" class="btn btn-lime btn-sm" id="viewMomCardBtn" data-pname="${ApnaUI.escapeHtml(potmName)}">🃏 View Player Card</button>
+            <button type="button" class="btn btn-lime btn-sm" id="viewMomCardBtn" data-pname="${ApnaUI.escapeHtml(potmName)}"><i class="fa-solid fa-id-card"></i> View Player Card</button>
           </div>
         ` : ''}
       </div>

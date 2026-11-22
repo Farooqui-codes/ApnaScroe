@@ -230,7 +230,7 @@
       backdrop.innerHTML = `
         <div class="modal-dialog coin-toss-dialog">
           <div class="modal-header">
-            <h3 class="modal-title">🪙 Digital Coin Toss (सिक्का उछालो)</h3>
+            <h3 class="modal-title"><i class="fa-solid fa-coins"></i> Digital Coin Toss (सिक्का उछालो)</h3>
             <button type="button" class="icon-btn" id="coinTossCloseBtn">✕</button>
           </div>
 
@@ -281,14 +281,14 @@
             <div class="coin-decision-actions hidden" id="coinDecisionRow">
               <p class="text-sm text-muted" style="margin:6px 0;text-align:center;">Winner picks what to do first:</p>
               <div class="choice-toggle-grid" style="grid-template-columns:1fr 1fr;">
-                <button type="button" class="btn btn-primary" id="tossPickBatBtn">🏏 Batting First</button>
-                <button type="button" class="btn btn-primary" id="tossPickBowlBtn">⚾ Bowling First</button>
+                <button type="button" class="btn btn-primary" id="tossPickBatBtn"><i class="fa-solid fa-baseball-bat-ball"></i> Batting First</button>
+                <button type="button" class="btn btn-primary" id="tossPickBowlBtn"><i class="fa-solid fa-bowling-ball"></i> Bowling First</button>
               </div>
             </div>
 
             <div class="coin-flip-btn-row mt-2" style="text-align:center;">
               <button type="button" class="btn btn-lime btn-lg" id="startCoinFlipBtn" style="min-width:200px;">
-                🪙 Flip Coin (उछालो)
+                <i class="fa-solid fa-coins"></i> Flip Coin (उछालो)
               </button>
             </div>
           </div>
@@ -331,7 +331,7 @@
       setTimeout(() => {
         isFlipping = false;
         flipBtn.disabled = false;
-        flipBtn.textContent = '🪙 Flip Again';
+        flipBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Flip Again';
         coin.style.transition = 'transform 0.3s ease';
         coin.style.transform = `rotateY(${isHeads ? 0 : 180}deg) scale(1)`;
 
@@ -749,7 +749,7 @@
     backdrop.innerHTML = `
       <div class="modal-dialog" style="max-width:480px;text-align:center;">
         <div class="modal-header">
-          <h3 class="modal-title">📸 Match Story Poster</h3>
+          <h3 class="modal-title"><i class="fa-solid fa-camera"></i> Match Story Poster</h3>
           <button type="button" class="icon-btn" id="posterCloseBtn">✕</button>
         </div>
         <div style="max-height:65vh;overflow-y:auto;border-radius:12px;margin:8px 0;background:#000;">
@@ -757,10 +757,10 @@
         </div>
         <div class="modal-footer" style="justify-content:center;gap:10px;">
           <a href="${dataUrl}" download="ApnaScore_${Date.now()}.png" class="btn btn-primary btn-lg">
-            ⬇️ Download Poster
+            <i class="fa-solid fa-download"></i> Download Poster
           </a>
           <button type="button" class="btn btn-lime btn-lg" id="posterShareBtn">
-            📲 Share to WhatsApp
+            <i class="fa-brands fa-whatsapp"></i> Share to WhatsApp
           </button>
         </div>
       </div>
@@ -889,7 +889,7 @@
         </div>
 
         <div style="display:flex;justify-content:center;gap:12px;margin-top:16px;">
-          <button type="button" class="btn btn-lime" id="shareCardWaBtn">📲 Share Player Card</button>
+          <button type="button" class="btn btn-lime" id="shareCardWaBtn"><i class="fa-brands fa-whatsapp"></i> Share Player Card</button>
         </div>
       </div>
     `;

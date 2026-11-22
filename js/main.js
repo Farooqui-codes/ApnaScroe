@@ -34,8 +34,8 @@
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem(THEME_KEY, t);
     const toggleBtn = document.getElementById('themeToggleBtn');
-    if (toggleBtn && root.ApnaIcons) {
-      toggleBtn.innerHTML = root.ApnaIcons.icon(t === 'dark' ? 'sun' : 'moon', 18);
+    if (toggleBtn) {
+      toggleBtn.innerHTML = t === 'dark' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
       toggleBtn.title = t === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
     }
     const themeSel = document.getElementById('setTheme');
@@ -182,10 +182,10 @@
       <div class="main-area">
         <header class="topbar">
           <div class="topbar-left">
-            <button class="icon-btn desktop-sidebar-toggle" id="sidebarCollapseBtn" aria-label="Toggle sidebar">${root.ApnaIcons.icon('menu', 18)}</button>
+            <button class="icon-btn desktop-sidebar-toggle" id="sidebarCollapseBtn" aria-label="Toggle sidebar"><i class="fa-solid fa-bars"></i></button>
             ${
               activePage !== 'dashboard'
-                ? `<button type="button" class="icon-btn mobile-back-btn" id="mobileBackBtn" aria-label="Go Back">${root.ApnaIcons.icon('chevronLeft', 22)}</button>`
+                ? `<button type="button" class="icon-btn mobile-back-btn" id="mobileBackBtn" aria-label="Go Back"><i class="fa-solid fa-arrow-left"></i></button>`
                 : ''
             }
             <a href="/dashboard.html" class="topbar-mobile-brand">
@@ -194,13 +194,13 @@
             <span class="topbar-page-title">${pageTitle}</span>
           </div>
           <div class="topbar-actions">
-            <button type="button" class="btn btn-lime btn-sm hidden" id="pwaInstallBtn" aria-label="Install ApnaScore App">Install App</button>
+            <button type="button" class="btn btn-lime btn-sm hidden" id="pwaInstallBtn" aria-label="Install ApnaScore App"><i class="fa-solid fa-download"></i> Install App</button>
             <button class="sync-pill online" id="globalSyncPill" title="Click to sync pending offline matches">
-              <span class="sync-icon">${root.ApnaIcons.icon('wifi', 15)}</span>
+              <span class="sync-icon"><i class="fa-solid fa-wifi"></i></span>
               <span class="sync-label-text">Online</span>
             </button>
             <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark mode"></button>
-            <button type="button" class="icon-btn hide-on-desktop mobile-menu-toggle" id="openDrawerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer">${root.ApnaIcons.icon('menu', 20)}</button>
+            <button type="button" class="icon-btn hide-on-desktop mobile-menu-toggle" id="openDrawerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             ${
               user
                 ? `<div class="profile-menu-wrap">
@@ -211,16 +211,16 @@
                       <span class="hide-on-mobile">${escapeHtml((user.displayName || user.name || 'User').split(' ')[0])}</span>
                     </button>
                     <div class="profile-dropdown" id="profileDropdownMenu">
-                      <a href="/profile.html">My Profile</a>
-                      <a href="/my-matches.html">My Matches</a>
-                      <a href="/tournament.html">My Tournaments</a>
-                      <a href="/settings.html">Settings</a>
-                      <button type="button" id="topDropdownLogoutBtn" style="color:var(--danger);">Logout</button>
+                      <a href="/profile.html"><i class="fa-solid fa-user"></i> My Profile</a>
+                      <a href="/my-matches.html"><i class="fa-solid fa-baseball-bat-ball"></i> My Matches</a>
+                      <a href="/tournament.html"><i class="fa-solid fa-trophy"></i> My Tournaments</a>
+                      <a href="/settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+                      <button type="button" id="topDropdownLogoutBtn" style="color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                     </div>
                   </div>`
                 : (root.ApnaAuth && root.ApnaAuth.isGuest()
-                  ? `<a href="/profile.html" class="badge badge-warning" title="Guest Mode active">Guest Mode</a><a href="/register.html" class="btn btn-primary btn-sm hide-on-mobile">Create Account</a>`
-                  : `<a href="/login.html" class="btn btn-primary btn-sm">Login</a>`)
+                  ? `<a href="/profile.html" class="topbar-guest-pill" title="Guest Mode active"><i class="fa-solid fa-user-clock"></i> Guest Mode</a><a href="/register.html" class="btn btn-primary btn-sm hide-on-mobile">Create Account</a>`
+                  : `<a href="/login.html" class="btn btn-primary btn-sm"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</a>`)
             }
           </div>
         </header>
@@ -408,7 +408,7 @@
         syncPill.className = `sync-pill ${st.state}`;
         const iconSpan = syncPill.querySelector('.sync-icon');
         const labelSpan = syncPill.querySelector('.sync-label-text');
-        if (iconSpan) iconSpan.innerHTML = root.ApnaIcons.icon(st.online ? 'wifi' : 'wifiOff', 15);
+        if (iconSpan) iconSpan.innerHTML = st.online ? '<i class="fa-solid fa-wifi"></i>' : '<i class="fa-solid fa-wifi-slash"></i>';
         if (labelSpan) {
           if (!st.online) labelSpan.textContent = `Offline (${st.pendingCount})`;
           else if (st.isSyncing) labelSpan.textContent = 'Syncing...';
