@@ -53,7 +53,7 @@ const matchSchema = new mongoose.Schema(
     },
     ballType: {
       type: String,
-      enum: ['tennis', 'leather', 'gully', 'street', 'box', 'school', 'custom'],
+      enum: ['tennis', 'tennis_hard', 'tennis_light', 'leather', 'tape', 'gully', 'street', 'box', 'school', 'custom'],
       default: 'tennis'
     },
     oversPerInnings: { type: Number, required: true, min: 1, max: 100 },

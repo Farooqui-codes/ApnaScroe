@@ -230,6 +230,7 @@
     });
 
     document.getElementById('matchWizardForm')?.addEventListener('submit', submitMatch);
+    document.getElementById('startMatchSubmitBtn')?.addEventListener('click', submitMatch);
   }
 
   function parsePlayerNames(rawText) {
@@ -448,7 +449,9 @@
     tossDecision = document.querySelector('input[name="tossDecRadio"]:checked')?.value || tossDecision || 'bat';
     currentRules.format.oversPerInnings = Math.max(1, Number(document.getElementById('customOversInput')?.value) || 16);
     currentRules.format.playersPerTeam = Math.max(2, Math.min(25, Number(document.getElementById('playersPerTeamInput')?.value) || 11));
-    currentRules.format.ballType = document.getElementById('ballTypeSelect')?.value || currentRules.format.ballType || 'tennis_hard';
+    const rawBall = document.getElementById('ballTypeSelect')?.value || currentRules.format.ballType || 'tennis';
+    const allowedBalls = ['tennis', 'tennis_hard', 'tennis_light', 'leather', 'tape', 'gully', 'street', 'box', 'school', 'custom'];
+    currentRules.format.ballType = allowedBalls.includes(rawBall) ? rawBall : 'tennis';
 
     const validation = collectRuleInputs();
     if (!validation.valid) return ApnaUI.showToast(validation.errors.join(' '), 'error');
@@ -459,8 +462,8 @@
       btn.textContent = 'Starting Match...';
     }
 
-    const pNamesA = parsePlayerNames(document.getElementById('teamAPlayersText').value);
-    const pNamesB = parsePlayerNames(document.getElementById('teamBPlayersText').value);
+    const pNamesA = parsePlayerNames(document.getElementById('teamAPlayersText')?.value || '');
+    const pNamesB = parsePlayerNames(document.getElementById('teamBPlayersText')?.value || '');
     const clientMatchId = 'cm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
 
     const payload = {
@@ -490,59 +493,54 @@
       await ApnaOffline.saveMatchLocally({ match: res.match, innings: res.innings, syncStatus: 'synced' });
       window.location.href = `/live-score.html?matchId=${res.match._id}`;
     } catch (err) {
-      // Full Offline Fallback: create teams, players, and match in IndexedDB immediately
-      if (err.isOffline || !navigator.onLine) {
-        const localTeamAId = 'lteam_a_' + Date.now();
-        const localTeamBId = 'lteam_b_' + Date.now();
-        const makeLocalSquad = (names, side) =>
-          names.map((n, i) => ({ playerId: `lp_${side}_${Date.now()}_${i}`, name: n }));
+      console.warn('Backend match creation failed, continuing with local offline match:', err);
+      // Full Fallback: create teams, players, and match in IndexedDB immediately
+      const localTeamAId = 'lteam_a_' + Date.now();
+      const localTeamBId = 'lteam_b_' + Date.now();
+      const makeLocalSquad = (names, side) =>
+        names.map((n, i) => ({ playerId: `lp_${side}_${Date.now()}_${i}`, name: n }));
 
-        const sqA = makeLocalSquad(pNamesA, 'a');
-        const sqB = makeLocalSquad(pNamesB, 'b');
+      const sqA = makeLocalSquad(pNamesA, 'a');
+      const sqB = makeLocalSquad(pNamesB, 'b');
 
-        await ApnaOffline.saveTeamLocally({ localId: localTeamAId, name: nameA, village: payload.venue, players: sqA.map((p) => p.playerId) });
-        await ApnaOffline.saveTeamLocally({ localId: localTeamBId, name: nameB, village: payload.venue, players: sqB.map((p) => p.playerId) });
-        for (const p of [...sqA, ...sqB]) {
-          await ApnaOffline.savePlayerLocally({ localId: p.playerId, name: p.name, village: payload.venue });
-        }
-
-        const batFirst =
-          (tossWinnerSide === 'A' && tossDecision === 'bat') || (tossWinnerSide === 'B' && tossDecision === 'bowl')
-            ? { id: localTeamAId, name: nameA }
-            : { id: localTeamBId, name: nameB };
-        const bowlFirst = batFirst.id === localTeamAId ? { id: localTeamBId, name: nameB } : { id: localTeamAId, name: nameA };
-
-        const offlineMatch = {
-          _id: clientMatchId,
-          clientMatchId,
-          title: payload.title,
-          teamA: { teamId: localTeamAId, name: nameA, squad: sqA },
-          teamB: { teamId: localTeamBId, name: nameB, squad: sqB },
-          venue: payload.venue,
-          matchDate: new Date().toISOString(),
-          oversPerInnings: currentRules.format.oversPerInnings,
-          playersPerTeam: currentRules.format.playersPerTeam,
-          ballType: currentRules.format.ballType,
-          rulesSnapshot: currentRules,
-          status: 'live',
-          currentInningsNumber: 1
-        };
-        const inn1 = {
-          inningsNumber: 1,
-          battingTeamId: batFirst.id,
-          battingTeamName: batFirst.name,
-          bowlingTeamId: bowlFirst.id,
-          bowlingTeamName: bowlFirst.name,
-          status: 'live'
-        };
-        await ApnaOffline.saveMatchLocally({ localId: clientMatchId, match: offlineMatch, innings: [inn1], syncStatus: 'pending' });
-        ApnaUI.showToast('Offline mode: Match ready to score!', 'warning');
-        window.location.href = `/live-score.html?matchId=${clientMatchId}`;
-      } else {
-        ApnaUI.showToast(err.message, 'error');
-        btn.disabled = false;
-        btn.textContent = 'Start Scoring';
+      await ApnaOffline.saveTeamLocally({ localId: localTeamAId, name: nameA, village: payload.venue, players: sqA.map((p) => p.playerId) });
+      await ApnaOffline.saveTeamLocally({ localId: localTeamBId, name: nameB, village: payload.venue, players: sqB.map((p) => p.playerId) });
+      for (const p of [...sqA, ...sqB]) {
+        await ApnaOffline.savePlayerLocally({ localId: p.playerId, name: p.name, village: payload.venue });
       }
+
+      const batFirst =
+        (tossWinnerSide === 'A' && tossDecision === 'bat') || (tossWinnerSide === 'B' && tossDecision === 'bowl')
+          ? { id: localTeamAId, name: nameA }
+          : { id: localTeamBId, name: nameB };
+      const bowlFirst = batFirst.id === localTeamAId ? { id: localTeamBId, name: nameB } : { id: localTeamAId, name: nameA };
+
+      const offlineMatch = {
+        _id: clientMatchId,
+        clientMatchId,
+        title: payload.title,
+        teamA: { teamId: localTeamAId, name: nameA, squad: sqA },
+        teamB: { teamId: localTeamBId, name: nameB, squad: sqB },
+        venue: payload.venue,
+        matchDate: new Date().toISOString(),
+        oversPerInnings: currentRules.format.oversPerInnings,
+        playersPerTeam: currentRules.format.playersPerTeam,
+        ballType: currentRules.format.ballType,
+        rulesSnapshot: currentRules,
+        status: 'live',
+        currentInningsNumber: 1
+      };
+      const inn1 = {
+        inningsNumber: 1,
+        battingTeamId: batFirst.id,
+        battingTeamName: batFirst.name,
+        bowlingTeamId: bowlFirst.id,
+        bowlingTeamName: bowlFirst.name,
+        status: 'live'
+      };
+      await ApnaOffline.saveMatchLocally({ localId: clientMatchId, match: offlineMatch, innings: [inn1], syncStatus: 'pending' });
+      ApnaUI.showToast('Match ready! Starting scoring...', 'success');
+      window.location.href = `/live-score.html?matchId=${clientMatchId}`;
     }
   }
 

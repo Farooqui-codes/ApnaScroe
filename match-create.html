@@ -186,7 +186,7 @@
       <div class="cs-container">
         <div id="tournamentMatchNotice" class="badge badge-success mb-2 hidden">Tournament Fixture Match</div>
 
-        <form id="matchWizardForm" novalidate>
+        <form id="matchWizardForm" action="javascript:void(0);" onsubmit="return false;" novalidate>
           <datalist id="existingTeamsDatalist"></datalist>
 
           <!-- 1. TEAMS (PHOTO 1) -->
@@ -302,7 +302,7 @@
           <!-- 5. ACTIONS ROW (PHOTO 1) -->
           <div class="cs-actions-row">
             <button type="button" class="cs-btn-advanced" id="toggleAdvancedSettingsBtn">Advanced settings</button>
-            <button type="submit" class="cs-btn-start" id="startMatchSubmitBtn">Start match</button>
+            <button type="button" class="cs-btn-start" id="startMatchSubmitBtn">Start match</button>
           </div>
         </form>
       </div>
