@@ -355,7 +355,9 @@ async function createMatch(req, res, next) {
       matchDate: matchDate ? new Date(matchDate) : new Date(),
       venue: venue ? String(venue).trim() : teamA.village || 'Village Ground',
       matchType: matchType || (tournamentId ? 'tournament' : 'friendly'),
-      ballType: rulesSnapshot.format.ballType,
+      ballType: ['tennis', 'leather', 'gully', 'street', 'box', 'school', 'custom'].includes(rulesSnapshot.format.ballType)
+        ? rulesSnapshot.format.ballType
+        : (String(rulesSnapshot.format.ballType || '').startsWith('tennis') ? 'tennis' : 'custom'),
       oversPerInnings: rulesSnapshot.format.oversPerInnings,
       playersPerTeam: rulesSnapshot.format.playersPerTeam,
       toss: {

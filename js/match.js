@@ -450,8 +450,7 @@
     currentRules.format.oversPerInnings = Math.max(1, Number(document.getElementById('customOversInput')?.value) || 16);
     currentRules.format.playersPerTeam = Math.max(2, Math.min(25, Number(document.getElementById('playersPerTeamInput')?.value) || 11));
     const rawBall = document.getElementById('ballTypeSelect')?.value || currentRules.format.ballType || 'tennis';
-    const allowedBalls = ['tennis', 'tennis_hard', 'tennis_light', 'leather', 'tape', 'gully', 'street', 'box', 'school', 'custom'];
-    currentRules.format.ballType = allowedBalls.includes(rawBall) ? rawBall : 'tennis';
+    currentRules.format.ballType = rawBall.startsWith('tennis') ? 'tennis' : (rawBall === 'leather' ? 'leather' : 'custom');
 
     const validation = collectRuleInputs();
     if (!validation.valid) return ApnaUI.showToast(validation.errors.join(' '), 'error');
