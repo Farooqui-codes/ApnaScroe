@@ -994,6 +994,94 @@ table.data-table td.num {
   border-top: 1px solid var(--border-color);
 }
 
+/* Digital Coin Toss (Virtual Sikka) Modal */
+.coin-toss-dialog {
+  max-width: 440px;
+}
+.coin-call-selector {
+  text-align: center;
+}
+.choice-pill-btn {
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-surface-alt);
+  color: var(--text-primary);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.choice-pill-btn.selected {
+  background: var(--brand-primary);
+  color: #FFFFFF;
+  border-color: var(--brand-primary);
+}
+.coin-scene {
+  width: 140px;
+  height: 140px;
+  margin: 18px auto;
+  perspective: 900px;
+}
+.coin-3d {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 1.8s cubic-bezier(0.15, 0.9, 0.25, 1);
+}
+.coin-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+.coin-front {
+  background: radial-gradient(circle at 35% 35%, #FDE047, #EAB308, #B45309);
+  border: 4px solid #FEF08A;
+}
+.coin-back {
+  background: radial-gradient(circle at 35% 35%, #FDE68A, #D97706, #78350F);
+  border: 4px solid #FDE047;
+  transform: rotateY(180deg);
+}
+.coin-inner {
+  text-align: center;
+  color: #451A03;
+  font-weight: 900;
+}
+.coin-symbol {
+  font-size: 2.6rem;
+  display: block;
+}
+.coin-text {
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  display: block;
+  margin-top: 2px;
+}
+.coin-result-box {
+  background: #E2F1E6;
+  border: 1.5px solid #208B4E;
+  border-radius: 12px;
+  padding: 12px 16px;
+  text-align: center;
+  margin: 14px 0;
+  color: #0F3822;
+}
+[data-theme="dark"] .coin-result-box {
+  background: #064E3B;
+  color: #D1FAE5;
+  border-color: #10B981;
+}
+.coin-decision-actions {
+  margin-top: 14px;
+}
+
 /* Toast Notifications */
 .toast-container {
   position: fixed;

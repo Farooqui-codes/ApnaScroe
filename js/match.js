@@ -180,6 +180,19 @@
       });
     });
 
+    document.getElementById('tossChoiceALabelWrap')?.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'INPUT') selectTossWinner('A');
+    });
+    document.getElementById('tossChoiceBLabelWrap')?.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'INPUT') selectTossWinner('B');
+    });
+    document.getElementById('tossChoiceBatWrap')?.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'INPUT') selectTossDecision('bat');
+    });
+    document.getElementById('tossChoiceBowlWrap')?.addEventListener('click', (e) => {
+      if (e.target.tagName !== 'INPUT') selectTossDecision('bowl');
+    });
+
     document.getElementById('customOversInput')?.addEventListener('change', (e) => {
       currentRules.format.oversPerInnings = Math.max(1, Number(e.target.value) || 16);
     });
@@ -203,11 +216,9 @@
           onComplete: ({ winnerSide, decision }) => {
             selectTossWinner(winnerSide);
             selectTossDecision(decision);
-            const sideRadio = document.querySelector(`input[name="tossSideRadio"][value="${winnerSide}"]`);
-            if (sideRadio) sideRadio.checked = true;
-            const decRadio = document.querySelector(`input[name="tossDecRadio"][value="${decision}"]`);
-            if (decRadio) decRadio.checked = true;
-            ApnaUI.showToast(`${winnerSide === 'A' ? nameA : nameB} won toss and chose ${decision === 'bat' ? 'Batting' : 'Bowling'} first!`, 'success');
+            const winnerName = winnerSide === 'A' ? nameA : nameB;
+            const decText = decision === 'bat' ? 'Batting' : 'Bowling';
+            ApnaUI.showToast(`🪙 ${winnerName} won toss and chose ${decText} first!`, 'success');
           }
         });
       }
@@ -266,14 +277,38 @@
 
   function selectTossWinner(side) {
     tossWinnerSide = side;
-    document.getElementById('tossWinnerABtn').classList.toggle('selected', side === 'A');
-    document.getElementById('tossWinnerBBtn').classList.toggle('selected', side === 'B');
+    const radA = document.getElementById('tossSideARadio');
+    const radB = document.getElementById('tossSideBRadio');
+    if (side === 'A' && radA) {
+      radA.checked = true;
+      radA.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (side === 'B' && radB) {
+      radB.checked = true;
+      radB.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const btnA = document.getElementById('tossWinnerABtn');
+    const btnB = document.getElementById('tossWinnerBBtn');
+    if (btnA) btnA.classList.toggle('selected', side === 'A');
+    if (btnB) btnB.classList.toggle('selected', side === 'B');
   }
 
   function selectTossDecision(dec) {
     tossDecision = dec;
-    document.getElementById('tossBatBtn').classList.toggle('selected', dec === 'bat');
-    document.getElementById('tossBowlBtn').classList.toggle('selected', dec === 'bowl');
+    const radBat = document.getElementById('tossDecBatRadio');
+    const radBowl = document.getElementById('tossDecBowlRadio');
+    if (dec === 'bat' && radBat) {
+      radBat.checked = true;
+      radBat.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (dec === 'bowl' && radBowl) {
+      radBowl.checked = true;
+      radBowl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const btnBat = document.getElementById('tossBatBtn');
+    const btnBowl = document.getElementById('tossBowlBtn');
+    if (btnBat) btnBat.classList.toggle('selected', dec === 'bat');
+    if (btnBowl) btnBowl.classList.toggle('selected', dec === 'bowl');
   }
 
   function goStep(step) {
