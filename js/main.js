@@ -22,11 +22,9 @@
   ];
 
   const BOTTOM_TABS = [
-    { id: 'dashboard', label: 'Home', href: '/dashboard.html', icon: 'home' },
-    { id: 'my-matches', label: 'Matches', href: '/my-matches.html', icon: 'radio' },
-    { id: 'match-create', label: 'Start Match', href: '/match-create.html', icon: 'plusBat', isCenter: true },
-    { id: 'tournaments', label: 'Tournaments', href: '/tournament.html', icon: 'trophy' },
-    { id: 'profile', label: 'Profile', href: '/profile.html', icon: 'user' }
+    { id: 'match-create', label: 'New Match', href: '/match-create.html', faClass: 'fa-solid fa-baseball-bat-ball' },
+    { id: 'teams', label: 'Teams', href: '/team.html', faClass: 'fa-solid fa-users' },
+    { id: 'my-matches', label: 'History', href: '/my-matches.html', faClass: 'fa-solid fa-clock-rotate-left' }
   ];
 
   function applyTheme(theme) {
@@ -136,11 +134,11 @@
     const navHtml = renderNavLinks(activePage);
     const drawerNavHtml = renderDrawerNav(activePage);
     const bottomHtml = BOTTOM_TABS.map((tab) => {
-      const active = tab.id === activePage ? 'active' : '';
-      if (tab.isCenter) {
-        return `<a href="${tab.href}" class="bottom-tab bottom-tab-center ${active}"><span class="bottom-tab-center-pill">${root.ApnaIcons.icon(tab.icon, 20)}</span><span class="bottom-tab-label">${tab.label}</span></a>`;
-      }
-      return `<a href="${tab.href}" class="bottom-tab ${active}">${root.ApnaIcons.icon(tab.icon, 21)}<span>${tab.label}</span></a>`;
+      const active = (tab.id === activePage || (tab.id === 'my-matches' && activePage === 'dashboard')) ? 'active' : '';
+      const iconMarkup = tab.faClass
+        ? `<i class="${tab.faClass}"></i>`
+        : root.ApnaIcons.icon(tab.icon || 'plusBat', 20);
+      return `<a href="${tab.href}" class="bottom-tab ${active}">${iconMarkup}<span>${tab.label}</span></a>`;
     }).join('');
 
     appRoot.className = 'app-shell';
@@ -150,8 +148,8 @@
           <a href="/dashboard.html" class="brand-lockup">
             <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore" class="brand-logo-img" />
             <div class="brand-text-wrap">
-              <span class="brand-title">ApnaScore</span>
-              <span class="brand-tagline">Your Local Cricket Scorer</span>
+              <span class="brand-title">Cricket <span style="font-weight:400;font-size:0.88em;opacity:0.92;">scorer</span></span>
+              <span class="brand-tagline">ApnaScore Live</span>
             </div>
           </a>
         </div>
@@ -164,8 +162,8 @@
           <a href="/dashboard.html" class="brand-lockup">
             <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore" class="brand-logo-img" />
             <div class="brand-text-wrap">
-              <span class="brand-title">ApnaScore</span>
-              <span class="brand-tagline">Your Local Cricket Scorer</span>
+              <span class="brand-title">Cricket <span style="font-weight:400;font-size:0.88em;opacity:0.92;">scorer</span></span>
+              <span class="brand-tagline">ApnaScore Live</span>
             </div>
           </a>
           <button class="icon-btn" id="closeDrawerBtn" aria-label="Close menu">${root.ApnaIcons.icon('x', 18)}</button>
@@ -184,22 +182,24 @@
           <div class="topbar-left">
             <button class="icon-btn desktop-sidebar-toggle" id="sidebarCollapseBtn" aria-label="Toggle sidebar"><i class="fa-solid fa-bars"></i></button>
             ${
-              activePage !== 'dashboard'
+              (activePage !== 'dashboard' && activePage !== 'match-create')
                 ? `<button type="button" class="icon-btn mobile-back-btn" id="mobileBackBtn" aria-label="Go Back"><i class="fa-solid fa-arrow-left"></i></button>`
                 : ''
             }
-            <a href="/dashboard.html" class="topbar-mobile-brand">
-              <img src="/assets/icons/apnascore-icon.png" alt="ApnaScore" style="width:30px;height:30px;border-radius:8px;object-fit:contain;" />
+            <a href="/match-create.html" class="topbar-mobile-brand">
+              <img src="/assets/icons/apnascore-icon.png" alt="ApnaScore" style="width:28px;height:28px;border-radius:8px;object-fit:contain;" />
             </a>
-            <span class="topbar-page-title">${pageTitle}</span>
+            <span class="topbar-page-title" style="letter-spacing:-0.02em;">Cricket <span style="font-weight:400;font-size:0.88em;opacity:0.92;">scorer</span></span>
           </div>
           <div class="topbar-actions">
             <button type="button" class="btn btn-lime btn-sm hidden" id="pwaInstallBtn" aria-label="Install ApnaScore App"><i class="fa-solid fa-download"></i> Install App</button>
-            <button class="sync-pill online" id="globalSyncPill" title="Click to sync pending offline matches">
+            <button class="sync-pill online hide-on-mobile" id="globalSyncPill" title="Click to sync pending offline matches">
               <span class="sync-icon"><i class="fa-solid fa-wifi"></i></span>
               <span class="sync-label-text">Online</span>
             </button>
-            <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark mode"></button>
+            <button class="icon-btn hide-on-mobile" id="themeToggleBtn" aria-label="Toggle dark mode"></button>
+            <button type="button" class="icon-btn" id="appAudioTipBtn" title="Notification / Tips" aria-label="Tips & Sound"><i class="fa-solid fa-bell"></i></button>
+            <a href="/settings.html" class="icon-btn" title="Settings" aria-label="Settings"><i class="fa-solid fa-gear"></i></a>
             <button type="button" class="icon-btn hide-on-desktop mobile-menu-toggle" id="openDrawerBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileDrawer"><i class="fa-solid fa-ellipsis-vertical"></i></button>
             ${
               user
@@ -212,15 +212,14 @@
                     </button>
                     <div class="profile-dropdown" id="profileDropdownMenu">
                       <a href="/profile.html"><i class="fa-solid fa-user"></i> My Profile</a>
-                      <a href="/my-matches.html"><i class="fa-solid fa-baseball-bat-ball"></i> My Matches</a>
-                      <a href="/tournament.html"><i class="fa-solid fa-trophy"></i> My Tournaments</a>
+                      <a href="/my-matches.html"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
+                      <a href="/team.html"><i class="fa-solid fa-users"></i> Teams</a>
+                      <a href="/tournament.html"><i class="fa-solid fa-trophy"></i> Tournaments</a>
                       <a href="/settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
                       <button type="button" id="topDropdownLogoutBtn" style="color:var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                     </div>
                   </div>`
-                : (root.ApnaAuth && root.ApnaAuth.isGuest()
-                  ? `<a href="/profile.html" class="topbar-guest-pill" title="Guest Mode active"><i class="fa-solid fa-user-clock"></i> Guest Mode</a><a href="/register.html" class="btn btn-primary btn-sm hide-on-mobile">Create Account</a>`
-                  : `<a href="/login.html" class="btn btn-primary btn-sm"><i class="fa-solid fa-arrow-right-to-bracket"></i> Login</a>`)
+                : `<button type="button" class="btn btn-secondary btn-sm hide-on-mobile" id="topbarGoogleBtn" title="Sign in with Google"><i class="fa-brands fa-google"></i> Google Sync</button>`
             }
           </div>
         </header>
@@ -247,6 +246,14 @@
       });
       document.getElementById('topDropdownLogoutBtn')?.addEventListener('click', () => root.ApnaAuth?.logout());
     }
+
+    document.getElementById('topbarGoogleBtn')?.addEventListener('click', () => {
+      root.ApnaAuth?.signInWithGoogle();
+    });
+
+    document.getElementById('appAudioTipBtn')?.addEventListener('click', () => {
+      root.ApnaUI?.showToast('ApnaScore Cricket Scorer: 100% Offline Ready, Fast Ball-by-Ball scoring & Instant WhatsApp sharing!', 'info');
+    });
 
     // Non-annoying Profile Completion Reminder (once per session, stops after 3 dismissals)
     if (user && activePage !== 'profile') {

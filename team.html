@@ -31,42 +31,42 @@
 <body>
   <div id="appShell">
     <div class="main-content-slot">
-      <section id="teamListView">
-        <div class="card mb-2">
-          <div class="flex-between">
-            <div>
-              <h2 class="card-title">Teams</h2>
-              <span class="text-sm text-muted">Create village teams, assign captains, and manage squads</span>
-            </div>
-            <div class="flex-gap">
-              <button type="button" class="btn btn-secondary btn-sm" id="joinByCodeBtn">Join via Code</button>
-              <button type="button" class="btn btn-primary" id="openCreateTeamBtn">+ Create Team</button>
-            </div>
+      <div class="cs-container">
+        <section id="teamListView">
+          <div class="flex-between mb-2" style="gap:10px;">
+            <input class="form-control" id="teamSearchInput" placeholder="Search teams..." style="height:36px;font-size:0.9rem;" />
+            <input class="form-control hidden" id="teamVillageFilter" placeholder="Filter by village..." />
+            <button type="button" class="btn btn-secondary btn-sm hidden" id="joinByCodeBtn">Join Code</button>
+            <button type="button" class="btn btn-primary btn-sm hide-on-mobile" id="openCreateTeamBtn"><i class="fa-solid fa-plus"></i> Add Team</button>
           </div>
-          <div class="form-grid-2 mt-2">
-            <input class="form-control" id="teamSearchInput" placeholder="Search team name..." />
-            <input class="form-control" id="teamVillageFilter" placeholder="Filter by village..." />
-          </div>
-        </div>
-        <div id="teamsGrid" class="entity-grid"><div class="empty-state">Loading teams...</div></div>
-      </section>
 
-      <section id="teamDetailView" class="hidden">
-        <div class="card mb-2">
-          <div class="flex-between">
-            <div class="flex-gap">
-              <a href="/team.html" class="btn btn-secondary btn-sm">← All Teams</a>
-              <h2 class="card-title" id="teamDetailName">Team</h2>
-            </div>
-            <span class="badge badge-success" id="teamInviteCodeBadge"></span>
+          <div id="teamsGrid">
+            <div class="empty-state">Loading teams...</div>
           </div>
-          <div class="text-sm text-muted mt-1" id="teamDetailMeta"></div>
-        </div>
-        <div class="form-grid-2">
-          <div class="card" id="teamRosterCard"></div>
-          <div class="card" id="teamHistoryCard"></div>
-        </div>
-      </section>
+
+          <!-- Floating Action Button (+) Matching Photo 3 -->
+          <button type="button" class="cs-fab" id="fabCreateTeamBtn" title="Create Team" aria-label="Create Team">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </section>
+
+        <section id="teamDetailView" class="hidden">
+          <div class="card mb-2">
+            <div class="flex-between">
+              <div class="flex-gap">
+                <a href="/team.html" class="btn btn-secondary btn-sm">← Back</a>
+                <h2 class="card-title" id="teamDetailName" style="font-size:1.2rem;">Team</h2>
+              </div>
+              <span class="badge badge-success" id="teamInviteCodeBadge"></span>
+            </div>
+            <div class="text-sm text-muted mt-1" id="teamDetailMeta"></div>
+          </div>
+          <div class="form-grid-2">
+            <div class="card" id="teamRosterCard"></div>
+            <div class="card" id="teamHistoryCard"></div>
+          </div>
+        </section>
+      </div>
     </div>
   </div>
 

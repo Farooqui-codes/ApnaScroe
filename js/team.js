@@ -14,18 +14,19 @@
       document.getElementById('teamDetailView').classList.remove('hidden');
       await loadTeamDetail(id);
     } else {
-      document.getElementById('openCreateTeamBtn').addEventListener('click', async () => {
+      const openModal = async () => {
         if (!ApnaAuth.isAuthenticatedOrGuest()) await ApnaAuth.continueAsGuest(null);
         document.getElementById('createTeamModal').classList.add('open');
-      });
+      };
+      document.getElementById('openCreateTeamBtn')?.addEventListener('click', openModal);
+      document.getElementById('fabCreateTeamBtn')?.addEventListener('click', openModal);
       document.getElementById('teamSearchInput').addEventListener('input', loadTeams);
-      document.getElementById('teamVillageFilter').addEventListener('input', loadTeams);
-      document.getElementById('joinByCodeBtn').addEventListener('click', joinByInviteCode);
+      document.getElementById('teamVillageFilter')?.addEventListener('input', loadTeams);
+      document.getElementById('joinByCodeBtn')?.addEventListener('click', joinByInviteCode);
       document.getElementById('createTeamForm').addEventListener('submit', createTeam);
       await loadTeams();
       if (params.get('action') === 'create') {
-        if (!ApnaAuth.isAuthenticatedOrGuest()) await ApnaAuth.continueAsGuest(null);
-        document.getElementById('createTeamModal').classList.add('open');
+        openModal();
       }
     }
   });
@@ -92,33 +93,67 @@
         }
       }
       if (!list.length) {
-        grid.innerHTML = `<div class="empty-state">No teams found. Create your first team!</div>`;
+        grid.innerHTML = `
+          <div class="card empty-state" style="padding:24px;text-align:center;">
+            <p style="margin:0 0 6px;font-weight:700;color:var(--text-primary);">No teams yet.</p>
+            <p class="text-sm text-muted" style="margin:0 0 14px;">Tap the + button to create your first team.</p>
+            <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('createTeamModal').classList.add('open')">+ Create Team</button>
+          </div>
+        `;
         return;
       }
-      grid.innerHTML = list.map((t, idx) => `
-        <div class="card">
-          <div class="flex-between mb-2">
-            <div class="flex-gap">
-              <img src="${ApnaUI.escapeHtml(t.logoUrl || '/assets/icons/apnascore-icon.png')}" class="avatar-circle" alt="Team" />
-              <div>
-                <strong>${ApnaUI.escapeHtml(t.name)}</strong>
-                <div class="text-sm text-muted">${ApnaUI.escapeHtml(t.village)} • Rank #${idx + 1}</div>
+
+      const avatarColors = ['cs-avatar-teal', 'cs-avatar-blue', 'cs-avatar-gray', 'cs-avatar-b', 'cs-avatar-a', 'cs-avatar-purple'];
+      grid.innerHTML = list.map((t, idx) => {
+        const rawName = t.name || 'Team';
+        const initials = (rawName.replace(/[^a-zA-Z0-9]/g, '').slice(0, 2) || 'TM').toUpperCase();
+        const colorClass = avatarColors[idx % avatarColors.length];
+        const played = t.stats?.matchesPlayed || t.stats?.played || 0;
+        const won = t.stats?.won || 0;
+        const lost = t.stats?.lost || Math.max(0, played - won);
+
+        return `
+          <div class="cs-team-item-card">
+            <div class="cs-team-item-left">
+              <span class="cs-avatar-circle ${colorClass}">${initials}</span>
+              <div class="cs-team-meta-col">
+                <span class="cs-team-meta-name">${ApnaUI.escapeHtml(rawName)}</span>
+                <div class="cs-team-meta-stats">
+                  <span>Matches: <strong>${played}</strong></span>
+                  <span>Won: <strong>${won}</strong></span>
+                  <span>Lost: <strong>${lost}</strong></span>
+                </div>
               </div>
             </div>
-            <span class="badge badge-neutral">${ApnaUI.escapeHtml(t.shortName || 'TM')}</span>
+            <div class="flex-gap">
+              <a href="/team.html?id=${t._id}" class="cs-icon-btn" title="Edit Team Squad"><i class="fa-solid fa-pen"></i></a>
+              <button type="button" class="cs-icon-btn delete-btn" onclick="window.confirmDeleteTeam('${t._id}', '${ApnaUI.escapeHtml(rawName)}')" title="Delete Team"><i class="fa-solid fa-trash"></i></button>
+            </div>
           </div>
-          <div class="text-sm text-muted">
-            Players: ${(t.players || []).length} • Won: ${t.stats?.won || 0} • Pts: ${t.stats?.rankingPoints || 1000}
-          </div>
-          <div class="flex-gap mt-2">
-            <a href="/team.html?id=${t._id}" class="btn btn-primary btn-sm">Manage Squad</a>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     } catch (err) {
       grid.innerHTML = `<div class="empty-state">${ApnaUI.escapeHtml(err.message)}</div>`;
     }
   }
+
+  window.confirmDeleteTeam = async (id, name) => {
+    if (!confirm(`Are you sure you want to delete team "${name}"?`)) return;
+    try {
+      await ApnaAPI.delete(`/api/teams/${id}`);
+      if (window.ApnaOffline) await ApnaOffline.deleteLocalTeam(id).catch(() => {});
+      ApnaUI.showToast(`Team "${name}" deleted.`);
+      await loadTeams();
+    } catch (err) {
+      if (window.ApnaOffline) {
+        await ApnaOffline.deleteLocalTeam(id).catch(() => {});
+        ApnaUI.showToast(`Local team "${name}" deleted.`);
+        await loadTeams();
+      } else {
+        ApnaUI.showToast(err.message, 'error');
+      }
+    }
+  };
 
   async function loadTeamDetail(id) {
     try {

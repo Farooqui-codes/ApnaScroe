@@ -149,45 +149,53 @@
       btn.addEventListener('click', () => goStep(Number(btn.dataset.step)));
     });
 
-    // Overs chips
-    document.querySelectorAll('#oversPresetsGrid .preset-chip').forEach((chip) => {
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('#oversPresetsGrid .preset-chip').forEach((c) => c.classList.remove('selected'));
-        chip.classList.add('selected');
-        const customWrap = document.getElementById('customOversWrap');
-        if (chip.dataset.overs !== 'custom') {
-          customWrap.classList.add('hidden');
-          document.getElementById('customOversInput').value = chip.dataset.overs;
-          currentRules.format.oversPerInnings = Number(chip.dataset.overs);
-        } else {
-          customWrap.classList.remove('hidden');
-          document.getElementById('customOversInput').focus();
-        }
+    const tAInp = document.getElementById('teamANameInput');
+    const tBInp = document.getElementById('teamBNameInput');
+    const tossLblA = document.getElementById('tossWinnerALabel');
+    const tossLblB = document.getElementById('tossWinnerBLabel');
+
+    function updateTossLabels() {
+      const valA = tAInp?.value.trim() || 'Host Team';
+      const valB = tBInp?.value.trim() || 'Visitor Team';
+      if (tossLblA) tossLblA.textContent = valA;
+      if (tossLblB) tossLblB.textContent = valB;
+      const tAPLabel = document.getElementById('teamAPlayersLabel');
+      const tBPLabel = document.getElementById('teamBPlayersLabel');
+      if (tAPLabel) tAPLabel.textContent = `${valA} Players (Optional)`;
+      if (tBPLabel) tBPLabel.textContent = `${valB} Players (Optional)`;
+    }
+    tAInp?.addEventListener('input', updateTossLabels);
+    tBInp?.addEventListener('input', updateTossLabels);
+    updateTossLabels();
+
+    document.querySelectorAll('input[name="tossSideRadio"]').forEach((radio) => {
+      radio.addEventListener('change', (e) => {
+        tossWinnerSide = e.target.value;
       });
     });
 
-    document.getElementById('customOversInput').addEventListener('change', (e) => {
-      currentRules.format.oversPerInnings = Math.max(1, Number(e.target.value) || 6);
+    document.querySelectorAll('input[name="tossDecRadio"]').forEach((radio) => {
+      radio.addEventListener('change', (e) => {
+        tossDecision = e.target.value;
+      });
     });
 
-    document.getElementById('playersPerTeamInput').addEventListener('change', (e) => {
-      currentRules.format.playersPerTeam = Math.max(2, Math.min(20, Number(e.target.value) || 11));
+    document.getElementById('customOversInput')?.addEventListener('change', (e) => {
+      currentRules.format.oversPerInnings = Math.max(1, Number(e.target.value) || 16);
     });
 
-    document.getElementById('skipPlayersBtn').addEventListener('click', () => goStep(3));
+    document.getElementById('toggleAdvancedSettingsBtn')?.addEventListener('click', () => {
+      const p = document.getElementById('advancedMatchPanel');
+      if (p) p.classList.toggle('hidden');
+    });
 
-    document.getElementById('teamAPlayersText').addEventListener('input', refreshCaptainDropdowns);
-    document.getElementById('teamBPlayersText').addEventListener('input', refreshCaptainDropdowns);
-
-    // Toss buttons
-    document.getElementById('tossWinnerABtn').addEventListener('click', () => selectTossWinner('A'));
-    document.getElementById('tossWinnerBBtn').addEventListener('click', () => selectTossWinner('B'));
-    document.getElementById('tossBatBtn').addEventListener('click', () => selectTossDecision('bat'));
-    document.getElementById('tossBowlBtn').addEventListener('click', () => selectTossDecision('bowl'));
+    document.getElementById('playersPerTeamInput')?.addEventListener('change', (e) => {
+      currentRules.format.playersPerTeam = Math.max(2, Math.min(25, Number(e.target.value) || 11));
+    });
 
     document.getElementById('btnFlipSikkaModal')?.addEventListener('click', () => {
-      const nameA = document.getElementById('teamANameInput').value.trim() || 'Team A';
-      const nameB = document.getElementById('teamBNameInput').value.trim() || 'Team B';
+      const nameA = document.getElementById('teamANameInput').value.trim() || 'Host Team';
+      const nameB = document.getElementById('teamBNameInput').value.trim() || 'Visitor Team';
       if (window.ApnaToss) {
         window.ApnaToss.showModal({
           teamAName: nameA,
@@ -195,26 +203,18 @@
           onComplete: ({ winnerSide, decision }) => {
             selectTossWinner(winnerSide);
             selectTossDecision(decision);
-            ApnaUI.showToast(`${winnerSide === 'A' ? nameA : nameB} chose ${decision === 'bat' ? 'Batting' : 'Bowling'} first!`, 'success');
+            const sideRadio = document.querySelector(`input[name="tossSideRadio"][value="${winnerSide}"]`);
+            if (sideRadio) sideRadio.checked = true;
+            const decRadio = document.querySelector(`input[name="tossDecRadio"][value="${decision}"]`);
+            if (decRadio) decRadio.checked = true;
+            ApnaUI.showToast(`${winnerSide === 'A' ? nameA : nameB} won toss and chose ${decision === 'bat' ? 'Batting' : 'Bowling'} first!`, 'success');
           }
         });
       }
     });
 
-    // Advanced rules controls
-    document.getElementById('ballTypeSelect').addEventListener('change', (e) => {
+    document.getElementById('ballTypeSelect')?.addEventListener('change', (e) => {
       currentRules.format.ballType = e.target.value;
-    });
-
-    document.getElementById('rulePresetSelect').addEventListener('change', (e) => {
-      const all = JSON.parse(e.target.dataset.presets || '[]');
-      const found = all.find((p) => (p.presetId || '') === e.target.value);
-      if (found && found.rules) {
-        const keepOvers = Number(document.getElementById('customOversInput').value) || found.rules.format.oversPerInnings;
-        currentRules = ApnaScoringEngine.validateAndNormalizeRules(found.rules).rules;
-        currentRules.format.oversPerInnings = keepOvers;
-        renderRulePanels();
-      }
     });
 
     document.querySelectorAll('#ruleEngineTabs .tab-btn').forEach((tab) => {
@@ -222,24 +222,12 @@
         document.querySelectorAll('#ruleEngineTabs .tab-btn').forEach((t) => t.classList.remove('active'));
         tab.classList.add('active');
         ['extras', 'boundaries', 'wickets', 'local'].forEach((k) => {
-          document.getElementById(`rulePanel-${k}`).classList.toggle('hidden', k !== tab.dataset.ruletab);
+          document.getElementById(`rulePanel-${k}`)?.classList.toggle('hidden', k !== tab.dataset.ruletab);
         });
       });
     });
 
-    document.getElementById('saveRulePresetBtn').addEventListener('click', async () => {
-      const name = prompt('Enter a name for this rule preset:');
-      if (!name || !name.trim()) return;
-      collectRuleInputs();
-      const clientId = 'lrule_' + Date.now();
-      await ApnaOffline.saveRuleLocally({ localId: clientId, clientId, name: name.trim(), rules: currentRules });
-      try {
-        await ApnaAPI.post('/api/settings/presets', { name: name.trim(), rules: currentRules, clientId });
-      } catch (_) {}
-      ApnaUI.showToast(`Rule preset "${name}" saved.`);
-    });
-
-    document.getElementById('matchWizardForm').addEventListener('submit', submitMatch);
+    document.getElementById('matchWizardForm')?.addEventListener('submit', submitMatch);
   }
 
   function parsePlayerNames(rawText) {
@@ -446,19 +434,28 @@
   }
 
   async function submitMatch(e) {
-    e.preventDefault();
-    const validation = collectRuleInputs();
-    if (!validation.valid) return ApnaUI.showToast(validation.errors.join(' '), 'error');
+    if (e && e.preventDefault) e.preventDefault();
 
     const nameA = document.getElementById('teamANameInput').value.trim();
     const nameB = document.getElementById('teamBNameInput').value.trim();
     if (!nameA || !nameB || nameA.toLowerCase() === nameB.toLowerCase()) {
-      return ApnaUI.showToast('Please enter two different team names.', 'error');
+      return ApnaUI.showToast('Please enter two different team names for Host and Visitor.', 'error');
     }
 
+    tossWinnerSide = document.querySelector('input[name="tossSideRadio"]:checked')?.value || tossWinnerSide || 'A';
+    tossDecision = document.querySelector('input[name="tossDecRadio"]:checked')?.value || tossDecision || 'bat';
+    currentRules.format.oversPerInnings = Math.max(1, Number(document.getElementById('customOversInput')?.value) || 16);
+    currentRules.format.playersPerTeam = Math.max(2, Math.min(25, Number(document.getElementById('playersPerTeamInput')?.value) || 11));
+    currentRules.format.ballType = document.getElementById('ballTypeSelect')?.value || currentRules.format.ballType || 'tennis_hard';
+
+    const validation = collectRuleInputs();
+    if (!validation.valid) return ApnaUI.showToast(validation.errors.join(' '), 'error');
+
     const btn = document.getElementById('startMatchSubmitBtn');
-    btn.disabled = true;
-    btn.textContent = 'Starting Match...';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Starting Match...';
+    }
 
     const pNamesA = parsePlayerNames(document.getElementById('teamAPlayersText').value);
     const pNamesB = parsePlayerNames(document.getElementById('teamBPlayersText').value);

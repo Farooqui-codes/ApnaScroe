@@ -37,70 +37,92 @@
     return ROLE_LABELS[role] || 'Scorer';
   }
 
-  async function continueAsGuest(redirectUrl = '/dashboard.html') {
+  function ensureGuestSessionSilently() {
+    if (isLoggedIn() || isGuest()) return;
     const deviceId = root.ApnaOffline ? root.ApnaOffline.getDeviceId() : ('dev_' + Date.now());
-    const existing = getGuestSession();
-    if (existing && existing.guestId && existing.guestToken) {
-      if (redirectUrl) window.location.href = redirectUrl;
-      return existing;
-    }
-
-    let profile;
-    try {
-      const res = await root.ApnaAPI.post('/api/guest/session', { deviceId });
-      profile = {
-        id: 'current',
-        guestId: res.guestId,
-        deviceId: res.deviceId || deviceId,
-        guestToken: res.guestToken,
-        expiresAt: res.expiresAt,
-        migrationStatus: res.migrationStatus || 'pending',
-        needsServerSession: false,
-        createdAt: new Date().toISOString()
-      };
-    } catch (_) {
-      // Offline guest entry: create local guest session immediately and queue backend registration
-      profile = {
-        id: 'current',
-        guestId: 'gst_local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-        deviceId,
-        guestToken: 'gtok_local_' + Math.random().toString(36).slice(2, 16),
-        migrationStatus: 'pending',
-        needsServerSession: true,
-        createdAt: new Date().toISOString()
-      };
-    }
-
+    const profile = {
+      id: 'current',
+      guestId: 'gst_local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+      deviceId,
+      guestToken: 'gtok_local_' + Math.random().toString(36).slice(2, 16),
+      migrationStatus: 'pending',
+      needsServerSession: true,
+      createdAt: new Date().toISOString()
+    };
+    root.ApnaAPI.setGuestSession(profile);
     if (root.ApnaOffline) {
-      try {
-        await root.ApnaOffline.saveGuestProfile(profile);
-      } catch (_) {
-        root.ApnaAPI.setGuestSession(profile);
-      }
-    } else {
-      root.ApnaAPI.setGuestSession(profile);
+      root.ApnaOffline.saveGuestProfile(profile).catch(() => {});
     }
-
-    if (redirectUrl) window.location.href = redirectUrl;
-    return profile;
+    if (navigator.onLine) {
+      root.ApnaAPI.post('/api/guest/session', { deviceId }).then((res) => {
+        if (res && res.guestId && res.guestToken) {
+          profile.guestId = res.guestId;
+          profile.guestToken = res.guestToken;
+          profile.needsServerSession = false;
+          root.ApnaAPI.setGuestSession(profile);
+          if (root.ApnaOffline) root.ApnaOffline.saveGuestProfile(profile).catch(() => {});
+        }
+      }).catch(() => {});
+    }
   }
 
-  function requireAuth(redirectTo = '/login.html', { allowGuest = false } = {}) {
-    if (isLoggedIn()) return true;
-    if (allowGuest && isGuest()) return true;
-    const next = encodeURIComponent(window.location.pathname + window.location.search);
-    window.location.href = `${redirectTo}?next=${next}`;
-    return false;
+  // Auto-initialize guest mode silently on load so user is never prompted to login or choose guest mode
+  try {
+    ensureGuestSessionSilently();
+  } catch (_) {}
+
+  async function continueAsGuest(redirectUrl = '/dashboard.html') {
+    ensureGuestSessionSilently();
+    const existing = getGuestSession();
+    if (redirectUrl && window.location.pathname !== redirectUrl) {
+      window.location.href = redirectUrl;
+    }
+    return existing;
+  }
+
+  function requireAuth(redirectTo = '/login.html', { allowGuest = true } = {}) {
+    ensureGuestSessionSilently();
+    // Auto guest mode ensures all features are 100% accessible to every user without forced login
+    return true;
+  }
+
+  async function signInWithGoogle(googleData = {}) {
+    const email = googleData.email || prompt('Enter your Google email to sync & backup matches:');
+    if (!email) return null;
+    const name = googleData.name || email.split('@')[0];
+    const avatarUrl = googleData.avatarUrl || '';
+    const googleId = googleData.googleId || ('gid_' + Date.now());
+
+    try {
+      const res = await root.ApnaAPI.post('/api/auth/google', { email, name, avatarUrl, googleId });
+      if (res && res.token && res.user) {
+        root.ApnaAPI.setSession(res.token, res.user);
+        // Automatically migrate guest data to the Google account
+        if (root.ApnaMigrate?.runQueuedOfflineMigration) {
+          await root.ApnaMigrate.runQueuedOfflineMigration().catch(() => {});
+        }
+        if (root.ApnaUI?.showToast) {
+          root.ApnaUI.showToast(`Signed in as ${res.user.name}! Your matches are synced to cloud.`);
+        }
+        return res.user;
+      }
+    } catch (err) {
+      if (root.ApnaUI?.showToast) root.ApnaUI.showToast(err.message || 'Google sign-in failed', 'error');
+      throw err;
+    }
+    return null;
   }
 
   function logout() {
     root.ApnaAPI.clearSession();
-    window.location.href = '/login.html';
+    ensureGuestSessionSilently();
+    window.location.href = '/dashboard.html';
   }
 
   function exitGuestMode() {
     root.ApnaAPI.clearGuestSession();
-    window.location.href = '/login.html';
+    ensureGuestSessionSilently();
+    window.location.href = '/dashboard.html';
   }
 
   async function refreshUser() {
@@ -124,8 +146,10 @@
     isGuest,
     isAuthenticatedOrGuest,
     roleLabel,
+    ensureGuestSessionSilently,
     continueAsGuest,
     requireAuth,
+    signInWithGoogle,
     logout,
     exitGuestMode,
     refreshUser

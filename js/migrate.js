@@ -29,22 +29,25 @@
   function showRestrictionPrompt(message) {
     const backdrop = ensureModalRoot();
     const dialog = document.getElementById('apnaGuestModalDialog');
-    const text = message || 'Create a free account to publish your match and manage tournaments.';
+    const text = message || 'You can optionally connect Google to backup your matches across devices.';
     dialog.innerHTML = `
       <div class="modal-header">
-        <h3 class="modal-title">Account Required for This Feature</h3>
+        <h3 class="modal-title">Google Cloud Backup (Optional)</h3>
         <button type="button" class="icon-btn" id="resCloseBtn">✕</button>
       </div>
       <p style="margin-top:0;">${root.ApnaUI ? root.ApnaUI.escapeHtml(text) : text}</p>
-      <p class="text-sm text-muted">Your existing local guest matches, teams, and scorecards remain completely safe and will migrate automatically when you sign up or log in.</p>
+      <p class="text-sm text-muted">Your matches stay 100% saved on this device. Sign in with Google anytime if you want to sync them to the cloud.</p>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="resContinueGuestBtn">Continue as Guest</button>
-        <a href="/login.html" class="btn btn-secondary">Login</a>
-        <a href="/register.html" class="btn btn-primary">Create Account</a>
+        <button type="button" class="btn btn-secondary" id="resContinueGuestBtn">Keep Playing</button>
+        <button type="button" class="btn btn-primary" id="resGoogleBtn"><i class="fa-brands fa-google"></i> Google Sign In</button>
       </div>
     `;
     document.getElementById('resCloseBtn').onclick = closeModal;
     document.getElementById('resContinueGuestBtn').onclick = closeModal;
+    document.getElementById('resGoogleBtn').onclick = async () => {
+      closeModal();
+      if (root.ApnaAuth?.signInWithGoogle) await root.ApnaAuth.signInWithGoogle();
+    };
     backdrop.classList.add('open');
   }
 

@@ -426,6 +426,26 @@
   }
 
   async function initSettingsPage() {
+    const syncStatusEl = document.getElementById('accountSyncStatusText');
+    const syncBtn = document.getElementById('googleSyncSettingsBtn');
+    if (ApnaAuth.isLoggedIn()) {
+      const u = ApnaAuth.getUser();
+      if (syncStatusEl) syncStatusEl.textContent = `Connected to ${u.email || u.name} • Cloud Backup & Sync Active.`;
+      if (syncBtn) {
+        syncBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Logout';
+        syncBtn.onclick = () => ApnaAuth.logout();
+      }
+    } else {
+      if (syncBtn) {
+        syncBtn.onclick = async () => {
+          try {
+            await ApnaAuth.signInWithGoogle();
+            window.location.reload();
+          } catch (_) {}
+        };
+      }
+    }
+
     const themeSel = document.getElementById('setTheme');
     themeSel.value = localStorage.getItem('apnascore_theme') || 'light';
     themeSel.onchange = () => ApnaUI.applyTheme(themeSel.value);

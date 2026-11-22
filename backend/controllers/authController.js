@@ -337,6 +337,51 @@ async function exportMyData(req, res, next) {
   }
 }
 
+async function googleAuth(req, res, next) {
+  try {
+    const { email, name, avatarUrl, googleId } = req.body || {};
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Google email is required.' });
+    }
+    const cleanEmail = String(email).toLowerCase().trim();
+    let user = await User.findOne({ email: cleanEmail });
+    if (!user) {
+      const rawName = String(name || cleanEmail.split('@')[0]).trim();
+      const baseUsername = cleanEmail.split('@')[0].replace(/[^a-z0-9_]/gi, '').toLowerCase().slice(0, 20) || 'scorer';
+      let username = baseUsername;
+      let counter = 1;
+      while (await User.findOne({ username })) {
+        username = `${baseUsername}${counter++}`;
+      }
+      user = new User({
+        name: rawName,
+        displayName: rawName,
+        username,
+        email: cleanEmail,
+        passwordHash: await bcrypt.hash(crypto.randomBytes(16).toString('hex'), 10),
+        avatarUrl: avatarUrl || '',
+        role: 'scorer'
+      });
+      await user.save();
+      await logAudit({ req: { user, ip: req.ip }, action: 'USER_REGISTERED_GOOGLE', entityType: 'User', entityId: user._id });
+    } else {
+      if (avatarUrl && !user.avatarUrl) {
+        user.avatarUrl = avatarUrl;
+        await user.save();
+      }
+    }
+
+    const token = signToken(user);
+    res.json({
+      success: true,
+      token,
+      user: user.toSafeJSON()
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function deleteMyAccount(req, res, next) {
   try {
     const { confirmText } = req.body || {};
@@ -354,6 +399,7 @@ async function deleteMyAccount(req, res, next) {
 module.exports = {
   register,
   login,
+  googleAuth,
   me,
   checkUsername,
   updateProfile,

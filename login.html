@@ -62,8 +62,15 @@
       <div class="auth-brand">
         <img src="/assets/logos/apnascore-logo.png" alt="ApnaScore" />
         <h1 style="margin:0;font-size:1.35rem;font-weight:800;">Sign in to ApnaScore</h1>
-        <p class="text-muted text-sm" style="margin:4px 0 0;">Your Local Cricket Scorer</p>
+        <p class="text-muted text-sm" style="margin:4px 0 0;">Optional • Cloud Backup & Sync</p>
       </div>
+
+      <!-- Google Sign In Option -->
+      <button type="button" class="btn btn-secondary btn-lg" style="width:100%;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:10px;" id="googleSignInBtn">
+        <i class="fa-brands fa-google" style="color:#EA4335;font-size:1.15rem;"></i> Sign in with Google
+      </button>
+
+      <div style="text-align:center;margin-bottom:14px;color:var(--text-muted);font-size:0.85rem;">— OR WITH EMAIL —</div>
 
       <form id="loginForm">
         <div class="form-group">
@@ -78,7 +85,9 @@
         <button type="submit" class="btn btn-primary btn-lg" style="width:100%;" id="loginSubmitBtn">Login</button>
       </form>
 
-      <button type="button" class="btn btn-lime mt-2" style="width:100%;" id="continueGuestBtn">Continue as Guest (No Sign-Up Needed)</button>
+      <a href="/match-create.html" class="btn btn-lime mt-2" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;" id="continueGuestBtn">
+        <i class="fa-solid fa-baseball-bat-ball"></i> Start Scoring Now (No Login Needed)
+      </a>
 
       <div class="flex-between mt-2 text-sm">
         <a href="/register.html">New user? Create account</a>
@@ -95,7 +104,13 @@
   <script src="/js/main.js"></script>
   <script>
     ApnaUI.applyTheme(localStorage.getItem('apnascore_theme') || 'light');
-    document.getElementById('continueGuestBtn').addEventListener('click', () => ApnaAuth.continueAsGuest('/dashboard.html'));
+
+    document.getElementById('googleSignInBtn')?.addEventListener('click', async () => {
+      try {
+        await ApnaAuth.signInWithGoogle();
+        window.location.href = '/match-create.html';
+      } catch (_) {}
+    });
 
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault();

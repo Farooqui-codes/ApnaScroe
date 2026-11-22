@@ -30,6 +30,18 @@
 <body>
   <div id="appShell">
     <div class="main-content-slot">
+      <div class="card mb-2" id="accountSyncCard" style="border-left: 4px solid var(--brand-primary);background:var(--bg-surface);">
+        <div class="flex-between">
+          <div>
+            <h3 style="margin:0 0 4px;font-size:1.05rem;color:var(--text-primary);">Google Cloud Backup (Optional)</h3>
+            <p class="text-sm text-muted" style="margin:0;" id="accountSyncStatusText">Playing in instant guest mode. Sign in with Google to backup & sync matches across devices.</p>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="googleSyncSettingsBtn">
+            <i class="fa-brands fa-google" style="color:#EA4335;"></i> Sign in with Google
+          </button>
+        </div>
+      </div>
+
       <div class="card mb-2">
         <div class="card-header"><h2 class="card-title">General Settings</h2></div>
         <div class="form-grid-2">

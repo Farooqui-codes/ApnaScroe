@@ -24,34 +24,24 @@
 <body>
   <div id="appShell">
     <div class="main-content-slot">
-      <div class="card mb-2">
-        <div class="card-header">
-          <div>
-            <h1 class="card-title" style="font-size:1.25rem;">My Matches</h1>
-            <span class="text-sm text-muted">View your live, upcoming, and completed matches</span>
+      <div class="cs-container">
+        <!-- Optional Search & Filters -->
+        <div class="flex-between mb-2" style="gap:8px;">
+          <div class="tabs-bar" id="myMatchFilterTabs" style="margin:0;border:none;">
+            <button type="button" class="tab-btn active" data-filter="all">All</button>
+            <button type="button" class="tab-btn" data-filter="live">Live</button>
+            <button type="button" class="tab-btn" data-filter="completed">Completed</button>
           </div>
-          <a href="/match-create.html" class="btn btn-primary btn-sm">+ Start Match</a>
+          <input class="form-control" id="mmSearchInput" placeholder="Search..." style="max-width:180px;height:34px;font-size:0.86rem;" />
         </div>
 
-        <div class="tabs-bar" id="myMatchFilterTabs">
-          <button type="button" class="tab-btn active" data-filter="all">All</button>
-          <button type="button" class="tab-btn" data-filter="live">Live</button>
-          <button type="button" class="tab-btn" data-filter="upcoming">Upcoming</button>
-          <button type="button" class="tab-btn" data-filter="completed">Completed</button>
-        </div>
+        <select class="form-control hidden" id="mmKindFilter">
+          <option value="all">All Match Types</option>
+        </select>
 
-        <div class="form-grid-2">
-          <input class="form-control" id="mmSearchInput" placeholder="Search by team or match title..." />
-          <select class="form-control" id="mmKindFilter">
-            <option value="all">All Match Types</option>
-            <option value="simple">Simple Matches Only</option>
-            <option value="tournament">Tournament Matches Only</option>
-          </select>
+        <div id="myMatchesGrid">
+          <div class="empty-state">Loading match history...</div>
         </div>
-      </div>
-
-      <div id="myMatchesGrid" class="match-list-grid">
-        <div class="empty-state">Loading your matches...</div>
       </div>
     </div>
   </div>

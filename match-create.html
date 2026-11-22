@@ -70,171 +70,107 @@
 <body>
   <div id="appShell">
     <div class="main-content-slot">
-      <div id="tournamentMatchNotice" class="badge badge-success mb-2 hidden">Tournament Fixture Match</div>
+      <div class="cs-container">
+        <div id="tournamentMatchNotice" class="badge badge-success mb-2 hidden">Tournament Fixture Match</div>
 
-      <div class="wizard-steps" id="wizardStepsBar">
-        <button type="button" class="wizard-step-pill active" data-step="1">1. Match Details</button>
-        <button type="button" class="wizard-step-pill" data-step="2">2. Players</button>
-        <button type="button" class="wizard-step-pill" data-step="3">3. Toss</button>
-        <button type="button" class="wizard-step-pill" data-step="4">4. Start Match</button>
-      </div>
+        <form id="matchWizardForm" novalidate>
+          <datalist id="existingTeamsDatalist"></datalist>
 
-      <form id="matchWizardForm" novalidate>
-        <datalist id="existingTeamsDatalist"></datalist>
-
-        <!-- STEP 1: Match Details -->
-        <section class="card wizard-panel" data-panel="1">
-          <div class="card-header">
-            <div>
-              <h1 class="card-title" style="font-size:1.18rem;">Step 1: Match Details</h1>
-              <span class="text-sm text-muted">Enter both team names and choose overs</span>
+          <!-- 1. TEAMS (PHOTO 1) -->
+          <div class="cs-section">
+            <span class="cs-section-label">Teams</span>
+            <div class="cs-card">
+              <input type="text" class="cs-underline-input" id="teamANameInput" list="existingTeamsDatalist" required placeholder="Host Team" autocomplete="off" />
+              <div style="height: 16px;"></div>
+              <input type="text" class="cs-underline-input" id="teamBNameInput" list="existingTeamsDatalist" required placeholder="Visitor Team" autocomplete="off" />
             </div>
           </div>
 
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label" for="teamANameInput">Team A Name</label>
-              <input class="form-control" id="teamANameInput" list="existingTeamsDatalist" required placeholder="e.g. Rampur Lions" />
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="teamBNameInput">Team B Name</label>
-              <input class="form-control" id="teamBNameInput" list="existingTeamsDatalist" required placeholder="e.g. Bazaar Tigers" />
-            </div>
-          </div>
-
-          <label class="form-label">Match Overs</label>
-          <div class="overs-preset-grid mb-2 mt-1" id="oversPresetsGrid">
-            <button type="button" class="preset-chip" data-overs="2">2 Overs</button>
-            <button type="button" class="preset-chip" data-overs="4">4 Overs</button>
-            <button type="button" class="preset-chip selected" data-overs="6">6 Overs</button>
-            <button type="button" class="preset-chip" data-overs="8">8 Overs</button>
-            <button type="button" class="preset-chip" data-overs="10">10 Overs</button>
-            <button type="button" class="preset-chip" data-overs="custom">Custom Overs</button>
-          </div>
-
-          <div class="form-group hidden" id="customOversWrap" style="max-width:240px;">
-            <label class="form-label" for="customOversInput">Custom Overs</label>
-            <input class="form-control" id="customOversInput" type="number" min="1" max="100" value="6" />
-          </div>
-
-          <div class="flex-between mt-2">
-            <a href="/dashboard.html" class="btn btn-secondary">Cancel</a>
-            <button type="button" class="btn btn-primary btn-lg" onclick="MatchWizard.goStep(2)">Next: Players →</button>
-          </div>
-        </section>
-
-        <!-- STEP 2: Players (Simple & Skippable) -->
-        <section class="card wizard-panel hidden" data-panel="2">
-          <div class="card-header">
-            <div>
-              <h2 class="card-title">Step 2: Players (Optional)</h2>
-              <span class="text-sm text-muted">You can add player names now or enter them later while scoring</span>
-            </div>
-            <button type="button" class="btn btn-lime btn-sm" id="skipPlayersBtn">Skip for Now →</button>
-          </div>
-
-          <div class="form-group" style="max-width:260px;">
-            <label class="form-label" for="playersPerTeamInput">Number of Players per Team</label>
-            <input class="form-control" id="playersPerTeamInput" type="number" min="2" max="20" value="11" />
-          </div>
-
-          <div class="form-grid-2">
-            <div class="form-group">
-              <label class="form-label" for="teamAPlayersText" id="teamAPlayersLabel">Team A Player Names (comma or new line separated)</label>
-              <textarea class="form-control" id="teamAPlayersText" rows="3" placeholder="e.g. Raju, Vikram, Aman, Deepak"></textarea>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="teamBPlayersText" id="teamBPlayersLabel">Team B Player Names (comma or new line separated)</label>
-              <textarea class="form-control" id="teamBPlayersText" rows="3" placeholder="e.g. Suresh, Karan, Vikas, Pankaj"></textarea>
+          <!-- 2. TOSS WON BY? (PHOTO 1) -->
+          <div class="cs-section">
+            <span class="cs-section-label">Toss won by?</span>
+            <div class="cs-card">
+              <div class="cs-radio-group">
+                <label class="cs-radio-item" id="tossChoiceALabelWrap">
+                  <input type="radio" name="tossSideRadio" value="A" id="tossSideARadio" checked />
+                  <span id="tossWinnerALabel">Host Team</span>
+                </label>
+                <label class="cs-radio-item" id="tossChoiceBLabelWrap">
+                  <input type="radio" name="tossSideRadio" value="B" id="tossSideBRadio" />
+                  <span id="tossWinnerBLabel">Visitor Team</span>
+                </label>
+              </div>
             </div>
           </div>
 
-          <details class="advanced-box">
-            <summary>Optional: Captain & Wicketkeeper Selection <span>▾</span></summary>
-            <div class="form-grid-2 mt-2">
-              <div class="form-group"><label class="form-label" for="capASelect">Team A Captain</label><select class="form-control" id="capASelect"><option value="">Optional</option></select></div>
-              <div class="form-group"><label class="form-label" for="wkASelect">Team A Wicketkeeper</label><select class="form-control" id="wkASelect"><option value="">Optional</option></select></div>
-              <div class="form-group"><label class="form-label" for="capBSelect">Team B Captain</label><select class="form-control" id="capBSelect"><option value="">Optional</option></select></div>
-              <div class="form-group"><label class="form-label" for="wkBSelect">Team B Wicketkeeper</label><select class="form-control" id="wkBSelect"><option value="">Optional</option></select></div>
-            </div>
-          </details>
-
-          <div class="flex-between mt-2">
-            <button type="button" class="btn btn-secondary" onclick="MatchWizard.goStep(1)">← Back</button>
-            <button type="button" class="btn btn-primary btn-lg" onclick="MatchWizard.goStep(3)">Next: Toss →</button>
-          </div>
-        </section>
-
-        <!-- STEP 3: Toss -->
-        <section class="card wizard-panel hidden" data-panel="3">
-          <div class="card-header">
-            <div>
-              <h2 class="card-title">Step 3: Toss</h2>
-              <span class="text-sm text-muted">Tap who won the toss and what they chose</span>
-            </div>
-            <button type="button" class="btn btn-lime btn-sm" id="btnFlipSikkaModal"><i class="fa-solid fa-coins"></i> Flip Virtual Coin (सिक्का)</button>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Who won the toss?</label>
-            <div class="choice-toggle-grid">
-              <button type="button" class="choice-pill-btn selected" id="tossWinnerABtn" data-side="A">Team A won toss</button>
-              <button type="button" class="choice-pill-btn" id="tossWinnerBBtn" data-side="B">Team B won toss</button>
+          <!-- 3. OPTED TO? (PHOTO 1) -->
+          <div class="cs-section">
+            <span class="cs-section-label">Opted to?</span>
+            <div class="cs-card">
+              <div class="cs-radio-group">
+                <label class="cs-radio-item">
+                  <input type="radio" name="tossDecRadio" value="bat" id="tossDecBatRadio" checked />
+                  <span>Bat</span>
+                </label>
+                <label class="cs-radio-item">
+                  <input type="radio" name="tossDecRadio" value="bowl" id="tossDecBowlRadio" />
+                  <span>Bowl</span>
+                </label>
+              </div>
             </div>
           </div>
 
-          <div class="form-group mt-2">
-            <label class="form-label">What did they choose?</label>
-            <div class="choice-toggle-grid">
-              <button type="button" class="choice-pill-btn selected" id="tossBatBtn" data-dec="bat">Batting First</button>
-              <button type="button" class="choice-pill-btn" id="tossBowlBtn" data-dec="bowl">Bowling First</button>
+          <!-- 4. OVERS? (PHOTO 1) -->
+          <div class="cs-section">
+            <span class="cs-section-label">Overs?</span>
+            <div class="cs-card">
+              <input class="cs-underline-input" id="customOversInput" type="number" min="1" max="100" value="16" placeholder="16" required />
             </div>
           </div>
 
-          <div class="flex-between mt-2">
-            <button type="button" class="btn btn-secondary" onclick="MatchWizard.goStep(2)">← Back</button>
-            <button type="button" class="btn btn-primary btn-lg" onclick="MatchWizard.goStep(4)">Next: Review & Start →</button>
-          </div>
-        </section>
-
-        <!-- STEP 4: Start Match (+ Collapsible Advanced Match Settings) -->
-        <section class="card wizard-panel hidden" data-panel="4">
-          <div class="card-header"><h2 class="card-title">Step 4: Ready to Play</h2></div>
-
-          <div id="matchConfirmSummary" class="card mb-2" style="background:var(--bg-surface-alt);"></div>
-
-          <!-- Advanced Match Settings: Collapsed by default for beginners -->
-          <details class="advanced-box" id="advancedRulesAccordion">
-            <summary>Advanced Match Settings (Optional Custom Rules) <span>▾</span></summary>
-            <div class="mt-2">
+          <!-- ADVANCED SETTINGS (COLLAPSIBLE) -->
+          <div class="cs-section hidden" id="advancedMatchPanel">
+            <div class="cs-card" style="margin-bottom:12px;">
+              <div class="flex-between mb-2">
+                <h3 style="margin:0;font-size:1.05rem;color:var(--text-primary);">Advanced Ground & Rules</h3>
+                <button type="button" class="btn btn-lime btn-sm" id="btnFlipSikkaModal"><i class="fa-solid fa-coins"></i> Flip Sikka (Coin Toss)</button>
+              </div>
               <div class="form-grid-3 mb-2">
                 <div class="form-group">
-                  <label class="form-label" for="rulePresetSelect">Rule Preset</label>
-                  <select class="form-control" id="rulePresetSelect"></select>
+                  <label class="form-label" for="matchVenue">Ground / Village Venue</label>
+                  <input class="form-control" id="matchVenue" placeholder="e.g. Rampur Ground" />
                 </div>
                 <div class="form-group">
                   <label class="form-label" for="ballTypeSelect">Ball Type</label>
                   <select class="form-control" id="ballTypeSelect">
-                    <option value="tennis">Tennis Ball</option>
+                    <option value="tennis_hard" selected>Tennis Ball (Hard)</option>
+                    <option value="tennis_light">Tennis Ball (Light)</option>
                     <option value="leather">Leather Ball</option>
-                    <option value="gully">Gully Cricket</option>
-                    <option value="street">Street Cricket</option>
-                    <option value="box">Box Cricket</option>
-                    <option value="school">School Cricket</option>
-                    <option value="custom">Custom</option>
+                    <option value="tape">Tape Ball</option>
                   </select>
                 </div>
                 <div class="form-group">
-                  <label class="form-label" for="matchVenue">Ground / Location</label>
-                  <input class="form-control" id="matchVenue" placeholder="Village Ground" />
+                  <label class="form-label" for="playersPerTeamInput">Players Per Team</label>
+                  <input class="form-control" id="playersPerTeamInput" type="number" min="2" max="25" value="11" />
                 </div>
               </div>
 
-              <div class="tabs-bar" id="ruleEngineTabs">
-                <button type="button" class="tab-btn active" data-ruletab="extras">Wide / No-Ball / Extras</button>
+              <div class="form-grid-2 mt-2">
+                <div class="form-group">
+                  <label class="form-label" for="teamAPlayersText" id="teamAPlayersLabel">Host Team Players (Optional)</label>
+                  <textarea class="form-control" id="teamAPlayersText" rows="2" placeholder="Player names comma separated..."></textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="teamBPlayersText" id="teamBPlayersLabel">Visitor Team Players (Optional)</label>
+                  <textarea class="form-control" id="teamBPlayersText" rows="2" placeholder="Player names comma separated..."></textarea>
+                </div>
+              </div>
+
+              <div class="tabs-bar mt-2" id="ruleEngineTabs">
+                <button type="button" class="tab-btn active" data-ruletab="extras">Wide / No-Ball</button>
                 <button type="button" class="tab-btn" data-ruletab="boundaries">Boundaries</button>
                 <button type="button" class="tab-btn" data-ruletab="wickets">Wicket Rules</button>
-                <button type="button" class="tab-btn" data-ruletab="local">Local Rules (1-Tip / Last Man)</button>
+                <button type="button" class="tab-btn" data-ruletab="local">Local Rules</button>
               </div>
 
               <div id="rulePanel-extras"></div>
@@ -242,19 +178,16 @@
               <div id="rulePanel-wickets" class="hidden"></div>
               <div id="rulePanel-local" class="hidden"></div>
               <div id="ruleWarningsBox" class="text-sm hidden mt-1" style="color:var(--warning);font-weight:600;"></div>
-
-              <div class="mt-2">
-                <button type="button" class="btn btn-secondary btn-sm" id="saveRulePresetBtn">Save Rules as Preset</button>
-              </div>
             </div>
-          </details>
-
-          <div class="flex-between">
-            <button type="button" class="btn btn-secondary" onclick="MatchWizard.goStep(3)">← Back</button>
-            <button type="submit" class="btn btn-primary btn-lg" id="startMatchSubmitBtn">Start Scoring</button>
           </div>
-        </section>
-      </form>
+
+          <!-- 5. ACTIONS ROW (PHOTO 1) -->
+          <div class="cs-actions-row">
+            <button type="button" class="cs-btn-advanced" id="toggleAdvancedSettingsBtn">Advanced settings</button>
+            <button type="submit" class="cs-btn-start" id="startMatchSubmitBtn">Start match</button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 
