@@ -193,7 +193,7 @@
       currentRules.format.playersPerTeam = Math.max(2, Math.min(25, Number(e.target.value) || 11));
     });
 
-    document.getElementById('btnFlipSikkaModal')?.addEventListener('click', () => {
+    const openSikkaToss = () => {
       const nameA = document.getElementById('teamANameInput').value.trim() || 'Host Team';
       const nameB = document.getElementById('teamBNameInput').value.trim() || 'Visitor Team';
       if (window.ApnaToss) {
@@ -211,7 +211,9 @@
           }
         });
       }
-    });
+    };
+    document.getElementById('btnFlipSikkaModal')?.addEventListener('click', openSikkaToss);
+    document.getElementById('btnFlipSikkaQuick')?.addEventListener('click', openSikkaToss);
 
     document.getElementById('ballTypeSelect')?.addEventListener('change', (e) => {
       currentRules.format.ballType = e.target.value;

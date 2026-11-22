@@ -22,11 +22,69 @@
   <meta name="twitter:image" content="/assets/images/apnascore-og-preview.jpg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/icons/favicon-32.png" />
   <link rel="manifest" href="/manifest.json" />
-  <link rel="stylesheet" href="/css/fontawesome.min.css" />
-  <link rel="stylesheet" href="/css/style.css" />
-  <link rel="stylesheet" href="/css/responsive.css" />
-  <link rel="stylesheet" href="/css/tournament.css" />
-  <link rel="stylesheet" href="/css/animations.css" />
+  <link rel="stylesheet" href="/css/fontawesome.min.css?v=15" />
+  <link rel="stylesheet" href="/css/style.css?v=15" />
+  <link rel="stylesheet" href="/css/responsive.css?v=15" />
+  <link rel="stylesheet" href="/css/tournament.css?v=15" />
+  <link rel="stylesheet" href="/css/animations.css?v=15" />
+  <style>
+    body { background-color: #EEF3F0 !important; }
+    .cs-container { max-width: 640px !important; margin: 0 auto !important; padding: 14px 16px 110px !important; }
+    .cs-team-item-card {
+      background: #FFFFFF !important;
+      border: 1px solid #E2E8F0 !important;
+      border-radius: 12px !important;
+      padding: 14px 16px !important;
+      margin-bottom: 12px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04) !important;
+    }
+    .cs-team-item-left { display: flex !important; align-items: center !important; gap: 14px !important; }
+    .cs-avatar-circle {
+      width: 44px !important; height: 44px !important; min-width: 44px !important;
+      border-radius: 50% !important; display: inline-flex !important; align-items: center !important;
+      justify-content: center !important; font-weight: 700 !important; font-size: 1.05rem !important; color: #FFFFFF !important;
+    }
+    .cs-avatar-a { background: #F59E0B !important; }
+    .cs-avatar-b { background: #8D6E63 !important; }
+    .cs-avatar-teal { background: #0D9488 !important; }
+    .cs-avatar-purple { background: #7C3AED !important; }
+    .cs-avatar-blue { background: #0284C7 !important; }
+    .cs-avatar-gray { background: #64748B !important; }
+    .cs-team-meta-col { display: flex !important; flex-direction: column !important; gap: 3px !important; }
+    .cs-team-meta-name { font-size: 1.1rem !important; font-weight: 700 !important; color: #1E293B !important; }
+    .cs-team-meta-stats { font-size: 0.88rem !important; color: #64748B !important; display: flex !important; align-items: center !important; gap: 10px !important; }
+    .cs-team-meta-stats strong { color: #1E293B !important; }
+    .cs-icon-btn { background: none !important; border: none !important; color: #64748B !important; font-size: 1.1rem !important; cursor: pointer !important; padding: 6px !important; }
+    .cs-icon-btn:hover { color: #208B4E !important; }
+    .cs-icon-btn.delete-btn:hover { color: #DC2626 !important; }
+    .cs-fab {
+      position: fixed !important;
+      bottom: 84px !important;
+      right: 20px !important;
+      width: 58px !important;
+      height: 58px !important;
+      border-radius: 50% !important;
+      background: #208B4E !important;
+      color: #FFFFFF !important;
+      border: none !important;
+      font-size: 1.5rem !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.24) !important;
+      cursor: pointer !important;
+      z-index: 99 !important;
+      transition: transform 0.15s ease !important;
+    }
+    .cs-fab:hover { background: #1b7340 !important; transform: scale(1.06) !important; }
+    [data-theme="dark"] body { background-color: #0F172A !important; }
+    [data-theme="dark"] .cs-team-item-card { background: #1E293B !important; border-color: #334155 !important; }
+    [data-theme="dark"] .cs-team-meta-name, [data-theme="dark"] .cs-team-meta-stats strong { color: #F8FAFC !important; }
+    [data-theme="dark"] .cs-team-meta-stats { color: #94A3B8 !important; }
+  </style>
 </head>
 <body>
   <div id="appShell">

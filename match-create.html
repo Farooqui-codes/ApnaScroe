@@ -17,53 +17,166 @@
   <link rel="manifest" href="/manifest.json" />
   <link rel="stylesheet" href="/css/fontawesome.min.css" />
   <link rel="stylesheet" href="/css/style.css" />
-  <link rel="stylesheet" href="/css/responsive.css" />
-  <link rel="stylesheet" href="/css/dashboard.css" />
-  <link rel="stylesheet" href="/css/animations.css" />
+  <link rel="stylesheet" href="/css/fontawesome.min.css?v=15" />
+  <link rel="stylesheet" href="/css/style.css?v=15" />
+  <link rel="stylesheet" href="/css/responsive.css?v=15" />
+  <link rel="stylesheet" href="/css/dashboard.css?v=15" />
+  <link rel="stylesheet" href="/css/animations.css?v=15" />
   <style>
-    .choice-toggle-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
+    /* Direct High-Specificity Scorer UI Styles (Photo 1 Matching) */
+    body {
+      background-color: #EEF3F0 !important;
     }
-    .choice-pill-btn {
-      min-height: 54px;
-      padding: 12px 14px;
-      border-radius: var(--radius-md);
-      border: 2px solid var(--border-color);
-      background: var(--bg-surface-alt);
-      color: var(--text-primary);
-      font-weight: 700;
-      font-size: 0.96rem;
-      cursor: pointer;
-      text-align: center;
-      transition: border-color 0.15s ease, background-color 0.15s ease;
+    .cs-container {
+      max-width: 620px !important;
+      margin: 0 auto !important;
+      padding: 14px 16px 110px !important;
     }
-    .choice-pill-btn.selected {
-      background: var(--brand-primary);
-      border-color: var(--brand-primary);
-      color: #FFFFFF;
+    .cs-section {
+      margin-bottom: 20px !important;
     }
-    details.advanced-box {
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      background: var(--bg-surface-alt);
-      padding: 12px 14px;
-      margin-bottom: 16px;
+    .cs-section-label {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      font-size: 1.15rem !important;
+      font-weight: 700 !important;
+      color: #208B4E !important;
+      margin-bottom: 8px !important;
     }
-    details.advanced-box summary {
-      cursor: pointer;
-      font-weight: 700;
-      color: var(--text-secondary);
-      list-style: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .cs-card {
+      background: #FFFFFF !important;
+      border: 1px solid #E2E8F0 !important;
+      border-radius: 12px !important;
+      padding: 16px 20px !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
     }
-    @media (max-width: 520px) {
-      .choice-toggle-grid {
-        grid-template-columns: 1fr;
-      }
+    .cs-underline-input {
+      width: 100% !important;
+      border: none !important;
+      border-bottom: 1.5px solid #CBD5E1 !important;
+      background: transparent !important;
+      padding: 10px 4px !important;
+      font-size: 1.1rem !important;
+      font-weight: 500 !important;
+      color: #1E293B !important;
+      border-radius: 0 !important;
+      outline: none !important;
+      transition: border-color 0.2s ease !important;
+      box-sizing: border-box !important;
+    }
+    .cs-underline-input:focus {
+      border-bottom-color: #208B4E !important;
+    }
+    .cs-underline-input::placeholder {
+      color: #94A3B8 !important;
+      font-weight: 400 !important;
+    }
+    .cs-radio-group {
+      display: flex !important;
+      align-items: center !important;
+      gap: 32px !important;
+      flex-wrap: wrap !important;
+    }
+    .cs-radio-item {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+      cursor: pointer !important;
+      font-size: 1.05rem !important;
+      font-weight: 600 !important;
+      color: #1E293B !important;
+      user-select: none !important;
+    }
+    .cs-radio-item input[type="radio"] {
+      width: 20px !important;
+      height: 20px !important;
+      accent-color: #208B4E !important;
+      cursor: pointer !important;
+      margin: 0 !important;
+    }
+    .cs-toss-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      background: #E2F1E6 !important;
+      border: 1.5px solid #9ADE68 !important;
+      color: #0F3822 !important;
+      font-size: 0.88rem !important;
+      font-weight: 700 !important;
+      padding: 6px 14px !important;
+      border-radius: 20px !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+    }
+    .cs-toss-btn:hover {
+      background: #9ADE68 !important;
+      transform: translateY(-1px) !important;
+    }
+    .cs-actions-row {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 16px !important;
+      margin-top: 28px !important;
+    }
+    .cs-btn-advanced {
+      background: none !important;
+      border: none !important;
+      color: #1E293B !important;
+      font-size: 1.08rem !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      padding: 8px 0 !important;
+      text-decoration: underline !important;
+      text-underline-offset: 4px !important;
+      text-decoration-color: transparent !important;
+      transition: all 0.2s ease !important;
+    }
+    .cs-btn-advanced:hover {
+      color: #208B4E !important;
+      text-decoration-color: #208B4E !important;
+    }
+    .cs-btn-start {
+      background: #208B4E !important;
+      color: #FFFFFF !important;
+      border: none !important;
+      border-radius: 10px !important;
+      padding: 13px 34px !important;
+      font-size: 1.12rem !important;
+      font-weight: 700 !important;
+      cursor: pointer !important;
+      box-shadow: 0 4px 12px rgba(32, 139, 78, 0.3) !important;
+      transition: all 0.15s ease !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-width: 150px !important;
+    }
+    .cs-btn-start:hover {
+      background: #1b7340 !important;
+      transform: translateY(-1px) !important;
+      box-shadow: 0 6px 16px rgba(32, 139, 78, 0.38) !important;
+    }
+    .cs-btn-start:active {
+      transform: translateY(0) !important;
+    }
+    [data-theme="dark"] body {
+      background-color: #0F172A !important;
+    }
+    [data-theme="dark"] .cs-card {
+      background: #1E293B !important;
+      border-color: #334155 !important;
+    }
+    [data-theme="dark"] .cs-underline-input {
+      color: #F8FAFC !important;
+      border-bottom-color: #475569 !important;
+    }
+    [data-theme="dark"] .cs-radio-item {
+      color: #F8FAFC !important;
+    }
+    [data-theme="dark"] .cs-btn-advanced {
+      color: #CBD5E1 !important;
     }
   </style>
 </head>
@@ -81,14 +194,19 @@
             <span class="cs-section-label">Teams</span>
             <div class="cs-card">
               <input type="text" class="cs-underline-input" id="teamANameInput" list="existingTeamsDatalist" required placeholder="Host Team" autocomplete="off" />
-              <div style="height: 16px;"></div>
+              <div style="height: 18px;"></div>
               <input type="text" class="cs-underline-input" id="teamBNameInput" list="existingTeamsDatalist" required placeholder="Visitor Team" autocomplete="off" />
             </div>
           </div>
 
-          <!-- 2. TOSS WON BY? (PHOTO 1) -->
+          <!-- 2. TOSS WON BY? (PHOTO 1) WITH COIN TOSS BUTTON -->
           <div class="cs-section">
-            <span class="cs-section-label">Toss won by?</span>
+            <div class="cs-section-label">
+              <span>Toss won by?</span>
+              <button type="button" class="cs-toss-btn" id="btnFlipSikkaQuick" title="Flip Coin Toss">
+                <i class="fa-solid fa-coins"></i> Flip Sikka (Coin Toss)
+              </button>
+            </div>
             <div class="cs-card">
               <div class="cs-radio-group">
                 <label class="cs-radio-item" id="tossChoiceALabelWrap">
@@ -133,7 +251,7 @@
             <div class="cs-card" style="margin-bottom:12px;">
               <div class="flex-between mb-2">
                 <h3 style="margin:0;font-size:1.05rem;color:var(--text-primary);">Advanced Ground & Rules</h3>
-                <button type="button" class="btn btn-lime btn-sm" id="btnFlipSikkaModal"><i class="fa-solid fa-coins"></i> Flip Sikka (Coin Toss)</button>
+                <button type="button" class="cs-toss-btn" id="btnFlipSikkaModal"><i class="fa-solid fa-coins"></i> Flip Sikka (Coin Toss)</button>
               </div>
               <div class="form-grid-3 mb-2">
                 <div class="form-group">
