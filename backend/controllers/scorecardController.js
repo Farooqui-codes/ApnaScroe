@@ -38,12 +38,9 @@ async function listScorecards(req, res, next) {
 
 async function getScorecard(req, res, next) {
   try {
-    const match = await Match.findById(req.params.matchId).populate('tournamentId', 'name village');
+    const isObjId = /^[0-9a-fA-F]{24}$/.test(req.params.matchId);
+    const match = await Match.findOne(isObjId ? { _id: req.params.matchId } : { $or: [{ matchCode: req.params.matchId }, { clientMatchId: req.params.matchId }] }).populate('tournamentId', 'name village');
     if (!match) return res.status(404).json({ success: false, message: 'Match not found.' });
-
-    if (match.ownerType === 'guest' && (!req.guest || req.guest.guestId !== match.guestId)) {
-      return res.status(403).json({ success: false, message: 'Unauthorized access to guest scorecard.' });
-    }
 
     let scorecard = await Scorecard.findOne({ matchId: match._id }).lean();
     if (!scorecard) {
@@ -60,12 +57,9 @@ async function getScorecard(req, res, next) {
 
 async function downloadMatchPDF(req, res, next) {
   try {
-    const match = await Match.findById(req.params.matchId).lean();
+    const isObjId = /^[0-9a-fA-F]{24}$/.test(req.params.matchId);
+    const match = await Match.findOne(isObjId ? { _id: req.params.matchId } : { $or: [{ matchCode: req.params.matchId }, { clientMatchId: req.params.matchId }] }).lean();
     if (!match) return res.status(404).json({ success: false, message: 'Match not found.' });
-
-    if (match.ownerType === 'guest' && (!req.guest || req.guest.guestId !== match.guestId)) {
-      return res.status(403).json({ success: false, message: 'Unauthorized access to guest PDF.' });
-    }
 
     const inningsList = await Innings.find({ matchId: match._id }).sort({ inningsNumber: 1 }).lean();
     const tournament = match.tournamentId
@@ -76,7 +70,7 @@ async function downloadMatchPDF(req, res, next) {
     const safeName = String(match.title || 'match-scorecard').replace(/[^a-z0-9-_]+/gi, '_').toLowerCase();
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="ApnaScore_${safeName}.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="ApnaScore_${safeName}.pdf"`);
     res.send(pdfBuffer);
   } catch (err) {
     next(err);

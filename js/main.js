@@ -492,6 +492,19 @@
       .replace(/'/g, '&#39;');
   }
 
+  // Server Keep-Alive Ping (Prevents Render free tier from sleeping while active)
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      if (navigator.onLine) fetch('/api/health').catch(() => {});
+    }, 1500);
+
+    setInterval(() => {
+      if (navigator.onLine && !document.hidden) {
+        fetch('/api/health').catch(() => {});
+      }
+    }, 4 * 60 * 1000);
+  }
+
   root.ApnaUI = {
     initShell,
     applyTheme,

@@ -238,6 +238,13 @@ async function startServer() {
 
   server.listen(config.port, () => {
     console.log(`[ApnaScore] Server running at http://localhost:${config.port}`);
+    // Self-keepalive ping for Render (keeps instance warm and prevents cold-starts)
+    const selfUrl = process.env.RENDER_EXTERNAL_URL;
+    if (selfUrl) {
+      setInterval(() => {
+        fetch(`${selfUrl}/api/health`).catch(() => {});
+      }, 10 * 60 * 1000);
+    }
   });
 
   return { app, server, io };

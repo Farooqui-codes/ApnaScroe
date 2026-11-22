@@ -473,35 +473,38 @@
     const localKey = matchDoc._id || matchDoc.clientMatchId;
     await ApnaOffline.saveEventLocally(localKey, innNum, eventObj);
 
-    try {
-      const canHitServer = navigator.onLine && !String(localKey).startsWith('cm_') && (ApnaAPI.getToken() || (ApnaAPI.getGuestSession() && ApnaAPI.getGuestSession().guestToken));
-      if (canHitServer) {
-        const res = await ApnaAPI.post(`/api/scoring/${localKey}/event`, eventObj);
-        if (res && res.success) {
-          eventObj.synced = true;
-          await ApnaOffline.saveEventLocally(localKey, innNum, Object.assign({}, eventObj, { synced: true }));
-          if (res.match) matchDoc = res.match;
-          if (res.state) {
-            computedState = res.state;
-            renderAll();
-          }
-        }
-      } else {
-        await ApnaOffline.saveMatchLocally({ localId: localKey, match: matchDoc, innings: inningsList, syncStatus: 'pending' });
-      }
-    } catch (err) {
-      await ApnaOffline.saveMatchLocally({ localId: localKey, match: matchDoc, innings: inningsList, syncStatus: 'pending' });
-      if (!err.isOffline) ApnaUI.showToast(err.message, 'warning');
-    }
-
-    // Prompt incoming batsman or new bowler automatically upon wicket or over completion
+    // Prompt incoming batsman or new bowler immediately without waiting for network
     if (computedState.status === 'live') {
       if (computedState.needsNewBatsman) {
-        setTimeout(() => openPlayersModal('new_batsman'), 160);
+        setTimeout(() => openPlayersModal('new_batsman'), 120);
       } else if (computedState.needsBowlerChange) {
-        setTimeout(() => openPlayersModal('change_bowler'), 160);
+        setTimeout(() => openPlayersModal('change_bowler'), 120);
       }
     }
+
+    // Asynchronous background server sync (prevents Render sleep / cold-start lag from freezing scorer)
+    (async () => {
+      try {
+        const canHitServer = navigator.onLine && !String(localKey).startsWith('cm_') && (ApnaAPI.getToken() || (ApnaAPI.getGuestSession() && ApnaAPI.getGuestSession().guestToken));
+        if (canHitServer) {
+          const res = await ApnaAPI.post(`/api/scoring/${localKey}/event`, eventObj);
+          if (res && res.success) {
+            eventObj.synced = true;
+            await ApnaOffline.saveEventLocally(localKey, innNum, Object.assign({}, eventObj, { synced: true }));
+            if (res.match) matchDoc = res.match;
+            if (res.state) {
+              computedState = res.state;
+              renderAll();
+            }
+          }
+        } else {
+          await ApnaOffline.saveMatchLocally({ localId: localKey, match: matchDoc, innings: inningsList, syncStatus: 'pending' });
+        }
+      } catch (err) {
+        await ApnaOffline.saveMatchLocally({ localId: localKey, match: matchDoc, innings: inningsList, syncStatus: 'pending' });
+        console.warn('Background score sync deferred:', err.message);
+      }
+    })();
   }
 
   function getSquads() {
@@ -1049,6 +1052,15 @@
     });
 
     document.getElementById('quickShareWaBtn')?.addEventListener('click', triggerWhatsAppScoreText);
+    document.getElementById('liveDownloadPdfBtn')?.addEventListener('click', () => {
+      if (!matchDoc) return;
+      const matchId = matchDoc._id || matchDoc.clientMatchId;
+      if (window.ApnaPDF) {
+        window.ApnaPDF.downloadMatchPDF(matchId, { match: matchDoc, innings: inningsList });
+      } else {
+        window.open(`/api/scorecards/${encodeURIComponent(matchId)}/pdf`, '_blank');
+      }
+    });
     document.getElementById('whatsappStoryPosterBtn')?.addEventListener('click', triggerStoryPoster);
     document.getElementById('whatsappTextShareBtn')?.addEventListener('click', triggerWhatsAppScoreText);
     document.getElementById('mcStoryPosterBtn')?.addEventListener('click', () => {

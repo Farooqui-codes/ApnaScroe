@@ -147,7 +147,8 @@
               <a href="/scorecard.html?matchId=${m._id}" class="cs-footer-link">Scoreboard</a>
             </div>
             <div class="cs-footer-right-icons">
-              <a href="/api/matches/${m._id}/pdf" download class="cs-icon-btn" title="Download Scorecard PDF"><i class="fa-solid fa-download"></i></a>
+              <a href="/api/scorecards/${m._id}/pdf" target="_blank" class="cs-icon-btn" title="Download Scorecard PDF"><i class="fa-solid fa-file-pdf"></i></a>
+              <button type="button" class="cs-icon-btn wa-btn" onclick="window.shareMatchToWhatsApp('${m._id}')" title="Share Scorecard on WhatsApp" style="color:#25D366;"><i class="fa-brands fa-whatsapp"></i></button>
               <button type="button" class="cs-icon-btn delete-btn" onclick="window.confirmDeleteMatch('${m._id}', '${teamAName} vs ${teamBName}')" title="Delete Match"><i class="fa-solid fa-trash"></i></button>
             </div>
           </div>
@@ -155,6 +156,40 @@
       `;
     }).join('');
   }
+
+  window.shareMatchToWhatsApp = (id) => {
+    const match = allUserMatches.find((m) => String(m._id) === String(id));
+    if (!match) return;
+    const origin = window.location.origin;
+    const shareUrl = `${origin}/scorecard.html?matchId=${encodeURIComponent(id)}`;
+    const pdfUrl = `${origin}/api/scorecards/${encodeURIComponent(id)}/pdf`;
+    const inn1 = (match.inningsSummary || [])[0];
+    const inn2 = (match.inningsSummary || [])[1];
+    const scoreA = inn1 ? `${inn1.battingTeamName}: ${inn1.totalRuns}/${inn1.wickets} (${inn1.oversString || '0.0'} ov)` : '';
+    const scoreB = inn2 ? `${inn2.battingTeamName}: ${inn2.totalRuns}/${inn2.wickets} (${inn2.oversString || '0.0'} ov)` : '';
+    const scoreLine = [scoreA, scoreB].filter(Boolean).join('\n') || 'Match in progress';
+    const resTxt = (match.result && match.result.marginText) || (match.status ? match.status.toUpperCase() : '');
+
+    const text = [
+      `🏏 *${match.title || 'Cricket Match'}*`,
+      match.venue ? `📍 Ground: ${match.venue}` : '',
+      `━━━━━━━━━━━━━━━━`,
+      scoreLine,
+      resTxt ? `🏆 *${resTxt}*` : '',
+      `━━━━━━━━━━━━━━━━`,
+      `📄 *Full Scorecard & PDF:*`,
+      shareUrl,
+      `📥 *Download Scorecard PDF:*`,
+      pdfUrl,
+      `\n_Scored on ApnaScore (Apne Gaon ka Apna Scorer)_`
+    ].filter(Boolean).join('\n');
+
+    if (window.ApnaWhatsApp) {
+      window.ApnaWhatsApp.share(text);
+    } else {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   window.confirmDeleteMatch = async (id, title) => {
     if (!confirm(`Are you sure you want to delete match "${title}"?`)) return;
